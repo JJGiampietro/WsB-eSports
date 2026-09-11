@@ -1,4 +1,109 @@
 {
-  "fetchedAt": null,
-  "players": {}
+  "fetchedAt": "2026-09-11T11:36:28.537Z",
+  "players": {
+    "lizzie": {
+      "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
+      "kd": 3.341,
+      "winrate": 22.346,
+      "wins": 4806,
+      "kills": 55804,
+      "matches": 21507
+    },
+    "zumiez": {
+      "displayName": "Wsb-ZumiezTT",
+      "kd": 9,
+      "winrate": 50,
+      "wins": 3,
+      "kills": 27,
+      "matches": 6
+    },
+    "jen": {
+      "displayName": "ᵂˢᴮJenClipsMenᵀᵀ",
+      "kd": 3.089,
+      "winrate": 11.469,
+      "wins": 645,
+      "kills": 15380,
+      "matches": 5624
+    },
+    "barrelroll": {
+      "displayName": "WsB Barrelroll77",
+      "kd": 5.61,
+      "winrate": 18.081,
+      "wins": 537,
+      "kills": 13648,
+      "matches": 2970
+    },
+    "buck": {
+      "displayName": "WsB Buck",
+      "kd": 7.183,
+      "winrate": 21.85,
+      "wins": 659,
+      "kills": 16930,
+      "matches": 3016
+    },
+    "ttbobbyfn": {
+      "displayName": "WsB_TTBOBBYfn",
+      "kd": 1.981,
+      "winrate": 8.933,
+      "wins": 580,
+      "kills": 11713,
+      "matches": 6493
+    },
+    "btajordan": {
+      "displayName": "TT BTAJORDAN",
+      "kd": 3.654,
+      "winrate": 12.469,
+      "wins": 2283,
+      "kills": 58555,
+      "matches": 18309
+    },
+    "shloozyyy": {
+      "displayName": "Shloozyyy ᵀᵀ",
+      "kd": 4.247,
+      "winrate": 22.008,
+      "wins": 2512,
+      "kills": 37809,
+      "matches": 11414
+    },
+    "ghost": {
+      "displayName": "Ǥнσsτ 艾",
+      "kd": 3.985,
+      "winrate": 12.948,
+      "wins": 4320,
+      "kills": 115732,
+      "matches": 33365
+    },
+    "marky": {
+      "displayName": "WsB_Marky!",
+      "kd": 5.223,
+      "winrate": 17.677,
+      "wins": 4773,
+      "kills": 116095,
+      "matches": 27001
+    },
+    "allieontt": {
+      "displayName": "ALLIEONTT",
+      "kd": 1.762,
+      "winrate": 13.606,
+      "wins": 3100,
+      "kills": 34685,
+      "matches": 22784
+    },
+    "chela": {
+      "displayName": "WsB_chela",
+      "kd": 2.446,
+      "winrate": 23.675,
+      "wins": 630,
+      "kills": 4967,
+      "matches": 2661
+    },
+    "lazy": {
+      "displayName": "ʷˢᵇLazy",
+      "kd": 7.05,
+      "winrate": 24.769,
+      "wins": 6703,
+      "kills": 143540,
+      "matches": 27062
+    }
+  }
 }
