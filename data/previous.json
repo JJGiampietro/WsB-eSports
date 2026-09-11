@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-11T12:07:20.344Z",
+  "fetchedAt": "2026-09-11T23:12:46.449Z",
   "players": {
     "zumiez": {
       "displayName": "Wsb-ZumiezTT",
@@ -27,11 +27,11 @@
     },
     "buck": {
       "displayName": "WsB Buck",
-      "kd": 7.183,
-      "winrate": 21.85,
+      "kd": 7.159,
+      "winrate": 21.728,
       "wins": 659,
-      "kills": 16930,
-      "matches": 3016
+      "kills": 16995,
+      "matches": 3033
     },
     "ttbobbyfn": {
       "displayName": "WsB_TTBOBBYfn",
@@ -52,18 +52,18 @@
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
       "kd": 4.246,
-      "winrate": 22.002,
+      "winrate": 21.991,
       "wins": 2512,
-      "kills": 37813,
-      "matches": 11417
+      "kills": 37838,
+      "matches": 11423
     },
     "ghost": {
       "displayName": "Ǥнσsτ 艾",
-      "kd": 3.985,
-      "winrate": 12.948,
-      "wins": 4320,
-      "kills": 115732,
-      "matches": 33365
+      "kd": 3.986,
+      "winrate": 12.951,
+      "wins": 4323,
+      "kills": 115820,
+      "matches": 33380
     },
     "marky": {
       "displayName": "WsB_Marky!",
@@ -76,26 +76,26 @@
     "allieontt": {
       "displayName": "ALLIEONTT",
       "kd": 1.762,
-      "winrate": 13.606,
+      "winrate": 13.604,
       "wins": 3100,
-      "kills": 34685,
-      "matches": 22784
+      "kills": 34686,
+      "matches": 22788
     },
     "chela": {
       "displayName": "WsB_chela",
-      "kd": 2.446,
-      "winrate": 23.675,
-      "wins": 630,
-      "kills": 4967,
-      "matches": 2661
+      "kd": 2.454,
+      "winrate": 23.642,
+      "wins": 631,
+      "kills": 5001,
+      "matches": 2669
     },
     "lazy": {
       "displayName": "ʷˢᵇLazy",
       "kd": 7.05,
-      "winrate": 24.769,
-      "wins": 6703,
-      "kills": 143540,
-      "matches": 27062
+      "winrate": 24.768,
+      "wins": 6704,
+      "kills": 143559,
+      "matches": 27067
     }
   }
 }
