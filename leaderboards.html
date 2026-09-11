@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WsB | Leaderboards</title>
+  <meta name="description" content="WsB — weekly and lifetime leaderboards, updated automatically every Monday.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="site-glow"></div>
+
+<header class="nav">
+  <span class="spooky-web left" aria-hidden="true">🕸️</span>
+  <span class="spooky-web right" aria-hidden="true">🕸️</span>
+  <a class="mini-brand" href="index.html#home">
+    <img src="wsb-logo.png" alt="WsB logo">
+    <span>WsB</span>
+  </a>
+  <nav id="navlinks">
+    <a href="index.html#team">ROSTER</a>
+    <a href="index.html#about">ABOUT</a>
+    <a href="members.html">MEMBERS</a>
+    <a href="leaderboards.html">LEADERBOARDS</a>
+    <a href="index.html#join">JOIN WsB</a>
+  </nav>
+  <button type="button" class="spooky-btn" id="spookyToggle" aria-pressed="false">🎃 Spooky Surprise</button>
+  <button class="menu" aria-label="Toggle navigation">☰</button>
+</header>
+
+<main>
+  <section class="section lb-hero">
+    <div class="heading-row">
+      <div>
+        <p class="label">UPDATED EVERY MONDAY</p>
+        <h2>LEADER<br><span>BOARDS.</span></h2>
+      </div>
+      <p class="intro" id="lbUpdatedNote">Snapshot pulled automatically once a week — nobody has to type these in.</p>
+    </div>
+
+    <div class="lb-board" id="lbWeekly">
+      <p class="label lb-board-label">THIS WEEK</p>
+      <div class="lb-grid" id="lbWeeklyGrid">
+        <p class="lb-empty">Waiting on the first weekly snapshot. Once the automation runs, this fills in on its own.</p>
+      </div>
+    </div>
+
+    <div class="lb-board" id="lbLifetime">
+      <p class="label lb-board-label">LIFETIME LEADERS</p>
+      <div class="lb-grid" id="lbLifetimeGrid">
+        <p class="lb-empty">Waiting on the first weekly snapshot.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="spooky-spider" aria-hidden="true">🕷️</span>
+  <div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div>
+  <div class="socials">
+    <a href="#">X / TWITTER</a><a href="#">YOUTUBE</a><a href="#">TWITCH</a><a href="#">DISCORD</a>
+  </div>
+  <small>© 2026 WsB — WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>
