@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WsB | Leaderboards</title>
-  <meta name="description" content="WsB — weekly and lifetime leaderboards, updated automatically every Monday.">
+  <title>WsB | Events</title>
+  <meta name="description" content="WsB — upcoming events and announcements.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
@@ -34,28 +34,39 @@
 </header>
 
 <main>
-  <section class="section lb-hero">
+  <section class="section ann-hero">
     <div class="heading-row">
       <div>
-        <p class="label">UPDATED EVERY MONDAY</p>
-        <h2>LEADER<br><span>BOARDS.</span></h2>
+        <p class="label">WHAT'S COMING UP</p>
+        <h2>UPCOMING<br><span>EVENTS.</span></h2>
       </div>
-      <p class="intro" id="lbUpdatedNote">Snapshot pulled automatically once a week — nobody has to type these in.</p>
+      <p class="intro">Mark your calendar — here's what's on the schedule.</p>
     </div>
 
-    <div class="lb-board" id="lbWeekly">
-      <p class="label lb-board-label">THIS WEEK</p>
-      <div class="lb-grid" id="lbWeeklyGrid">
-        <p class="lb-empty">Waiting on the first weekly snapshot. Once the automation runs, this fills in on its own.</p>
+    <div class="event-list" id="eventList">
+      <div class="event-card" data-event-date="2026-10-07T00:00:00">
+        <div class="event-date-block">
+          <span class="event-month">OCT</span>
+          <span class="event-day">07</span>
+        </div>
+        <div class="event-info">
+          <p class="label">BIG ANNOUNCEMENT</p>
+          <h3>Something's Coming.</h3>
+          <p>We've got a major announcement dropping on this date — details are still under wraps, but it's a big one. Keep an eye on the Announcements page for the full reveal.</p>
+          <div class="event-countdown" data-countdown-target="2026-10-07T00:00:00">
+            <div class="cd-unit"><span class="cd-num" data-cd="days">--</span><span class="cd-label">Days</span></div>
+            <div class="cd-unit"><span class="cd-num" data-cd="hours">--</span><span class="cd-label">Hours</span></div>
+            <div class="cd-unit"><span class="cd-num" data-cd="minutes">--</span><span class="cd-label">Min</span></div>
+            <div class="cd-unit"><span class="cd-num" data-cd="seconds">--</span><span class="cd-label">Sec</span></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="lb-board" id="lbLifetime">
-      <p class="label lb-board-label">LIFETIME LEADERS</p>
-      <div class="lb-grid" id="lbLifetimeGrid">
-        <p class="lb-empty">Waiting on the first weekly snapshot.</p>
-      </div>
-    </div>
+    <!-- Dev note: to add another event, copy the .event-card block above.
+         Set data-event-date and data-countdown-target to the same ISO date/time
+         (YYYY-MM-DDTHH:MM:SS, using the visitor's local time). Omit the
+         .event-countdown block entirely for past or countdown-less events. -->
   </section>
 </main>
 

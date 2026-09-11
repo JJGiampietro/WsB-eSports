@@ -214,3 +214,44 @@ body.halloween-theme .members-hero{background-image:linear-gradient(180deg,#0a05
 .lb-name{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lb-value{flex-shrink:0;font:800 15px "Barlow Condensed",sans-serif;color:#f7f4ff}
 .lb-delta{flex-shrink:0;font-size:10px;color:#7be08a;margin-left:4px}
+
+/* Announcements page */
+.ann-hero{padding-top:150px}
+.ann-feed{display:flex;flex-direction:column;gap:20px;max-width:760px}
+.ann-post{background:linear-gradient(150deg,#15091f,#09060e);border:1px solid var(--line);padding:32px 34px}
+.ann-post-meta{margin-bottom:10px}
+.ann-date{font-size:10px;letter-spacing:2px;color:#c36cff;font-weight:700}
+.ann-post h3{font-size:28px;font-style:italic;line-height:1;margin-bottom:16px;background:linear-gradient(#fff,#8c3bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ann-post-remembrance{background:linear-gradient(150deg,#0f0a14,#08050a);border-color:#ffffff14}
+.ann-post-remembrance h3{background:none;-webkit-background-clip:unset;background-clip:unset;color:#e8e2ef;font-weight:600}
+.ann-post p{color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:14px}
+.ann-post p:last-child{margin-bottom:0}
+.ann-countdown-block{max-width:760px;margin:44px auto 0;padding-top:40px;border-top:1px solid var(--line);text-align:center}
+.ann-countdown-block p{margin-left:auto;margin-right:auto}
+.ann-countdown-block h3{font-size:32px;font-style:italic;line-height:1;margin:10px 0 14px;background:linear-gradient(#fff,#ff8c3b);-webkit-background-clip:text;background-clip:text;color:transparent}
+.ann-countdown-block p{color:var(--muted);font-size:15px;line-height:1.7;max-width:520px}
+.ann-countdown-block p a{color:#c36cff;text-decoration:underline}
+.ann-events-link{display:inline-block;margin-top:18px}
+
+/* Countdown widget (shared by Announcements + Events) */
+.event-countdown{display:flex;justify-content:center;gap:18px;margin-top:26px}
+.cd-unit{background:#0b0612;border:1px solid var(--line);padding:20px 24px;text-align:center;min-width:88px;box-shadow:0 0 24px #7911c633;transition:box-shadow .3s,border-color .3s}
+.cd-num{display:block;font:800 44px "Barlow Condensed",sans-serif;color:#f7f4ff;line-height:1}
+.cd-label{display:block;font-size:11px;letter-spacing:2px;color:#8f759f;margin-top:6px}
+@media(max-width:600px){.cd-unit{padding:14px 16px;min-width:64px}.cd-num{font-size:32px}}
+
+/* Spookier countdown when Halloween mode is on */
+body.halloween-theme .cd-unit{border-color:#ff9c4488;box-shadow:0 0 28px #ff7a1a66;animation:cdPulse 2.6s ease-in-out infinite}
+body.halloween-theme .cd-num{color:#ffb35e;text-shadow:0 0 16px #ff7a1acc}
+body.halloween-theme .cd-label{color:#e0a86e}
+@keyframes cdPulse{0%,100%{box-shadow:0 0 22px #ff7a1a55}50%{box-shadow:0 0 40px #ff7a1ad9}}
+
+/* Events page */
+.event-list{display:flex;flex-direction:column;gap:18px;max-width:760px}
+.event-card{display:flex;gap:24px;background:linear-gradient(150deg,#15091f,#09060e);border:1px solid var(--line);padding:30px}
+.event-date-block{flex-shrink:0;width:78px;height:78px;border:1px solid #bc62ff55;background:#1a0c28;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.event-month{font-size:11px;letter-spacing:2px;color:#c36cff;font-weight:700}
+.event-day{font:800 30px "Barlow Condensed",sans-serif;color:#f7f4ff;line-height:1}
+.event-info h3{font-size:24px;font-style:italic;margin:6px 0 10px;color:var(--text)}
+.event-info p{color:var(--muted);font-size:14px;line-height:1.6;max-width:480px}
+@media(max-width:600px){.event-card{flex-direction:column}.event-countdown{flex-wrap:wrap}}

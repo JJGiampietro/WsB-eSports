@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WsB | Announcements</title>
+  <meta name="description" content="WsB — team and website announcements.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="site-glow"></div>
+
+<header class="nav">
+  <span class="spooky-web left" aria-hidden="true">🕸️</span>
+  <span class="spooky-web right" aria-hidden="true">🕸️</span>
+  <a class="mini-brand" href="index.html#home">
+    <img src="wsb-logo.png" alt="WsB logo">
+    <span>WsB</span>
+  </a>
+  <nav id="navlinks">
+    <a href="index.html#team">ROSTER</a>
+    <a href="index.html#about">ABOUT</a>
+    <a href="members.html">MEMBERS</a>
+    <a href="leaderboards.html">LEADERBOARDS</a>
+    <a href="announcements.html">ANNOUNCEMENTS</a>
+    <a href="events.html">EVENTS</a>
+    <a href="index.html#join">JOIN WsB</a>
+  </nav>
+  <button type="button" class="spooky-btn" id="spookyToggle" aria-pressed="false">🎃 Spooky Surprise</button>
+  <button class="menu" aria-label="Toggle navigation">☰</button>
+</header>
+
+<main>
+  <section class="section ann-hero">
+    <div class="heading-row">
+      <div>
+        <p class="label">TEAM & WEBSITE UPDATES</p>
+        <h2>ANNOUNCE<br><span>MENTS.</span></h2>
+      </div>
+      <p class="intro">The latest from the WsB team — site updates, roster news, and what's coming next.</p>
+    </div>
+
+    <!-- Dev note: newest post goes on top. Copy an .ann-post block to add one. -->
+    <div class="ann-feed" id="annFeed">
+      <article class="ann-post ann-post-remembrance">
+        <div class="ann-post-meta">
+          <span class="ann-date">September 11, 2026 · PST</span>
+        </div>
+        <h3>A Moment to Remember.</h3>
+        <p>Before anything else today — we want to take a moment to remember and honor everyone affected by the events of September 11th, 2001. Our thoughts are with the families, the first responders, and everyone who carries that day with them. However you're spending today, we hope it's a peaceful one. Take a moment to reflect, and hold the people you care about a little closer.</p>
+      </article>
+      <article class="ann-post">
+        <div class="ann-post-meta">
+          <span class="ann-date">September 11, 2026 · PST</span>
+        </div>
+        <h3>New Site Updates Just Dropped!</h3>
+        <p>Big day for the site — we just rolled out a bunch of new stuff. The Members page now pulls live stats straight from the API for most of the roster, so K/D, wins, kills, and matches stay current on their own instead of needing manual updates every time. We also launched the new Leaderboards page, which automatically tracks weekly and lifetime rankings across the whole team — that one updates itself every Monday behind the scenes, no copy-pasting screenshots required.</p>
+        <p>On top of that: a full Halloween theme you can toggle on and off from the "🎃 Spooky Surprise" button up top, a few new faces added to the roster, and a very well-hidden little surprise somewhere on the Members page for anyone who likes clicking around.</p>
+        <p>Excited to keep building this out and even more excited to see everyone enjoying their time repping WsB. More to come soon — including a pretty big announcement we're sitting on. Countdown's below. 👀</p>
+        <p>And if you're new here — welcome! We're genuinely glad to have you. WsB is built to be a place where you can compete, improve, and just have a good time doing it. If you've got any questions at all, about the team, the roster, events, anything — don't hesitate to reach out to any of us. No question is too small, and someone will always get back to you.</p>
+      </article>
+    </div>
+
+    <div class="ann-countdown-block">
+      <p class="label">SAVE THE DATE</p>
+      <h3>Something Big Is Coming.</h3>
+      <p>We've got a major announcement landing soon. Full details will be posted right here — and on the <a href="events.html">Events page</a> — the moment it's live.</p>
+      <div class="event-countdown ann-countdown" data-countdown-target="2026-10-07T00:00:00">
+        <div class="cd-unit"><span class="cd-num" data-cd="days">--</span><span class="cd-label">Days</span></div>
+        <div class="cd-unit"><span class="cd-num" data-cd="hours">--</span><span class="cd-label">Hours</span></div>
+        <div class="cd-unit"><span class="cd-num" data-cd="minutes">--</span><span class="cd-label">Min</span></div>
+        <div class="cd-unit"><span class="cd-num" data-cd="seconds">--</span><span class="cd-label">Sec</span></div>
+      </div>
+      <a class="arrow-link ann-events-link" href="events.html">VIEW ALL EVENTS ↗</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="spooky-spider" aria-hidden="true">🕷️</span>
+  <div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div>
+  <div class="socials">
+    <a href="#">X / TWITTER</a><a href="#">YOUTUBE</a><a href="#">TWITCH</a><a href="#">DISCORD</a>
+  </div>
+  <small>© 2026 WsB — WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small>
+</footer>
+<script src="script.js"></script>
+</body>
+</html>

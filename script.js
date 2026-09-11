@@ -452,3 +452,47 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     weeklyGrid.innerHTML = weeklyHtml || '<p class="lb-empty">No week-over-week change detected yet.</p>';
   });
 })();
+
+
+// Live countdown timers (Announcements + Events pages)
+(function(){
+  const widgets = document.querySelectorAll("[data-countdown-target]");
+  if(!widgets.length) return;
+
+  function update(){
+    widgets.forEach(function(widget){
+      const target = new Date(widget.getAttribute("data-countdown-target")).getTime();
+      const now = Date.now();
+      let diff = target - now;
+
+      const daysEl = widget.querySelector('[data-cd="days"]');
+      const hoursEl = widget.querySelector('[data-cd="hours"]');
+      const minutesEl = widget.querySelector('[data-cd="minutes"]');
+      const secondsEl = widget.querySelector('[data-cd="seconds"]');
+
+      if(diff <= 0){
+        if(daysEl) daysEl.textContent = "0";
+        if(hoursEl) hoursEl.textContent = "0";
+        if(minutesEl) minutesEl.textContent = "0";
+        if(secondsEl) secondsEl.textContent = "0";
+        return;
+      }
+
+      const days = Math.floor(diff / 86400000);
+      diff -= days * 86400000;
+      const hours = Math.floor(diff / 3600000);
+      diff -= hours * 3600000;
+      const minutes = Math.floor(diff / 60000);
+      diff -= minutes * 60000;
+      const seconds = Math.floor(diff / 1000);
+
+      if(daysEl) daysEl.textContent = days;
+      if(hoursEl) hoursEl.textContent = hours;
+      if(minutesEl) minutesEl.textContent = minutes;
+      if(secondsEl) secondsEl.textContent = seconds;
+    });
+  }
+
+  update();
+  setInterval(update, 1000);
+})();
