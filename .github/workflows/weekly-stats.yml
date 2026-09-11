@@ -1,0 +1,38 @@
+name: Weekly Fortnite Stats Snapshot
+
+on:
+  schedule:
+    # Every Monday at 08:00 UTC. GitHub's cron runner can lag a bit at busy
+    # times, so treat this as "early Monday" rather than exact-to-the-minute.
+    - cron: "0 8 * * 1"
+  workflow_dispatch: {}
+    # Lets you trigger this manually from the Actions tab any time —
+    # useful for the very first run instead of waiting for Monday.
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch this week's stats
+        env:
+          FORTNITE_API_KEY: ${{ secrets.FORTNITE_API_KEY }}
+        run: node scripts/fetch-weekly-stats.js
+
+      - name: Commit and push updated snapshots
+        run: |
+          git config user.name "wsb-stats-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/latest.json data/previous.json
+          git diff --quiet --cached || git commit -m "Weekly stats snapshot: $(date -u +'%Y-%m-%d')"
+          git push
