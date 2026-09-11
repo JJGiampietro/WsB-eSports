@@ -432,6 +432,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
       const cur = latest.players[id];
       const prev = previous.players[id];
       if(!prev) return; // player is new since last snapshot, no delta yet
+      if(prev.username && cur.username && prev.username !== cur.username) return; // username was corrected — not the same account, skip until both snapshots agree
       const deltaKills = cur.kills - prev.kills;
       const deltaWins = cur.wins - prev.wins;
       const deltaMatches = cur.matches - prev.matches;

@@ -80,6 +80,7 @@ async function main() {
     if (stats) {
       results[player.id] = {
         displayName: player.displayName,
+        username: player.username,
         ...stats
       };
       console.log("  -> OK");
