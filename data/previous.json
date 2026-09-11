@@ -1,13 +1,13 @@
 {
-  "fetchedAt": "2026-09-11T23:12:46.449Z",
+  "fetchedAt": "2026-09-11T23:27:31.613Z",
   "players": {
     "zumiez": {
-      "displayName": "headshotluxTT",
-      "kd": 9,
-      "winrate": 50,
-      "wins": 3,
-      "kills": 27,
-      "matches": 6
+      "displayName": "Wsb-ZumiezTT",
+      "kd": 4.11,
+      "winrate": 15.544,
+      "wins": 2323,
+      "kills": 51875,
+      "matches": 14945
     },
     "jen": {
       "displayName": "ᵂˢᴮJenClipsMenᵀᵀ",
@@ -92,10 +92,10 @@
     "lazy": {
       "displayName": "ʷˢᵇLazy",
       "kd": 7.05,
-      "winrate": 24.768,
+      "winrate": 24.767,
       "wins": 6704,
-      "kills": 143559,
-      "matches": 27067
+      "kills": 143561,
+      "matches": 27068
     }
   }
 }

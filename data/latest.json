@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-11T23:27:31.613Z",
+  "fetchedAt": "2026-09-11T23:35:20.901Z",
   "players": {
     "zumiez": {
       "displayName": "Wsb-ZumiezTT",
@@ -92,10 +92,10 @@
     "lazy": {
       "displayName": "ʷˢᵇLazy",
       "kd": 7.05,
-      "winrate": 24.767,
-      "wins": 6704,
-      "kills": 143561,
-      "matches": 27068
+      "winrate": 24.77,
+      "wins": 6705,
+      "kills": 143574,
+      "matches": 27069
     }
   }
 }
