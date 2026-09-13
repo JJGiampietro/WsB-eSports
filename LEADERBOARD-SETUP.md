@@ -1,64 +1,63 @@
 # Setting up the automatic weekly leaderboard
 
-This site now includes a `leaderboards.html` page that shows weekly and
-lifetime stat rankings for the roster. To make the "weekly" part actually
-work automatically, the site needs to move to GitHub (free), which lets us
-run a scheduled task every Monday that fetches everyone's stats and saves
-a snapshot.
+This site includes a `leaderboards.html` page that shows weekly and lifetime stat rankings for the roster. The stats workflow runs on GitHub Actions every Monday, fetches Fortnite stats server-side, and saves public JSON snapshots that the website can safely read.
 
 ## One-time setup
 
-1. **Create a free GitHub account** at github.com if you don't have one.
-
-2. **Create a new repository**
-   - Click the "+" in the top right → "New repository"
-   - Name it whatever you like (e.g. `wsb-esports`)
-   - Set it to **Public** (required for free GitHub Pages)
-   - Don't add a README, .gitignore, or license — we already have files
-
-3. **Upload all the site files** into that repo. Easiest way: on the repo
-   page, click "uploading an existing file" and drag in everything from
-   the extracted zip — including the `.github` folder, `data` folder, and
-   `scripts` folder (these might be hidden in some file browsers — make
-   sure they come along).
-
-4. **Add your API key as a secret** (this keeps it out of the public repo):
-   - In the repo, go to **Settings → Secrets and variables → Actions**
+1. **Add the Fortnite API key as a GitHub Actions secret**
+   - In the repository, go to **Settings → Secrets and variables → Actions**
    - Click **New repository secret**
-   - Name: `FORTNITE_API_KEY`
-   - Value: your key from dash.fortnite-api.com
+   - Name it `FORTNITE_API_KEY`
+   - Use the API key from dash.fortnite-api.com as the value
+   - Save it
+
+2. **Enable GitHub Pages if the site is hosted there**
+   - Go to **Settings → Pages**
+   - Under **Build and deployment**, choose **Deploy from a branch**
+   - Select `main` and `/ (root)`
    - Save
 
-5. **Enable GitHub Pages**:
-   - Go to **Settings → Pages**
-   - Under "Build and deployment", set Source to **Deploy from a branch**
-   - Branch: `main`, folder: `/ (root)`
-   - Save. GitHub gives you a live URL like
-     `https://yourusername.github.io/wsb-esports/`
+3. **Run the first snapshot manually**
+   - Open the **Actions** tab
+   - Choose **Weekly Fortnite Stats Snapshot**
+   - Click **Run workflow**
+   - Wait for the run to finish successfully
+   - The workflow updates `data/latest.json`
 
-6. **Run the first snapshot manually** (don't wait for Monday):
-   - Go to the **Actions** tab in the repo
-   - Click "Weekly Fortnite Stats Snapshot" in the left sidebar
-   - Click **Run workflow** → **Run workflow** button
-   - Wait a minute or two, refresh — you should see a green checkmark
-   - This commits `data/latest.json` with everyone's current stats
+4. **Build week-over-week history**
+   - On each later run, the old `data/latest.json` is copied to `data/previous.json`
+   - A fresh `data/latest.json` is then generated
+   - Once both snapshots exist, the leaderboard can calculate weekly changes
 
-7. **Run it again a week later** (or manually trigger it again anytime) to
-   get a second snapshot — that's when the "This Week" deltas on the
-   leaderboard page will actually have something to compare against.
-   After that, it runs completely on its own, every Monday, forever.
+## How the secure stats flow works
 
-## Important notes
+- `.github/workflows/weekly-stats.yml` runs on GitHub Actions.
+- `scripts/fetch-weekly-stats.js` reads `FORTNITE_API_KEY` from the Actions environment.
+- The API key is never written into the public website JavaScript.
+- The workflow writes the safe stat results to `data/latest.json` and `data/previous.json`.
+- `leaderboards.html` reads those snapshots for rankings.
+- The Members page also reads `data/latest.json` to refresh player cards without exposing an API credential to visitors.
 
-- **The leaderboard page only works when actually hosted** (via GitHub
-  Pages or similar) — it can't read the JSON snapshot files if you just
-  double-click `leaderboards.html` from a folder on your computer, since
-  browsers block that kind of local file access for security reasons.
-- The API key lives in GitHub's encrypted secrets, not in any file you
-  can see in the repo — this is actually *more* secure than the
-  client-side key already sitting in `script.js` for the Members page's
-  live stats.
-- If a player's stats fail to fetch on a given week (wrong username, API
-  hiccup, etc.), that player is just skipped for that week's snapshot
-  rather than breaking the whole run — they'll reappear once a fetch
-  succeeds again.
+## Local testing
+
+Do not double-click the HTML files directly because browsers may block JSON requests from `file://` pages. Run a local web server instead.
+
+From the project directory:
+
+```bash
+python -m http.server 8000
+```
+
+On Windows, if `python` is unavailable:
+
+```bash
+py -m http.server 8000
+```
+
+Then open `http://localhost:8000` in the browser.
+
+## Important security note
+
+A Fortnite API key was previously embedded in `script.js`. Because the repository and website are public, that value should be considered exposed even after it is removed from the current code. Revoke or rotate that old key in the Fortnite API dashboard and store the replacement only in the `FORTNITE_API_KEY` GitHub Actions secret.
+
+If a player's stats fail to fetch during a weekly run because of an incorrect username, API outage, or rate limit, that player is skipped for that snapshot instead of causing the full workflow to fail.
