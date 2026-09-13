@@ -258,40 +258,16 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
 })();
 
 
-// Live Fortnite stats via fortnite-api.com (Members page)
-// NOTE: this key is publicly visible in this file since it's a static site with
-// no backend to hide it behind. If it ever gets abused, generate a fresh one at
-// dash.fortnite-api.com and swap it in below.
-// Every card keeps its manually-entered numbers as a fallback — if a lookup fails
-// (wrong username, rate limit, CORS block, etc.) the existing static stats just stay put.
+// Members page stats — reads the latest server-side snapshot produced by GitHub Actions.
+// The Fortnite API key stays in the FORTNITE_API_KEY Actions secret and is never sent
+// to site visitors. Manually entered HTML stats remain as a fallback if the snapshot
+// is unavailable or a player cannot be matched.
 (function(){
-  const API_KEY = "0d88443d-d00a-42aa-b4c2-77ec9bc5acd8";
   const cards = document.querySelectorAll("[data-fn-user]");
   if(!cards.length) return;
 
-  // fortnite-api.com uses "epic" for PC/Epic accounts rather than "pc"
-  const PLATFORM_MAP = { pc: "epic", epic: "epic", xbl: "xbl", psn: "psn" };
-
   function fmtInt(n){
     return Math.round(n).toLocaleString("en-US");
-  }
-
-  function pickStats(json){
-    // Defensive parsing in case the response shape shifts.
-    try{
-      const overall = json.data.stats.all.overall;
-      if(overall){
-        const winRateRaw = parseFloat(overall.winRate);
-        return {
-          kd: parseFloat(overall.kd),
-          winrate: winRateRaw <= 1 ? winRateRaw*100 : winRateRaw,
-          wins: parseFloat(overall.wins),
-          kills: parseFloat(overall.kills),
-          matches: parseFloat(overall.matches)
-        };
-      }
-    }catch(e){}
-    return null;
   }
 
   function applyStats(card, stats){
@@ -309,27 +285,23 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     });
   }
 
-  async function updateCard(card){
-    const user = card.getAttribute("data-fn-user");
-    const rawPlatform = card.getAttribute("data-fn-platform") || "pc";
-    const accountType = PLATFORM_MAP[rawPlatform] || "epic";
-    try{
-      const url = "https://fortnite-api.com/v2/stats/br/v2?name="
-        + encodeURIComponent(user) + "&accountType=" + accountType;
-      const res = await fetch(url, { headers: { "Authorization": API_KEY } });
-      if(!res.ok) return; // leave static fallback numbers as-is
-      const json = await res.json();
-      const stats = pickStats(json);
-      if(stats) applyStats(card, stats);
-    }catch(e){
-      // network error, CORS block, etc. — fallback numbers already in the HTML stay put
-    }
-  }
-
-  // Stagger requests to be a polite, well-behaved API consumer
-  cards.forEach(function(card, i){
-    setTimeout(function(){ updateCard(card); }, i*1200);
-  });
+  fetch("data/latest.json")
+    .then(function(res){ return res.ok ? res.json() : null; })
+    .then(function(snapshot){
+      if(!snapshot || !snapshot.players) return;
+      const players = Object.values(snapshot.players);
+      cards.forEach(function(card){
+        const username = (card.getAttribute("data-fn-user") || "").trim().toLowerCase();
+        if(!username) return;
+        const stats = players.find(function(player){
+          return player.username && player.username.trim().toLowerCase() === username;
+        });
+        if(stats) applyStats(card, stats);
+      });
+    })
+    .catch(function(){
+      // Snapshot unavailable — leave the static fallback numbers in the HTML.
+    });
 })();
 
 
