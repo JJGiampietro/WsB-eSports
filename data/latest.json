@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-27T20:30:16.040Z",
+  "fetchedAt": "2026-09-27T20:33:25.715Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -189,6 +189,15 @@
       "wins": 976,
       "kills": 38406,
       "matches": 23336
+    },
+    "bri": {
+      "displayName": "ᵂˢᴮbri ʚїɞ",
+      "username": "bri ʚїɞ",
+      "kd": 3.674,
+      "winrate": 7.646,
+      "wins": 51,
+      "kills": 2263,
+      "matches": 667
     }
   }
 }
