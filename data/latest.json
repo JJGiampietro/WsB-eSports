@@ -1,23 +1,23 @@
 {
-  "fetchedAt": "2026-09-27T19:05:07.731Z",
+  "fetchedAt": "2026-09-27T20:05:57.324Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
       "username": "ᵂˢᴮℒizzíeᵀᵀʚїɞ",
       "kd": 3.344,
-      "winrate": 22.308,
+      "winrate": 22.306,
       "wins": 4839,
-      "kills": 56352,
-      "matches": 21692
+      "kills": 56357,
+      "matches": 21694
     },
     "jen": {
       "displayName": "ᵂˢᴮJenClipsMenᵀᵀ",
       "username": "ᵂˢᴮJenClipsMenᵀᵀ",
       "kd": 3.114,
-      "winrate": 11.941,
+      "winrate": 11.937,
       "wins": 697,
-      "kills": 16007,
-      "matches": 5837
+      "kills": 16014,
+      "matches": 5839
     },
     "barrelroll": {
       "displayName": "ᵂˢᴮ Barrelroll77",
@@ -41,10 +41,10 @@
       "displayName": "ᵂˢᴮ ＤＵＢＳ",
       "username": "ᵂˢᴮ ＤＵＢＳ",
       "kd": 2.972,
-      "winrate": 9.081,
-      "wins": 768,
-      "kills": 22850,
-      "matches": 8457
+      "winrate": 9.101,
+      "wins": 770,
+      "kills": 22859,
+      "matches": 8461
     },
     "btajordan": {
       "displayName": "ᵂˢᴮJordan TT",
@@ -77,10 +77,10 @@
       "displayName": "ʷˢᵇLazy",
       "username": "ʷˢᵇLazy",
       "kd": 7.055,
-      "winrate": 24.793,
-      "wins": 6782,
-      "kills": 145128,
-      "matches": 27354
+      "winrate": 24.794,
+      "wins": 6783,
+      "kills": 145148,
+      "matches": 27357
     },
     "mysterious": {
       "displayName": "ᵂˢᴮ Mysterious",
@@ -104,10 +104,10 @@
       "displayName": "ᵂˢᴮohitskatie",
       "username": "ᵗᵗohitskatie ʚїɞ",
       "kd": 3.41,
-      "winrate": 16.449,
+      "winrate": 16.442,
       "wins": 1943,
-      "kills": 33658,
-      "matches": 11812
+      "kills": 33669,
+      "matches": 11817
     },
     "iinsanity": {
       "displayName": "ᵂˢᴮ iinsanity ᵀᵀ",
@@ -121,11 +121,11 @@
     "envious": {
       "displayName": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
       "username": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
-      "kd": 5.83,
-      "winrate": 26.957,
-      "wins": 2493,
-      "kills": 39382,
-      "matches": 9248
+      "kd": 5.833,
+      "winrate": 26.972,
+      "wins": 2496,
+      "kills": 39421,
+      "matches": 9254
     },
     "mello": {
       "displayName": "ᵀᵀMelloᵂˢᴮ",
