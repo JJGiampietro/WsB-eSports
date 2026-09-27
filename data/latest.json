@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-27T16:05:58.569Z",
+  "fetchedAt": "2026-09-27T17:05:23.563Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -59,10 +59,10 @@
       "displayName": "Shloozyyy ᵀᵀ",
       "username": "Shloozyyy ᵀᵀ",
       "kd": 4.239,
-      "winrate": 22.024,
+      "winrate": 22.02,
       "wins": 2542,
-      "kills": 38151,
-      "matches": 11542
+      "kills": 38155,
+      "matches": 11544
     },
     "allieontt": {
       "displayName": "ᵂˢᴮ alliecat",
@@ -79,8 +79,8 @@
       "kd": 7.055,
       "winrate": 24.793,
       "wins": 6781,
-      "kills": 145106,
-      "matches": 27350
+      "kills": 145116,
+      "matches": 27351
     },
     "mysterious": {
       "displayName": "WsB Mysterious",
@@ -133,8 +133,8 @@
       "kd": 2.305,
       "winrate": 3.191,
       "wins": 435,
-      "kills": 30421,
-      "matches": 13630
+      "kills": 30424,
+      "matches": 13632
     },
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
