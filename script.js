@@ -311,7 +311,9 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
   function setProfileImage(card,member){
     if(!member||!member.profileImage)return;
     const emblem=card.querySelector(".member-emblem");
-    if(emblem)emblem.style.backgroundImage='url("'+encodeURI(member.profileImage)+'")';
+    if(!emblem)return;
+    emblem.style.backgroundImage='url("'+encodeURI(member.profileImage)+'")';
+    emblem.textContent="";
   }
   function setProfileLink(card,member){
     if(!member||card.dataset.profileLinkReady)return;

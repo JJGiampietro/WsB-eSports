@@ -84,7 +84,7 @@
     "username": "ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ",
     "platform": "epic",
     "accountId": "042571092ca444eaa64d793ea3e49c64",
-    "profileImage": null
+    "profileImage": "mysterious.png"
   },
   {
     "id": "dmo",
@@ -138,7 +138,7 @@
     "username": "ᵀᵀMelloᵂˢᴮ",
     "platform": "epic",
     "accountId": "c0461b926e024c29a8a2c178ca96e6f0",
-    "profileImage": null
+    "profileImage": "mello.png"
   },
   {
     "id": "glosznfv",
@@ -199,7 +199,14 @@
     "displayName": "ᵂˢᴮ katoᵀᵀ",
     "username": "ᵂˢᴮ katoᵀᵀ",
     "platform": "epic",
-    "profileImage": null,
+    "profileImage": "kato.png",
     "accountId": "9a4988e25f6347a49ea93175a194ee2a"
+  },
+  {
+    "id": "bri",
+    "displayName": "ᵂˢᴮbri ʚїɞ",
+    "username": "bri ʚїɞ",
+    "platform": "epic",
+    "profileImage": null
   }
 ]
