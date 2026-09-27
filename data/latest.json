@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-27T08:05:48.873Z",
+  "fetchedAt": "2026-09-27T09:05:26.338Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -32,28 +32,28 @@
       "displayName": "Wsb BotLupitaa",
       "username": "botlupitaツ",
       "kd": 4.363,
-      "winrate": 17.424,
+      "winrate": 17.422,
       "wins": 2104,
-      "kills": 43501,
-      "matches": 12075
+      "kills": 43509,
+      "matches": 12077
     },
     "dubs": {
       "displayName": "ᵂˢᴮ ＤＵＢＳ",
       "username": "ᵂˢᴮ ＤＵＢＳ",
-      "kd": 2.971,
-      "winrate": 9.086,
+      "kd": 2.972,
+      "winrate": 9.082,
       "wins": 768,
-      "kills": 22832,
-      "matches": 8453
+      "kills": 22849,
+      "matches": 8456
     },
     "btajordan": {
       "displayName": "ᵂˢᴮJordan TT",
       "username": "ᵂˢᴮJordan TT",
-      "kd": 3.65,
-      "winrate": 12.443,
+      "kd": 3.649,
+      "winrate": 12.442,
       "wins": 2289,
-      "kills": 58783,
-      "matches": 18396
+      "kills": 58784,
+      "matches": 18397
     },
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
@@ -85,11 +85,11 @@
     "mysterious": {
       "displayName": "WsB Mysterious",
       "username": "ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ",
-      "kd": 4.302,
-      "winrate": 12.881,
-      "wins": 2323,
-      "kills": 67600,
-      "matches": 18035
+      "kd": 4.307,
+      "winrate": 12.905,
+      "wins": 2328,
+      "kills": 67664,
+      "matches": 18040
     },
     "dmo": {
       "displayName": "ᵂˢᴮ Dmo",
@@ -112,11 +112,11 @@
     "iinsanity": {
       "displayName": "ᵂˢᴮ iinsanity ᵀᵀ",
       "username": "ᵂˢᴮ iinsanity ᵀᵀ",
-      "kd": 4.862,
-      "winrate": 16.652,
+      "kd": 4.863,
+      "winrate": 16.65,
       "wins": 5347,
-      "kills": 130139,
-      "matches": 32111
+      "kills": 130164,
+      "matches": 32115
     },
     "envious": {
       "displayName": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
@@ -133,8 +133,8 @@
       "kd": 2.305,
       "winrate": 3.192,
       "wins": 435,
-      "kills": 30410,
-      "matches": 13627
+      "kills": 30412,
+      "matches": 13629
     },
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
