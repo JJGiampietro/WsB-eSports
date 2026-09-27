@@ -23,12 +23,13 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
   const text=document.getElementById("bioText");
   const gif=document.getElementById("bioGif");
   const tiktok=document.getElementById("bioTiktok");
-  const cards=document.querySelectorAll(".player-card");
+  const cards=document.querySelectorAll(".player-card, .tier-node[data-bio]");
   if(!modal||!cards.length)return;
 
   function openBio(card){
-    const nameEl=card.querySelector(".player-name h3");
-    const bg=card.style.getPropertyValue("--player-photo");
+    const isTier=card.classList.contains("tier-node");
+    const nameEl=isTier?card.querySelector(".tier-name"):card.querySelector(".player-name h3");
+    const bg=card.style.getPropertyValue(isTier?"--tier-photo":"--player-photo");
     photo.style.backgroundImage=bg||"none";
     role.textContent=card.dataset.role||"";
     name.textContent=nameEl?nameEl.textContent.trim():"";

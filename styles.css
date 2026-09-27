@@ -487,3 +487,33 @@ a.stats-player{display:block;color:inherit}
 .event-livestream-btn{display:inline-flex;align-items:center;gap:10px;margin-top:22px;padding:14px 22px;background:linear-gradient(135deg,#7d23ce,#f9edff 48%,#8530d5);color:#14071e;font:800 12px "Barlow Condensed",sans-serif;letter-spacing:1.5px;box-shadow:0 0 20px #a42cff55}
 .event-livestream-btn:hover{filter:brightness(1.1)}
 @media(max-width:700px){.event-detail-card{padding:28px 22px}.event-detail-meta{grid-template-columns:1fr}.event-detail-participants ul{grid-template-columns:1fr}.event-card .event-countdown{flex-wrap:wrap}}
+
+/* Management tier tree (shared between index.html and management.html) */
+.tier-page{padding:150px 6vw 100px;max-width:1500px;margin:0 auto;overflow-x:auto}
+.tier-page.tier-embedded{padding:0}
+.tier-header{text-align:center;margin-bottom:70px}
+.tier-eyebrow{font:700 12px Rajdhani,sans-serif;letter-spacing:4px;color:#c36cff}
+.tier-title{font:900 italic clamp(44px,7vw,84px) "Barlow Condensed";line-height:.9;margin-top:10px;background:linear-gradient(#fff,#8c3bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tier-subtitle{font:700 13px Rajdhani,sans-serif;letter-spacing:6px;color:#8f759f;margin-top:12px}
+.tier-min-width{min-width:1100px}
+.tier-row{display:flex;justify-content:space-between;gap:10px}
+.tier-node{position:relative;flex:1;height:170px;clip-path:polygon(12% 0,88% 0,100% 50%,88% 100%,12% 100%,0 50%);background:linear-gradient(150deg,#1a0e28,#0a0512);border:1px solid #a62cff55;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;padding-bottom:14px;box-shadow:0 0 18px #7911c622;transition:border-color .2s,transform .2s}
+.tier-node:hover{border-color:#c36cff;transform:translateY(-2px)}
+.tier-node .tier-role{font:700 8px Rajdhani,sans-serif;letter-spacing:1.5px;color:#c36cff}
+.tier-node .tier-name{font:800 italic 14px "Barlow Condensed";margin-top:4px;color:#f7f4ff;padding:0 6px}
+.tier-node.empty{border-style:dashed;border-color:#5a4a6e;box-shadow:none}
+.tier-node.empty .tier-name{color:#5a4a6e}
+.tier-node.has-tier-photo{background-image:linear-gradient(0deg,#0a0512ee 20%,#0a051277 60%,transparent 100%),var(--tier-photo);background-size:cover;background-position:var(--tier-photo-pos,center 12%)}
+.tier-node.has-tier-photo .tier-role{text-shadow:0 1px 4px #000}
+.tier-node.has-tier-photo .tier-name{text-shadow:0 1px 4px #000}
+.tier-crown{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:14px}
+.tier-connector{position:relative;height:46px}
+.tier-connector .ticks{display:flex;justify-content:space-between;height:100%}
+.tier-connector .ticks span{width:1px;background:#a62cff77;margin:0 auto}
+.tier-connector .bus{position:absolute;left:0;right:0;top:50%;height:1px;background:#a62cff77}
+.tier-connector .drop{position:absolute;left:50%;top:50%;bottom:0;width:1px;background:#a62cff77}
+.tier-center{display:flex;align-items:center;justify-content:center;gap:40px;margin:0 0 6px}
+.tier-center-line{flex:1;height:1px;background:#a62cff77;max-width:260px}
+.tier-logo{width:120px;filter:drop-shadow(0 0 24px #a62cff99)}
+.tier-footer{text-align:center;margin-top:70px;font:700 11px Rajdhani,sans-serif;letter-spacing:5px;color:#8f759f}
+@media(max-width:900px){.tier-page{padding-top:120px}}

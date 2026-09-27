@@ -17,7 +17,7 @@
   },
   {
     "id": "barrelroll",
-    "displayName": "WsB Barrelroll77",
+    "displayName": "ᵂˢᴮ Barrelroll77",
     "username": "ʷˢᵇ-Bᴀʀʀᴇʟʀᴏʟʟ77",
     "platform": "epic",
     "accountId": "13e0333c5cee45079dfda04f1da9c402",
@@ -25,7 +25,7 @@
   },
   {
     "id": "botlupitaa",
-    "displayName": "Wsb BotLupitaa",
+    "displayName": "ᵂˢᴮ BotLupitaa",
     "username": "botlupitaツ",
     "platform": "epic",
     "accountId": "b97db1fb53d44ba5aac574fdd68c7f79",
@@ -80,7 +80,7 @@
   },
   {
     "id": "mysterious",
-    "displayName": "WsB Mysterious",
+    "displayName": "ᵂˢᴮ Mysterious",
     "username": "ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ",
     "platform": "epic",
     "accountId": "042571092ca444eaa64d793ea3e49c64",
@@ -96,7 +96,7 @@
   },
   {
     "id": "ohitskatie",
-    "displayName": "WsB_ohitskatie",
+    "displayName": "ᵂˢᴮohitskatie",
     "username": "ᵗᵗohitskatie ʚїɞ",
     "platform": "epic",
     "accountId": "e0e5e417e17341f7a8885ab9f4872f03",
@@ -112,14 +112,14 @@
   },
   {
     "id": "rina",
-    "displayName": "WsB_Rina",
+    "displayName": "ᵂˢᴮRina",
     "username": "TTBadGirlRina",
     "platform": "epic",
     "profileImage": null
   },
   {
     "id": "bee",
-    "displayName": "WsB_Bee",
+    "displayName": "ᵂˢᴮBee",
     "username": "ᵀᵀ ᵇᵉᵉ ᵇᵒˣᵉᵈ ʸᵒᵘ",
     "platform": "epic",
     "profileImage": null
@@ -161,8 +161,7 @@
     "displayName": "ᵂˢᴮ Skrewwww",
     "username": "ᵂˢᴮ Skrewwww",
     "platform": "epic",
-    "profileImage": null,
-    "accountId": "6ac207f29d8746639864cc76fca2a9c8"
+    "profileImage": null
   },
   {
     "id": "pink420",
@@ -176,7 +175,27 @@
     "displayName": "gabeTT4",
     "username": "gabeTT4",
     "platform": "epic",
-    "profileImage": null,
-    "accountId": "4919efd31e81441fb9521bc57bec61c7"
+    "profileImage": null
+  },
+  {
+    "id": "taz",
+    "displayName": "ᵂ˥Tazᵀᵀ",
+    "username": "ᵂ˥Tazᵀᵀ",
+    "platform": "epic",
+    "profileImage": null
+  },
+  {
+    "id": "yoshi",
+    "displayName": "ᵂˢᴮYoshi",
+    "username": "ᵂˢᴮYoshi",
+    "platform": "epic",
+    "profileImage": null
+  },
+  {
+    "id": "kato",
+    "displayName": "ᵂˢᴮ katoᵀᵀ",
+    "username": "ᵂˢᴮ katoᵀᵀ",
+    "platform": "epic",
+    "profileImage": null
   }
 ]
