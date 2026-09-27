@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-27T00:08:05.732Z",
+  "fetchedAt": "2026-09-27T01:05:55.432Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -31,11 +31,11 @@
     "botlupitaa": {
       "displayName": "Wsb BotLupitaa",
       "username": "botlupitaツ",
-      "kd": 4.356,
-      "winrate": 17.444,
+      "kd": 4.355,
+      "winrate": 17.439,
       "wins": 2101,
-      "kills": 43309,
-      "matches": 12044
+      "kills": 43319,
+      "matches": 12048
     },
     "dubs": {
       "displayName": "ᵂˢᴮ ＤＵＢＳ",
@@ -50,10 +50,10 @@
       "displayName": "ᵂˢᴮJordan TT",
       "username": "ᵂˢᴮJordan TT",
       "kd": 3.649,
-      "winrate": 12.444,
+      "winrate": 12.441,
       "wins": 2286,
-      "kills": 58692,
-      "matches": 18370
+      "kills": 58702,
+      "matches": 18374
     },
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
@@ -68,10 +68,10 @@
       "displayName": "ᵂˢᴮ alliecat",
       "username": "ᵂˢᴮ alliecat",
       "kd": 1.754,
-      "winrate": 13.536,
-      "wins": 3148,
-      "kills": 35273,
-      "matches": 23256
+      "winrate": 13.537,
+      "wins": 3149,
+      "kills": 35278,
+      "matches": 23262
     },
     "lazy": {
       "displayName": "ʷˢᵇLazy",
@@ -149,10 +149,10 @@
       "displayName": "ᵂˢᴮBurrtio",
       "username": "Runito_",
       "kd": 2.164,
-      "winrate": 13.729,
+      "winrate": 13.728,
       "wins": 6840,
-      "kills": 92995,
-      "matches": 49822
+      "kills": 93002,
+      "matches": 49824
     }
   }
 }
