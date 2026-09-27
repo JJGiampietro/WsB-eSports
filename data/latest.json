@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-27T04:05:32.366Z",
+  "fetchedAt": "2026-09-27T05:05:22.125Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -13,11 +13,11 @@
     "jen": {
       "displayName": "ᵂˢᴮJenClipsMenᵀᵀ",
       "username": "ᵂˢᴮJenClipsMenᵀᵀ",
-      "kd": 3.109,
-      "winrate": 11.889,
-      "wins": 693,
-      "kills": 15968,
-      "matches": 5829
+      "kd": 3.111,
+      "winrate": 11.898,
+      "wins": 694,
+      "kills": 15987,
+      "matches": 5833
     },
     "barrelroll": {
       "displayName": "WsB Barrelroll77",
@@ -31,11 +31,11 @@
     "botlupitaa": {
       "displayName": "Wsb BotLupitaa",
       "username": "botlupitaツ",
-      "kd": 4.358,
-      "winrate": 17.424,
-      "wins": 2102,
-      "kills": 43411,
-      "matches": 12064
+      "kd": 4.359,
+      "winrate": 17.429,
+      "wins": 2103,
+      "kills": 43424,
+      "matches": 12066
     },
     "dubs": {
       "displayName": "ᵂˢᴮ ＤＵＢＳ",
@@ -50,10 +50,10 @@
       "displayName": "ᵂˢᴮJordan TT",
       "username": "ᵂˢᴮJordan TT",
       "kd": 3.649,
-      "winrate": 12.441,
-      "wins": 2287,
-      "kills": 58729,
-      "matches": 18383
+      "winrate": 12.444,
+      "wins": 2288,
+      "kills": 58746,
+      "matches": 18387
     },
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
@@ -67,11 +67,11 @@
     "allieontt": {
       "displayName": "ᵂˢᴮ alliecat",
       "username": "ᵂˢᴮ alliecat",
-      "kd": 1.754,
-      "winrate": 13.537,
+      "kd": 1.755,
+      "winrate": 13.535,
       "wins": 3150,
-      "kills": 35300,
-      "matches": 23270
+      "kills": 35310,
+      "matches": 23273
     },
     "lazy": {
       "displayName": "ʷˢᵇLazy",
@@ -85,20 +85,20 @@
     "mysterious": {
       "displayName": "WsB Mysterious",
       "username": "ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ",
-      "kd": 4.296,
-      "winrate": 12.84,
-      "wins": 2314,
-      "kills": 67486,
-      "matches": 18022
+      "kd": 4.297,
+      "winrate": 12.844,
+      "wins": 2315,
+      "kills": 67508,
+      "matches": 18024
     },
     "dmo": {
       "displayName": "ᵂˢᴮ Dmo",
       "username": "ᵂˢᴮ Dmo",
       "kd": 3.581,
-      "winrate": 17.287,
-      "wins": 6066,
-      "kills": 103928,
-      "matches": 35090
+      "winrate": 17.289,
+      "wins": 6067,
+      "kills": 103947,
+      "matches": 35092
     },
     "ohitskatie": {
       "displayName": "WsB_ohitskatie",
@@ -112,11 +112,11 @@
     "iinsanity": {
       "displayName": "ᵂˢᴮ iinsanity ᵀᵀ",
       "username": "ᵂˢᴮ iinsanity ᵀᵀ",
-      "kd": 4.86,
-      "winrate": 16.638,
-      "wins": 5340,
-      "kills": 130028,
-      "matches": 32095
+      "kd": 4.861,
+      "winrate": 16.643,
+      "wins": 5342,
+      "kills": 130055,
+      "matches": 32098
     },
     "envious": {
       "displayName": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
@@ -148,11 +148,11 @@
     "burrtio": {
       "displayName": "ᵂˢᴮBurrtio",
       "username": "Runito_",
-      "kd": 2.164,
-      "winrate": 13.727,
+      "kd": 2.163,
+      "winrate": 13.726,
       "wins": 6840,
-      "kills": 93005,
-      "matches": 49828
+      "kills": 93010,
+      "matches": 49832
     }
   }
 }
