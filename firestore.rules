@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function ownsMember(memberId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/memberAccess/$(memberId)).data.ownerUid == request.auth.uid;
+    }
+
+    function validMemberUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['displayName', 'bio', 'socials', 'updatedAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 48
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() <= 280
+        && request.resource.data.socials is map
+        && request.resource.data.socials.keys()
+          .hasOnly(['tiktok', 'twitch', 'youtube', 'instagram'])
+        && (!('tiktok' in request.resource.data.socials) || request.resource.data.socials.tiktok is string)
+        && (!('twitch' in request.resource.data.socials) || request.resource.data.socials.twitch is string)
+        && (!('youtube' in request.resource.data.socials) || request.resource.data.socials.youtube is string)
+        && (!('instagram' in request.resource.data.socials) || request.resource.data.socials.instagram is string);
+    }
+
+    match /members/{memberId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (ownsMember(memberId) && validMemberUpdate());
+    }
+
+    match /memberAccess/{memberId} {
+      allow get: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow list: if isAdmin() || (signedIn() && (
+        resource.data.ownerUid == request.auth.uid || resource.data.invitedEmail == request.auth.token.email
+      ));
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn()
+        && resource.data.ownerUid == null
+        && resource.data.invitedEmail == request.auth.token.email
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == "active"
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerUid', 'status', 'claimedAt']));
+    }
+
+    match /admins/{userId} {
+      allow get: if signedIn() && userId == request.auth.uid;
+      allow list, create, update, delete: if isAdmin();
+    }
+  }
+}

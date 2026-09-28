@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WsB | Member Admin</title>
+  <meta name="description" content="WsB member profile administration.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=circular-logo-20260927">
+  <link rel="stylesheet" href="redesign.css?v=20260927-member-admin-state-fix">
+</head>
+<body>
+<div class="site-glow"></div>
+
+<header class="nav">
+  <span class="spooky-web left" aria-hidden="true">🕸️</span>
+  <span class="spooky-web right" aria-hidden="true">🕸️</span>
+  <a class="mini-brand" href="index.html#home"><img src="wsb-logo.png" alt="WsB logo"><span>WsB</span></a>
+  <nav id="navlinks">
+    <a href="management.html">MANAGEMENT</a><a href="members.html">MEMBERS</a>
+    <details class="nav-group"><summary>PERFORMANCE <span class="nav-group-chevron" aria-hidden="true">⌄</span></summary><div class="nav-menu"><a href="stats.html">STATS</a><a href="leaderboards.html">LEADERBOARDS</a></div></details>
+    <details class="nav-group"><summary>COMMUNITY <span class="nav-group-chevron" aria-hidden="true">⌄</span></summary><div class="nav-menu"><a href="index.html#about">ABOUT</a><a href="events.html">EVENTS</a><a href="announcements.html">ANNOUNCEMENTS</a><a href="questions.html">QUESTIONS</a><a href="games.html">MINI GAMES</a></div></details>
+    <a href="index.html#join" id="navJoinLink">JOIN WsB</a>
+  </nav>
+  <button type="button" class="spooky-btn" id="spookyToggle" aria-pressed="false">🎃 Spooky Surprise</button>
+  <button class="menu" aria-label="Toggle navigation">☰</button>
+</header>
+
+<main class="member-account-page admin-members-page">
+  <section class="member-account-hero admin-members-hero">
+    <div>
+      <p class="label">WsB ADMIN</p>
+      <h1>MEMBER<br><span>ACCESS.</span></h1>
+      <p>Create member profile access, update an existing invitation, and prepare a secure Gmail invite. Members use that same Gmail to claim and manage their public profile.</p>
+    </div>
+    <img src="wsb-logo.png" alt="" aria-hidden="true">
+  </section>
+
+  <section id="adminAuthPanel" class="admin-auth-panel member-account-card" aria-live="polite">
+    <div id="adminSignedOut">
+      <p class="label">ADMIN SIGN-IN</p>
+      <h2>TEAM ONLY.</h2>
+      <p>Sign in with the Google account approved for WsB administration.</p>
+      <button class="member-auth-button" id="adminGoogleSignIn" type="button">CONTINUE WITH GOOGLE <b>→</b></button>
+    </div>
+    <div id="adminLoading" hidden><p class="member-account-status">Checking admin access...</p></div>
+    <div id="adminDenied" hidden>
+      <p class="label">NO ADMIN ACCESS</p>
+      <h2>NOT APPROVED.</h2>
+      <p>This Google account is not on the WsB admin list. Ask an existing admin to approve it before using this page.</p>
+      <button class="member-text-button" id="adminSignOutDenied" type="button">SIGN OUT</button>
+    </div>
+    <div id="adminError" class="member-account-error" hidden></div>
+  </section>
+
+  <section id="adminDashboard" class="admin-members-dashboard" hidden>
+    <div class="member-account-intro admin-members-guide">
+      <p class="label">HOW IT WORKS</p>
+      <h2>INVITE.<br><span>CLAIM.</span></h2>
+      <p>Add the member’s Gmail and prepare the invite. They sign in with that exact Google account, then can update their own public name, bio, and socials.</p>
+      <ul><li>Admins control membership and roles</li><li>Members control public profile details</li><li>Fortnite identity stays admin-managed</li></ul>
+      <button class="member-text-button" id="adminSignOut" type="button">SIGN OUT</button>
+    </div>
+
+    <section class="member-account-card admin-editor">
+      <div class="admin-editor-head"><div><p class="label" id="adminFormLabel">NEW MEMBER</p><h2 id="adminFormTitle">CREATE<br>ACCESS.</h2></div><button class="member-text-button" id="adminStartNew" type="button" hidden>+ NEW MEMBER</button></div>
+      <p class="admin-editor-note">Every current site member is listed below. Select <b>Edit</b> to add their Gmail and prepare an invite. Use this form as a new member only after they have also been added to the site roster.</p>
+      <form id="adminMemberForm">
+        <div class="member-form-grid">
+          <label>MEMBER ID<input id="adminMemberId" type="text" maxlength="80" pattern="[a-z0-9-]+" placeholder="example-player" required><small>Lowercase letters, numbers, and hyphens only.</small></label>
+          <label>DISPLAY NAME<input id="adminDisplayName" type="text" maxlength="48" placeholder="WsB Player" required></label>
+          <label>FORTNITE USERNAME<input id="adminFortniteUsername" type="text" maxlength="100" placeholder="Exact Epic display name"></label>
+          <label>GMAIL FOR INVITE<input id="adminInviteEmail" type="email" maxlength="160" placeholder="member@gmail.com" required></label>
+          <label>ROLE<select id="adminRole"><option value="member">Member</option><option value="creator">Creator</option><option value="management">Management</option><option value="owner">Owner</option></select></label>
+          <label>ACCESS STATUS<select id="adminStatus"><option value="invited">Invited</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+        </div>
+        <label class="admin-reset-access"><input id="adminResetAccess" type="checkbox"><span><b>RESET PROFILE ACCESS</b> Use this only when moving the profile to a different Gmail. The prior Google account will lose editing access.</span></label>
+        <div class="member-form-actions"><p id="adminSaveStatus" class="member-save-status"></p><button class="member-auth-button" id="adminSave" type="submit">SAVE MEMBER <b>→</b></button></div>
+      </form>
+      <div id="adminInviteActions" class="admin-invite-actions" hidden><div><p class="label">READY TO INVITE</p><p id="adminInviteSummary"></p><textarea id="adminInviteMessage" class="admin-invite-message" readonly aria-label="Member invite message"></textarea></div><button class="member-auth-button member-auth-button-secondary" id="adminPrepareInvite" type="button">COPY INVITE MESSAGE <b>⧉</b></button></div>
+    </section>
+
+    <section class="admin-directory">
+      <div class="admin-directory-head"><div><p class="label">CURRENT SITE ROSTER</p><h2>MEMBERS &amp;<br><span>INVITES.</span></h2></div><p id="adminDirectoryCount"></p></div>
+      <div id="adminMemberList" class="admin-member-list"></div>
+    </section>
+  </section>
+</main>
+
+<footer><span class="spooky-spider" aria-hidden="true">🕷️</span><div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div><div class="socials"><a href="#">X / TWITTER</a><a href="#">YOUTUBE</a><a href="#">TWITCH</a><a href="#">DISCORD</a></div><small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small></footer>
+<script src="script.js?v=20260927-profile-image-text"></script>
+<script type="module" src="firebase-admin.js?v=20260927-copy-invite"></script>
+</body>
+</html>
