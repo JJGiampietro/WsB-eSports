@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=circular-logo-20260927">
-  <link rel="stylesheet" href="redesign.css?v=20260927-member-admin-state-fix">
+  <link rel="stylesheet" href="redesign.css?v=20260927-member-picker">
 </head>
 <body>
 <div class="site-glow"></div>
@@ -66,7 +66,11 @@
 
     <section class="member-account-card admin-editor">
       <div class="admin-editor-head"><div><p class="label" id="adminFormLabel">NEW MEMBER</p><h2 id="adminFormTitle">CREATE<br>ACCESS.</h2></div><button class="member-text-button" id="adminStartNew" type="button" hidden>+ NEW MEMBER</button></div>
-      <p class="admin-editor-note">Every current site member is listed below. Select <b>Edit</b> to add their Gmail and prepare an invite. New members are added to the public roster automatically at the next hourly stats refresh.</p>
+      <p class="admin-editor-note">Choose an existing member to update their Gmail, profile icon, or access. New members are added to the public roster automatically at the next hourly stats refresh.</p>
+      <div class="admin-member-picker" aria-label="Select an existing member to edit">
+        <label>SEARCH MEMBERS<input id="adminMemberSearch" type="search" placeholder="Start typing a name"></label>
+        <label>EDIT EXISTING MEMBER<select id="adminMemberPicker" disabled><option value="">Loading members...</option></select></label>
+      </div>
       <form id="adminMemberForm">
         <input id="adminMemberId" type="hidden">
         <div class="member-form-grid">
@@ -87,15 +91,11 @@
       <div id="adminInviteActions" class="admin-invite-actions" hidden><div><p class="label">READY TO INVITE</p><p id="adminInviteSummary"></p><textarea id="adminInviteMessage" class="admin-invite-message" readonly aria-label="Member invite message"></textarea></div><button class="member-auth-button member-auth-button-secondary" id="adminPrepareInvite" type="button">COPY INVITE MESSAGE <b>⧉</b></button></div>
     </section>
 
-    <section class="admin-directory">
-      <div class="admin-directory-head"><div><p class="label">CURRENT SITE ROSTER</p><h2>MEMBERS &amp;<br><span>INVITES.</span></h2></div><p id="adminDirectoryCount"></p></div>
-      <div id="adminMemberList" class="admin-member-list"></div>
-    </section>
   </section>
 </main>
 
 <footer><span class="spooky-spider" aria-hidden="true">🕷️</span><div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div><div class="socials"><a href="#">X / TWITTER</a><a href="#">YOUTUBE</a><a href="#">TWITCH</a><a href="#">DISCORD</a></div><small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small></footer>
 <script src="script.js?v=20260927-profile-image-text"></script>
-<script type="module" src="firebase-admin.js?v=20260927-profile-icon"></script>
+<script type="module" src="firebase-admin.js?v=20260927-member-picker"></script>
 </body>
 </html>

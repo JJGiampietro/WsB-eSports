@@ -12,8 +12,8 @@ const form = document.getElementById("adminMemberForm");
 const signIn = document.getElementById("adminGoogleSignIn");
 const signOutButtons = [document.getElementById("adminSignOut"), document.getElementById("adminSignOutDenied")];
 const startNew = document.getElementById("adminStartNew");
-const list = document.getElementById("adminMemberList");
-const count = document.getElementById("adminDirectoryCount");
+const memberSearch = document.getElementById("adminMemberSearch");
+const memberPicker = document.getElementById("adminMemberPicker");
 const formLabel = document.getElementById("adminFormLabel");
 const formTitle = document.getElementById("adminFormTitle");
 const memberId = document.getElementById("adminMemberId");
@@ -149,6 +149,9 @@ function resetForm() {
   formLabel.textContent = "NEW MEMBER";
   formTitle.innerHTML = "CREATE<br>ACCESS.";
   startNew.hidden = true;
+  memberSearch.value = "";
+  renderMemberPicker();
+  memberPicker.value = "";
   inviteActions.hidden = true;
   updateStatus("");
 }
@@ -167,39 +170,34 @@ function showEditor(record) {
   formLabel.textContent = "EDIT MEMBER";
   formTitle.innerHTML = "UPDATE<br>ACCESS.";
   startNew.hidden = false;
+  memberSearch.value = "";
+  renderMemberPicker();
+  memberPicker.value = record.id;
   if (readyInvite.email) showInviteMessage(readyInvite);
   inviteActions.hidden = !readyInvite.email;
   updateStatus("");
-  document.querySelector(".admin-editor").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function renderDirectory() {
+function renderMemberPicker() {
   const items = Array.from(records.values()).sort((a, b) => emptyValue(a.displayName || a.id).localeCompare(emptyValue(b.displayName || b.id)));
-  count.textContent = `${items.length} ${items.length === 1 ? "MEMBER" : "MEMBERS"}`;
-  list.textContent = "";
-  if (!items.length) {
-    list.innerHTML = '<p class="admin-directory-empty">No member profile access has been created yet.</p>';
-    return;
-  }
-  items.forEach((record) => {
-    const card = document.createElement("article");
-    card.className = "admin-member-row";
-    const details = document.createElement("div");
-    const title = document.createElement("strong");
-    title.textContent = record.displayName || record.id;
-    const meta = document.createElement("p");
-    const inviteState = record.invitedEmail || (record.hasAccess ? "No Gmail added" : "Not invited yet");
-    const rosterState = record.rosterStatus === "pending" ? "awaiting hourly sync" : "roster synced";
-    meta.textContent = [inviteState, rosterState, record.status || "not invited", record.role || "member"].join(" · ");
-    details.append(title, meta);
-    const action = document.createElement("button");
-    action.type = "button";
-    action.className = "member-text-button";
-    action.textContent = "EDIT →";
-    action.addEventListener("click", () => showEditor(record));
-    card.append(details, action);
-    list.append(card);
+  const filter = emptyValue(memberSearch.value).trim().toLocaleLowerCase();
+  const matches = items.filter((record) => [record.displayName, record.fortniteUsername, record.invitedEmail, record.id].join(" ").toLocaleLowerCase().includes(filter));
+  const selectedId = editingId || memberPicker.value;
+  memberPicker.textContent = "";
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = matches.length ? "Choose a member to edit" : "No matching members";
+  placeholder.disabled = !matches.length;
+  memberPicker.append(placeholder);
+  matches.forEach((record) => {
+    const option = document.createElement("option");
+    option.value = record.id;
+    const username = emptyValue(record.fortniteUsername);
+    option.textContent = username ? `${record.displayName || record.id} (${username})` : (record.displayName || record.id);
+    memberPicker.append(option);
   });
+  memberPicker.disabled = !items.length;
+  if (selectedId && matches.some((record) => record.id === selectedId)) memberPicker.value = selectedId;
 }
 
 async function loadRecords() {
@@ -228,7 +226,7 @@ async function loadRecords() {
     const profile = profiles.get(id) || {};
     records.set(id, { id, ...profile, ...memberAccess, hasAccess: true, hasProfile: profiles.has(id) });
   });
-  renderDirectory();
+  renderMemberPicker();
 }
 
 async function verifyAdmin(user) {
@@ -274,6 +272,11 @@ signIn.addEventListener("click", async () => {
 
 signOutButtons.forEach((button) => button && button.addEventListener("click", () => signOut(auth)));
 startNew.addEventListener("click", resetForm);
+memberSearch.addEventListener("input", renderMemberPicker);
+memberPicker.addEventListener("change", () => {
+  const record = records.get(memberPicker.value);
+  if (record) showEditor(record);
+});
 
 profileImageInput.addEventListener("change", async () => {
   const file = profileImageInput.files && profileImageInput.files[0];
