@@ -53,7 +53,7 @@
       <ul>
         <li>Display name and bio</li>
         <li>TikTok, Twitch, YouTube, and Instagram links</li>
-        <li>Profile images coming later</li>
+        <li>Your own profile icon</li>
       </ul>
     </div>
 
@@ -91,6 +91,11 @@
           <button class="member-text-button" id="signOutForm" type="button">SIGN OUT</button>
         </div>
         <div class="member-form-grid">
+          <div class="member-avatar-editor member-form-full">
+            <div class="member-avatar-preview member-avatar-preview-empty" id="profileImagePreview" aria-hidden="true"><span>WsB</span></div>
+            <div class="member-avatar-copy"><p>PROFILE ICON</p><strong id="profileImageName">No icon selected</strong><span>Square images only. It will be resized automatically for fast loading.</span><div><label class="member-avatar-picker" for="profileImageInput">CHOOSE IMAGE <b>→</b></label><button class="member-text-button member-avatar-remove" id="profileImageRemove" type="button" hidden>REMOVE ICON</button></div></div>
+            <input id="profileImageInput" name="profileImage" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          </div>
           <label>DISPLAY NAME<input id="profileDisplayName" name="displayName" type="text" maxlength="48" required></label>
           <label class="member-form-full">BIO<textarea id="profileBio" name="bio" rows="4" maxlength="280" placeholder="Tell the community a little about yourself."></textarea><small><span id="bioCount">0</span>/280</small></label>
           <label>TIKTOK URL<input id="profileTikTok" name="tiktok" type="url" inputmode="url" placeholder="https://tiktok.com/@yourname"></label>
@@ -98,7 +103,7 @@
           <label>YOUTUBE URL<input id="profileYoutube" name="youtube" type="url" inputmode="url" placeholder="https://youtube.com/@yourname"></label>
           <label>INSTAGRAM URL<input id="profileInstagram" name="instagram" type="url" inputmode="url" placeholder="https://instagram.com/yourname"></label>
         </div>
-        <div class="member-profile-limits"><b>MANAGED BY WsB</b><span>Fortnite profile, role, team status, and profile image uploads.</span></div>
+        <div class="member-profile-limits"><b>MANAGED BY WsB</b><span>Fortnite profile, role, and team status.</span></div>
         <div class="member-form-actions"><p id="memberSaveStatus" class="member-save-status"></p><button class="member-auth-button" id="profileSave" type="submit">SAVE PROFILE <b>→</b></button></div>
       </form>
 
@@ -114,6 +119,6 @@
   <small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small>
 </footer>
 <script src="script.js?v=20260927-profile-image-text"></script>
-<script type="module" src="firebase-member.js?v=20260927-member-profile-state"></script>
+<script type="module" src="firebase-member.js?v=20260927-member-profile-icon-popup"></script>
 </body>
 </html>

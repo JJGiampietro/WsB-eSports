@@ -16,7 +16,7 @@ service cloud.firestore {
 
     function validMemberUpdate() {
       return request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['displayName', 'bio', 'socials', 'updatedAt'])
+          .hasOnly(['displayName', 'bio', 'socials', 'profileImage', 'updatedAt'])
         && request.resource.data.displayName is string
         && request.resource.data.displayName.size() > 0
         && request.resource.data.displayName.size() <= 48
@@ -28,7 +28,10 @@ service cloud.firestore {
         && (!('tiktok' in request.resource.data.socials) || request.resource.data.socials.tiktok is string)
         && (!('twitch' in request.resource.data.socials) || request.resource.data.socials.twitch is string)
         && (!('youtube' in request.resource.data.socials) || request.resource.data.socials.youtube is string)
-        && (!('instagram' in request.resource.data.socials) || request.resource.data.socials.instagram is string);
+        && (!('instagram' in request.resource.data.socials) || request.resource.data.socials.instagram is string)
+        && request.resource.data.profileImage is string
+        && request.resource.data.profileImage.size() <= 200000
+        && (request.resource.data.profileImage.size() == 0 || request.resource.data.profileImage.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$'));
     }
 
     match /members/{memberId} {

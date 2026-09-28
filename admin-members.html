@@ -69,6 +69,11 @@
       <p class="admin-editor-note">Every current site member is listed below. Select <b>Edit</b> to add their Gmail and prepare an invite. Use this form as a new member only after they have also been added to the site roster.</p>
       <form id="adminMemberForm">
         <div class="member-form-grid">
+          <div class="member-avatar-editor member-form-full">
+            <div class="member-avatar-preview member-avatar-preview-empty" id="adminProfileImagePreview" aria-hidden="true"><span>WsB</span></div>
+            <div class="member-avatar-copy"><p>PROFILE ICON</p><strong id="adminProfileImageName">No icon selected</strong><span>Square images only. It will be resized automatically for fast loading.</span><div><label class="member-avatar-picker" for="adminProfileImageInput">CHOOSE IMAGE <b>→</b></label><button class="member-text-button member-avatar-remove" id="adminProfileImageRemove" type="button" hidden>REMOVE ICON</button></div></div>
+            <input id="adminProfileImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          </div>
           <label>MEMBER ID<input id="adminMemberId" type="text" maxlength="80" pattern="[a-z0-9-]+" placeholder="example-player" required><small>Lowercase letters, numbers, and hyphens only.</small></label>
           <label>DISPLAY NAME<input id="adminDisplayName" type="text" maxlength="48" placeholder="WsB Player" required></label>
           <label>FORTNITE USERNAME<input id="adminFortniteUsername" type="text" maxlength="100" placeholder="Exact Epic display name"></label>
@@ -91,6 +96,6 @@
 
 <footer><span class="spooky-spider" aria-hidden="true">🕷️</span><div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div><div class="socials"><a href="#">X / TWITTER</a><a href="#">YOUTUBE</a><a href="#">TWITCH</a><a href="#">DISCORD</a></div><small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small></footer>
 <script src="script.js?v=20260927-profile-image-text"></script>
-<script type="module" src="firebase-admin.js?v=20260927-copy-invite"></script>
+<script type="module" src="firebase-admin.js?v=20260927-profile-icon"></script>
 </body>
 </html>

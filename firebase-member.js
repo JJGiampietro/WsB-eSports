@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { GoogleAuthProvider, browserLocalPersistence, getAuth, onAuthStateChanged, setPersistence, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, getFirestore, query, serverTimestamp, updateDoc, where } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -16,6 +16,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
+const authReady = setPersistence(auth, browserLocalPersistence);
 
 const signedOut = document.getElementById("accountSignedOut");
 const loading = document.getElementById("accountLoading");
@@ -35,9 +36,16 @@ const bio = document.getElementById("profileBio");
 const bioCount = document.getElementById("bioCount");
 const saveStatus = document.getElementById("memberSaveStatus");
 const saveButton = document.getElementById("profileSave");
+const profileImageInput = document.getElementById("profileImageInput");
+const profileImagePreview = document.getElementById("profileImagePreview");
+const profileImageName = document.getElementById("profileImageName");
+const profileImageRemove = document.getElementById("profileImageRemove");
 const isAccountPage = Boolean(signedOut && loading && notLinked && form && signInButton);
 
 let linkedMemberId = null;
+let profileImageData = "";
+let publicProfiles = null;
+let publicRoster = null;
 
 function hideAll() {
   signedOut.hidden = true;
@@ -55,6 +63,63 @@ function showError(message) {
 
 function safeText(value) {
   return typeof value === "string" ? value : "";
+}
+
+function safeProfileImage(value) {
+  const image = safeText(value);
+  return image.length <= 200000 && /^data:image\/(?:webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(image) ? image : "";
+}
+
+function setProfileImage(value, label) {
+  profileImageData = safeProfileImage(value);
+  if (!profileImagePreview || !profileImageName || !profileImageRemove) return;
+  profileImagePreview.style.backgroundImage = profileImageData ? 'url("' + profileImageData + '")' : "";
+  profileImagePreview.classList.toggle("member-avatar-preview-empty", !profileImageData);
+  profileImageName.textContent = profileImageData ? (label || "Current profile icon") : "No icon selected";
+  profileImageRemove.hidden = !profileImageData;
+}
+
+function fileAsDataUrl(file) {
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function () { resolve(reader.result); };
+    reader.onerror = function () { reject(new Error("The image could not be read.")); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function canvasAsBlob(canvas, quality) {
+  return new Promise(function (resolve) {
+    canvas.toBlob(resolve, "image/webp", quality);
+  });
+}
+
+async function makeProfileIcon(file) {
+  if (!file || !/^image\/(png|jpeg|webp)$/.test(file.type)) throw new Error("Choose a PNG, JPG, or WebP image.");
+  if (file.size > 5 * 1024 * 1024) throw new Error("Choose an image smaller than 5 MB.");
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise(function (resolve, reject) {
+      const source = new Image();
+      source.onload = function () { resolve(source); };
+      source.onerror = function () { reject(new Error("The image could not be opened.")); };
+      source.src = objectUrl;
+    });
+    const crop = Math.min(image.naturalWidth, image.naturalHeight);
+    const startX = Math.max(0, (image.naturalWidth - crop) / 2);
+    const startY = Math.max(0, (image.naturalHeight - crop) / 2);
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 256;
+    canvas.getContext("2d").drawImage(image, startX, startY, crop, crop, 0, 0, 256, 256);
+    for (const quality of [0.82, 0.7, 0.58]) {
+      const blob = await canvasAsBlob(canvas, quality);
+      if (blob && blob.size <= 145000) return fileAsDataUrl(blob);
+    }
+    throw new Error("That image could not be made small enough. Try another image.");
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 function updateBioCount() {
@@ -110,6 +175,7 @@ async function loadLinkedProfile(user) {
     document.getElementById("profileTwitch").value = safeText(socials.twitch);
     document.getElementById("profileYoutube").value = safeText(socials.youtube);
     document.getElementById("profileInstagram").value = safeText(socials.instagram);
+    setProfileImage(profile.profileImage, profile.profileImage ? "Current profile icon" : "");
     emailOutput.textContent = user.email || "Google account";
     updateBioCount();
     hideAll();
@@ -126,11 +192,12 @@ signInButton.addEventListener("click", async function () {
   hideAll();
   loading.hidden = false;
   try {
+    await authReady;
     await signInWithPopup(auth, provider);
   } catch (signInError) {
     hideAll();
     signedOut.hidden = false;
-    showError(signInError.code === "auth/popup-closed-by-user" ? "Sign-in was cancelled." : "Google sign-in could not be completed. Please try again.");
+    showError(signInError.code === "auth/popup-closed-by-user" ? "The Google sign-in window was closed before it finished." : "Google sign-in could not be completed. Please try again.");
   }
 });
 
@@ -149,6 +216,28 @@ copyUidButton.addEventListener("click", async function () {
 });
 
 bio.addEventListener("input", updateBioCount);
+
+profileImageInput.addEventListener("change", async function () {
+  const file = profileImageInput.files && profileImageInput.files[0];
+  if (!file) return;
+  profileImageInput.disabled = true;
+  setSaving("Preparing your profile icon...");
+  try {
+    setProfileImage(await makeProfileIcon(file), file.name);
+    setSaving("Icon ready. Save your profile to publish it.");
+  } catch (imageError) {
+    profileImageInput.value = "";
+    setSaving(imageError.message || "That image could not be used.", true);
+  } finally {
+    profileImageInput.disabled = false;
+  }
+});
+
+profileImageRemove.addEventListener("click", function () {
+  profileImageInput.value = "";
+  setProfileImage("", "");
+  setSaving("Icon will be removed when you save your profile.");
+});
 
 form.addEventListener("submit", async function (event) {
   event.preventDefault();
@@ -172,6 +261,7 @@ form.addEventListener("submit", async function (event) {
       displayName: nextName,
       bio: bio.value.trim(),
       socials: socials,
+      profileImage: profileImageData,
       updatedAt: serverTimestamp()
     });
     setSaving("Profile saved.");
@@ -199,10 +289,17 @@ function memberIdFromStatsLink(link) {
 }
 
 function appendPublicProfile(memberId, profile) {
-  const detail = document.getElementById("profileDetail");
+  const detail = document.getElementById("playerDetail") || document.getElementById("profileDetail");
   if (!detail || detail.querySelector(".member-public-profile") || !profile) return;
   const heading = detail.querySelector(".profile-hero-card h1");
   if (heading && profile.displayName) heading.textContent = profile.displayName;
+  const profileAvatar = detail.querySelector(".profile-hero-card .profile-avatar");
+  const profileImage = safeProfileImage(profile.profileImage);
+  if (profileAvatar && profileImage) {
+    profileAvatar.style.backgroundImage = 'url("' + profileImage + '")';
+    profileAvatar.textContent = "";
+    profileAvatar.classList.remove("profile-avatar-initial");
+  }
   const hasBio = safeText(profile.bio).trim();
   const socials = profile.socials || {};
   const links = [["TIKTOK", socials.tiktok], ["TWITCH", socials.twitch], ["YOUTUBE", socials.youtube], ["INSTAGRAM", socials.instagram]]
@@ -239,24 +336,60 @@ function appendPublicProfile(memberId, profile) {
 }
 
 async function applyPublicMemberProfiles() {
-  const needsProfileData = document.querySelector(".member-card[data-fn-user], a.stats-player[href*='stats/'], #profileDetail");
+  const needsProfileData = document.querySelector(".member-card[data-fn-user], a.stats-player[href*='stats/'], #playerDetail, #profileDetail, .management-card, .player-card[data-roster-id]");
   if (!needsProfileData) return;
   try {
-    const snapshot = await getDocs(collection(db, "members"));
-    if (snapshot.empty) return;
-    const profiles = new Map(snapshot.docs.map(function (entry) { return [entry.id, entry.data()]; }));
-    const roster = await fetch("data/roster.json", { cache: "no-store" }).then(function (response) { return response.ok ? response.json() : []; });
+    if (!publicProfiles || !publicRoster) {
+      const [snapshot, roster] = await Promise.all([
+        getDocs(collection(db, "members")),
+        fetch((document.body.dataset.siteRoot || "") + "data/roster.json", { cache: "no-store" }).then(function (response) { return response.ok ? response.json() : []; })
+      ]);
+      if (snapshot.empty) return;
+      publicProfiles = new Map(snapshot.docs.map(function (entry) { return [entry.id, entry.data()]; }));
+      publicRoster = roster;
+    }
+    const profiles = publicProfiles;
+    const roster = publicRoster;
     const rosterByUsername = new Map(roster.map(function (member) { return [member.username, member.id]; }));
     document.querySelectorAll(".member-card[data-fn-user]").forEach(function (card) {
       const memberId = rosterByUsername.get(card.dataset.fnUser);
       const profile = profiles.get(memberId);
       const name = card.querySelector(".member-name");
       if (profile && name && profile.displayName) name.textContent = profile.displayName;
+      const emblem = card.querySelector(".member-emblem");
+      const profileImage = profile && safeProfileImage(profile.profileImage);
+      if (emblem && profileImage) emblem.style.backgroundImage = 'url("' + profileImage + '")';
     });
     document.querySelectorAll("a.stats-player[href*='stats/']").forEach(function (card) {
       const profile = profiles.get(memberIdFromStatsLink(card));
       const name = card.querySelector("h3");
       if (profile && name && profile.displayName) name.textContent = profile.displayName;
+      const avatar = card.querySelector(".stats-avatar");
+      const profileImage = profile && safeProfileImage(profile.profileImage);
+      if (avatar && profileImage) {
+        avatar.style.backgroundImage = 'url("' + profileImage + '")';
+        avatar.textContent = "";
+        avatar.classList.remove("stats-avatar-initial");
+      }
+    });
+    document.querySelectorAll(".player-card[data-roster-id]").forEach(function (card) {
+      const profile = profiles.get(card.dataset.rosterId);
+      const profileImage = profile && safeProfileImage(profile.profileImage);
+      if (profileImage) card.style.setProperty("--player-photo", 'url("' + profileImage + '")');
+    });
+    const managementMemberIds = new Map([
+      ["ᵂˢᴮJenClipsMenᵀᵀ", "jen"], ["ᵂˢᴮ Łìzzíeᵀᵀ ʚїɞ", "lizzie"], ["ᵂ˥Tazᵀᵀ", "taz"], ["ᵂˢᴮ katoᵀᵀ", "kato"],
+      ["ʷˢᵇLazy", "lazy"], ["ᵂˢᴮ Elusion keys", "elusion"], ["ᵂˢᴮ Dmo", "dmo"], ["ᵂˢᴮBee", "bee"],
+      ["ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ", "mysterious"], ["ᵂˢᴮ Skrewwww", "skrewwww"], ["ᵂˢᴮ Barrelroll77", "barrelroll"]
+    ]);
+    document.querySelectorAll(".management-card").forEach(function (card) {
+      const name = card.querySelector(".tier-name");
+      const profile = name && profiles.get(managementMemberIds.get(name.textContent.trim()));
+      const profileImage = profile && safeProfileImage(profile.profileImage);
+      if (profileImage) {
+        card.classList.add("has-tier-photo");
+        card.style.setProperty("--tier-photo", 'url("' + profileImage + '")');
+      }
     });
     const pathMatch = location.pathname.match(/\/stats\/([^/]+)\/?$/);
     if (pathMatch) appendPublicProfile(pathMatch[1], profiles.get(decodeURIComponent(pathMatch[1])));
@@ -288,6 +421,13 @@ function updateAccountIndicator(user) {
 }
 
 onAuthStateChanged(auth, updateAccountIndicator);
-window.addEventListener("load", applyPublicMemberProfiles);
+function schedulePublicProfilePasses() {
+  applyPublicMemberProfiles();
+  window.setTimeout(applyPublicMemberProfiles, 900);
+  window.setTimeout(applyPublicMemberProfiles, 2400);
+}
+
+if (document.readyState === "complete") schedulePublicProfilePasses();
+else window.addEventListener("load", schedulePublicProfilePasses);
 
 export { auth, db, provider };
