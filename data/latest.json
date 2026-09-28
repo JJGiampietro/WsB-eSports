@@ -1,14 +1,14 @@
 {
-  "fetchedAt": "2026-09-28T06:08:08.165Z",
+  "fetchedAt": "2026-09-28T07:08:44.146Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
       "username": "ᵂˢᴮℒizzíeᵀᵀʚїɞ",
       "kd": 3.345,
-      "winrate": 22.323,
+      "winrate": 22.319,
       "wins": 4846,
-      "kills": 56408,
-      "matches": 21709
+      "kills": 56411,
+      "matches": 21712
     },
     "jen": {
       "displayName": "ᵂˢᴮJenClipsMenᵀᵀ",
@@ -50,10 +50,10 @@
       "displayName": "ᵂˢᴮJordan TT",
       "username": "ᵂˢᴮJordan TT",
       "kd": 3.646,
-      "winrate": 12.431,
+      "winrate": 12.429,
       "wins": 2292,
-      "kills": 58871,
-      "matches": 18438
+      "kills": 58876,
+      "matches": 18441
     },
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
@@ -113,10 +113,10 @@
       "displayName": "ᵂˢᴮ iinsanity ᵀᵀ",
       "username": "ᵂˢᴮ iinsanity ᵀᵀ",
       "kd": 4.868,
-      "winrate": 16.672,
+      "winrate": 16.67,
       "wins": 5360,
-      "kills": 130420,
-      "matches": 32149
+      "kills": 130430,
+      "matches": 32154
     },
     "envious": {
       "displayName": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
@@ -133,8 +133,8 @@
       "kd": 2.305,
       "winrate": 3.196,
       "wins": 436,
-      "kills": 30438,
-      "matches": 13640
+      "kills": 30439,
+      "matches": 13641
     },
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
@@ -149,10 +149,10 @@
       "displayName": "ᵂˢᴮBurrtio",
       "username": "Runito_",
       "kd": 2.163,
-      "winrate": 13.724,
+      "winrate": 13.723,
       "wins": 6842,
-      "kills": 93039,
-      "matches": 49854
+      "kills": 93043,
+      "matches": 49857
     },
     "skrewwww": {
       "displayName": "ᵂˢᴮ Skrewwww",
@@ -176,10 +176,10 @@
       "displayName": "ᵂˢᴮYoshi",
       "username": "ᵂˢᴮYoshi",
       "kd": 5.273,
-      "winrate": 17.707,
+      "winrate": 17.705,
       "wins": 3678,
-      "kills": 90134,
-      "matches": 20771
+      "kills": 90145,
+      "matches": 20774
     },
     "kato": {
       "displayName": "ᵂˢᴮ katoᵀᵀ",
