@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-28T15:09:26.815Z",
+  "fetchedAt": "2026-09-28T16:07:56.395Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -31,11 +31,11 @@
     "botlupitaa": {
       "displayName": "ᵂˢᴮ BotLupitaa",
       "username": "botlupitaツ",
-      "kd": 4.369,
-      "winrate": 17.417,
+      "kd": 4.371,
+      "winrate": 17.413,
       "wins": 2105,
-      "kills": 43602,
-      "matches": 12086
+      "kills": 43639,
+      "matches": 12089
     },
     "dubs": {
       "displayName": "ᵂˢᴮ ＤＵＢＳ",
@@ -77,10 +77,10 @@
       "displayName": "ʷˢᵇLazy",
       "username": "ʷˢᵇLazy",
       "kd": 7.058,
-      "winrate": 24.813,
-      "wins": 6793,
-      "kills": 145278,
-      "matches": 27377
+      "winrate": 24.815,
+      "wins": 6794,
+      "kills": 145288,
+      "matches": 27379
     },
     "mysterious": {
       "displayName": "ᵂˢᴮ Mysterious",
@@ -103,11 +103,11 @@
     "ohitskatie": {
       "displayName": "ᵂˢᴮohitskatie",
       "username": "ᵗᵗohitskatie ʚїɞ",
-      "kd": 3.409,
-      "winrate": 16.434,
-      "wins": 1944,
-      "kills": 33702,
-      "matches": 11829
+      "kd": 3.411,
+      "winrate": 16.44,
+      "wins": 1945,
+      "kills": 33717,
+      "matches": 11831
     },
     "iinsanity": {
       "displayName": "ᵂˢᴮ iinsanity ᵀᵀ",
@@ -139,11 +139,11 @@
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
       "username": "ᵂˢᴮGloSznFvᵀᵀ",
-      "kd": 4.109,
-      "winrate": 14.515,
-      "wins": 1463,
-      "kills": 35405,
-      "matches": 10079
+      "kd": 4.11,
+      "winrate": 14.518,
+      "wins": 1464,
+      "kills": 35428,
+      "matches": 10084
     },
     "burrtio": {
       "displayName": "ᵂˢᴮBurrtio",
@@ -175,11 +175,11 @@
     "yoshi": {
       "displayName": "ᵂˢᴮYoshi",
       "username": "ᵂˢᴮYoshi",
-      "kd": 5.273,
-      "winrate": 17.712,
+      "kd": 5.272,
+      "winrate": 17.708,
       "wins": 3680,
-      "kills": 90153,
-      "matches": 20777
+      "kills": 90167,
+      "matches": 20782
     },
     "kato": {
       "displayName": "ᵂˢᴮ katoᵀᵀ",
