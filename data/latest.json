@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-28T02:06:04.416Z",
+  "fetchedAt": "2026-09-28T03:06:55.792Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -31,11 +31,11 @@
     "botlupitaa": {
       "displayName": "ᵂˢᴮ BotLupitaa",
       "username": "botlupitaツ",
-      "kd": 4.363,
-      "winrate": 17.422,
+      "kd": 4.365,
+      "winrate": 17.417,
       "wins": 2104,
-      "kills": 43509,
-      "matches": 12077
+      "kills": 43549,
+      "matches": 12080
     },
     "dubs": {
       "displayName": "ᵂˢᴮ ＤＵＢＳ",
@@ -50,10 +50,10 @@
       "displayName": "ᵂˢᴮJordan TT",
       "username": "ᵂˢᴮJordan TT",
       "kd": 3.647,
-      "winrate": 12.441,
+      "winrate": 12.438,
       "wins": 2292,
-      "kills": 58836,
-      "matches": 18423
+      "kills": 58847,
+      "matches": 18427
     },
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
@@ -115,8 +115,8 @@
       "kd": 4.867,
       "winrate": 16.664,
       "wins": 5356,
-      "kills": 130355,
-      "matches": 32141
+      "kills": 130363,
+      "matches": 32142
     },
     "envious": {
       "displayName": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
@@ -149,19 +149,19 @@
       "displayName": "ᵂˢᴮBurrtio",
       "username": "Runito_",
       "kd": 2.163,
-      "winrate": 13.725,
-      "wins": 6841,
-      "kills": 93021,
-      "matches": 49842
+      "winrate": 13.726,
+      "wins": 6842,
+      "kills": 93027,
+      "matches": 49846
     },
     "skrewwww": {
       "displayName": "ᵂˢᴮ Skrewwww",
       "username": "ᵂˢᴮ Skrewwww",
       "kd": 2.905,
-      "winrate": 5.384,
-      "wins": 865,
-      "kills": 44153,
-      "matches": 16066
+      "winrate": 5.389,
+      "wins": 866,
+      "kills": 44172,
+      "matches": 16069
     },
     "gabett4": {
       "displayName": "gabeTT4",
@@ -176,10 +176,10 @@
       "displayName": "ᵂˢᴮYoshi",
       "username": "ᵂˢᴮYoshi",
       "kd": 5.277,
-      "winrate": 17.72,
+      "winrate": 17.719,
       "wins": 3677,
-      "kills": 90092,
-      "matches": 20750
+      "kills": 90103,
+      "matches": 20752
     },
     "kato": {
       "displayName": "ᵂˢᴮ katoᵀᵀ",
