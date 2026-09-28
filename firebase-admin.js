@@ -61,6 +61,20 @@ function emptyValue(value) {
   return typeof value === "string" ? value : "";
 }
 
+function makeMemberId(fortniteName) {
+  const base = emptyValue(fortniteName)
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 42) || "member";
+  const suffix = globalThis.crypto && typeof globalThis.crypto.randomUUID === "function"
+    ? globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 7)
+    : Math.random().toString(36).slice(2, 9);
+  return base + "-" + suffix;
+}
+
 function safeProfileImage(value) {
   const image = emptyValue(value);
   return image.length <= 200000 && /^data:image\/(?:webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(image) ? image : "";
@@ -130,8 +144,8 @@ function resetForm() {
   editingId = null;
   readyInvite = null;
   form.reset();
+  memberId.value = "";
   setProfileImage("", "");
-  memberId.disabled = false;
   formLabel.textContent = "NEW MEMBER";
   formTitle.innerHTML = "CREATE<br>ACCESS.";
   startNew.hidden = true;
@@ -143,7 +157,6 @@ function showEditor(record) {
   editingId = record.id;
   readyInvite = { id: record.id, email: emptyValue(record.invitedEmail), displayName: emptyValue(record.displayName) || record.id };
   memberId.value = record.id;
-  memberId.disabled = true;
   displayName.value = emptyValue(record.displayName);
   fortniteUsername.value = emptyValue(record.fortniteUsername);
   inviteEmail.value = emptyValue(record.invitedEmail);
@@ -176,7 +189,8 @@ function renderDirectory() {
     title.textContent = record.displayName || record.id;
     const meta = document.createElement("p");
     const inviteState = record.invitedEmail || (record.hasAccess ? "No Gmail added" : "Not invited yet");
-    meta.textContent = [inviteState, record.status || "not invited", record.role || "member"].join(" · ");
+    const rosterState = record.rosterStatus === "pending" ? "awaiting hourly sync" : "roster synced";
+    meta.textContent = [inviteState, rosterState, record.status || "not invited", record.role || "member"].join(" · ");
     details.append(title, meta);
     const action = document.createElement("button");
     action.type = "button";
@@ -286,18 +300,15 @@ profileImageRemove.addEventListener("click", () => {
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!isAdmin) return;
-  const id = (editingId || memberId.value.trim().toLowerCase()).trim();
-  if (!/^[a-z0-9-]+$/.test(id)) {
-    updateStatus("Member ID can use lowercase letters, numbers, and hyphens only.", true);
-    memberId.focus();
-    return;
-  }
   const name = displayName.value.trim();
   const email = inviteEmail.value.trim().toLowerCase();
-  if (!name || !email) {
-    updateStatus("Display name and Gmail are required.", true);
+  const username = fortniteUsername.value.trim();
+  if (!name || !email || !username) {
+    updateStatus("Display name, Fortnite username, and Gmail are required.", true);
     return;
   }
+  const id = editingId || memberId.value || makeMemberId(username);
+  memberId.value = id;
   save.disabled = true;
   updateStatus("Saving member access...");
   try {
@@ -305,9 +316,11 @@ form.addEventListener("submit", async (event) => {
     const shouldReset = !existing || !existing.hasAccess || resetAccess.checked;
     const access = {
       memberId: id,
-      fortniteUsername: fortniteUsername.value.trim(),
+      displayName: name,
+      fortniteUsername: username,
       invitedEmail: email,
       role: role.value,
+      rosterStatus: existing ? (existing.rosterStatus || "active") : "pending",
       status: shouldReset ? "invited" : status.value,
       updatedAt: serverTimestamp()
     };

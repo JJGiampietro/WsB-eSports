@@ -335,6 +335,43 @@ function appendPublicProfile(memberId, profile) {
   window.dispatchEvent(new Event("resize"));
 }
 
+function addNewRosterCards(roster, profiles) {
+  const grid = document.getElementById("membersGrid");
+  if (!grid) return;
+  const existingUsernames = new Set(Array.from(grid.querySelectorAll(".member-card[data-fn-user]")).map(function (card) { return card.dataset.fnUser; }));
+  roster.forEach(function (member) {
+    if (existingUsernames.has(member.username)) return;
+    const profile = profiles.get(member.id) || {};
+    const displayName = safeText(profile.displayName) || member.displayName || member.username;
+    const profileImage = safeProfileImage(profile.profileImage);
+    const card = document.createElement("div");
+    card.className = "member-card has-stats member-card-link";
+    card.dataset.fnUser = member.username;
+    card.setAttribute("role", "link");
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("aria-label", "Open " + displayName + " detailed stats");
+    const emblem = document.createElement("div");
+    emblem.className = "member-emblem";
+    if (profileImage) emblem.style.backgroundImage = 'url("' + profileImage + '")';
+    else if (member.profileImage) emblem.style.backgroundImage = 'url("' + member.profileImage + '")';
+    else emblem.textContent = displayName.replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase() || "W";
+    const info = document.createElement("div");
+    info.className = "member-info";
+    const name = document.createElement("div");
+    name.className = "member-name";
+    name.textContent = displayName;
+    const meta = document.createElement("div");
+    meta.className = "member-meta";
+    meta.innerHTML = "<b>SYNCED</b>";
+    info.append(name, meta);
+    card.append(emblem, info);
+    const openProfile = function () { window.location.href = "stats/" + encodeURIComponent(member.id) + "/"; };
+    card.addEventListener("click", openProfile);
+    card.addEventListener("keydown", function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openProfile(); } });
+    grid.append(card);
+  });
+}
+
 async function applyPublicMemberProfiles() {
   const needsProfileData = document.querySelector(".member-card[data-fn-user], a.stats-player[href*='stats/'], #playerDetail, #profileDetail, .management-card, .player-card[data-roster-id]");
   if (!needsProfileData) return;
@@ -360,6 +397,7 @@ async function applyPublicMemberProfiles() {
       const profileImage = profile && safeProfileImage(profile.profileImage);
       if (emblem && profileImage) emblem.style.backgroundImage = 'url("' + profileImage + '")';
     });
+    addNewRosterCards(roster, profiles);
     document.querySelectorAll("a.stats-player[href*='stats/']").forEach(function (card) {
       const profile = profiles.get(memberIdFromStatsLink(card));
       const name = card.querySelector("h3");

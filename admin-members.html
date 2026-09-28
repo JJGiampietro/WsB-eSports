@@ -66,15 +66,15 @@
 
     <section class="member-account-card admin-editor">
       <div class="admin-editor-head"><div><p class="label" id="adminFormLabel">NEW MEMBER</p><h2 id="adminFormTitle">CREATE<br>ACCESS.</h2></div><button class="member-text-button" id="adminStartNew" type="button" hidden>+ NEW MEMBER</button></div>
-      <p class="admin-editor-note">Every current site member is listed below. Select <b>Edit</b> to add their Gmail and prepare an invite. Use this form as a new member only after they have also been added to the site roster.</p>
+      <p class="admin-editor-note">Every current site member is listed below. Select <b>Edit</b> to add their Gmail and prepare an invite. New members are added to the public roster automatically at the next hourly stats refresh.</p>
       <form id="adminMemberForm">
+        <input id="adminMemberId" type="hidden">
         <div class="member-form-grid">
           <div class="member-avatar-editor member-form-full">
             <div class="member-avatar-preview member-avatar-preview-empty" id="adminProfileImagePreview" aria-hidden="true"><span>WsB</span></div>
             <div class="member-avatar-copy"><p>PROFILE ICON</p><strong id="adminProfileImageName">No icon selected</strong><span>Square images only. It will be resized automatically for fast loading.</span><div><label class="member-avatar-picker" for="adminProfileImageInput">CHOOSE IMAGE <b>→</b></label><button class="member-text-button member-avatar-remove" id="adminProfileImageRemove" type="button" hidden>REMOVE ICON</button></div></div>
             <input id="adminProfileImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
           </div>
-          <label>MEMBER ID<input id="adminMemberId" type="text" maxlength="80" pattern="[a-z0-9-]+" placeholder="example-player" required><small>Lowercase letters, numbers, and hyphens only.</small></label>
           <label>DISPLAY NAME<input id="adminDisplayName" type="text" maxlength="48" placeholder="WsB Player" required></label>
           <label>FORTNITE USERNAME<input id="adminFortniteUsername" type="text" maxlength="100" placeholder="Exact Epic display name"></label>
           <label>GMAIL FOR INVITE<input id="adminInviteEmail" type="email" maxlength="160" placeholder="member@gmail.com" required></label>
