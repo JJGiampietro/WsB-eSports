@@ -135,6 +135,13 @@ async function loadLinkedProfile(user) {
   hideAll();
   loading.hidden = false;
   try {
+    const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
+    if (adminSnapshot.exists()) {
+      if (adminEmailOutput) adminEmailOutput.textContent = user.email || "Your Google account";
+      hideAll();
+      adminOnly.hidden = false;
+      return;
+    }
     const accessQuery = query(collection(db, "memberAccess"), where("ownerUid", "==", user.uid));
     const accessSnapshot = await getDocs(accessQuery);
     if (accessSnapshot.empty) {
@@ -148,13 +155,6 @@ async function loadLinkedProfile(user) {
           claimedAt: serverTimestamp()
         });
         return loadLinkedProfile(user);
-      }
-      const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
-      if (adminSnapshot.exists()) {
-        if (adminEmailOutput) adminEmailOutput.textContent = user.email || "Your Google account";
-        hideAll();
-        adminOnly.hidden = false;
-        return;
       }
       hideAll();
       uidOutput.textContent = user.uid;
