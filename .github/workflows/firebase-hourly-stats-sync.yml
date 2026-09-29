@@ -3,12 +3,18 @@ name: Firebase Hourly Stats Sync
 on:
   schedule:
     # The canonical refresh starts on the hour and can take several minutes to finish.
-    - cron: "20 * * * *"
+    # Check a few minutes apart so a delayed GitHub schedule cannot leave Firebase stale
+    # for an entire hour. A deployment happens only when the source data changed.
+    - cron: "12,22,32,42,52 * * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: read
   id-token: write
+
+concurrency:
+  group: firebase-stats-sync
+  cancel-in-progress: false
 
 jobs:
   deploy-current-stats:
@@ -17,13 +23,22 @@ jobs:
       - name: Check out Firebase site
         uses: actions/checkout@v7
 
-      - name: Pull current stats from the canonical site repository
+      - name: Check for newer canonical stats
+        id: stats
         run: |
           git remote add canonical https://github.com/adetrick7/WsB-eSports.git
           git fetch canonical main --depth=1
-          git checkout FETCH_HEAD -- data stats
+          if git diff --quiet FETCH_HEAD -- data stats; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Canonical stats are already deployed."
+          else
+            git checkout FETCH_HEAD -- data stats
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "New canonical stats found."
+          fi
 
       - name: Authenticate with Firebase
+        if: steps.stats.outputs.changed == 'true'
         id: auth
         uses: google-github-actions/auth@v3
         with:
@@ -34,6 +49,7 @@ jobs:
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
 
       - name: Deploy refreshed stats to Firebase
+        if: steps.stats.outputs.changed == 'true'
         run: node .github/scripts/deploy-firebase-preview.mjs
         env:
           FIREBASE_HOSTING_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
