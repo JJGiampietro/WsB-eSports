@@ -89,6 +89,7 @@ function hostingConfig() {
   return {
     headers: [
       { glob: "**/*.html", headers: { "Cache-Control": "no-cache" } },
+      { glob: "/stats/**", headers: { "Cache-Control": "no-cache, no-store" } },
       { glob: "data/**", headers: { "Cache-Control": "public, max-age=300, must-revalidate" } },
     ],
   };
