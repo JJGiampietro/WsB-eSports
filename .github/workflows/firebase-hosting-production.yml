@@ -17,6 +17,12 @@ jobs:
       - name: Check out site
         uses: actions/checkout@v7
 
+      - name: Pull current canonical player data
+        run: |
+          git remote add canonical https://github.com/adetrick7/WsB-eSports.git
+          git fetch canonical main --depth=1
+          git checkout FETCH_HEAD -- data stats
+
       - name: Authenticate with Firebase
         id: auth
         uses: google-github-actions/auth@v3
