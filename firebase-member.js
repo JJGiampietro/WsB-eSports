@@ -423,12 +423,16 @@ async function applyPublicMemberProfiles() {
     const managementMemberIds = new Map([
       ["ᵂˢᴮJenClipsMenᵀᵀ", "jen"], ["ᵂˢᴮ Łìzzíeᵀᵀ ʚїɞ", "lizzie"], ["ᵂ˥Tazᵀᵀ", "taz"], ["ᵂˢᴮ katoᵀᵀ", "kato"],
       ["ʷˢᵇLazy", "lazy"], ["ᵂˢᴮ Elusion keys", "elusion"], ["ᵂˢᴮ Dmo", "dmo"], ["ᵂˢᴮBee", "bee"],
-      ["ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ", "mysterious"], ["ᵂˢᴮ Skrewwww", "skrewwww"], ["ᵂˢᴮ Barrelroll77", "barrelroll"]
+      ["ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ", "mysterious"], ["ᵂˢᴮ Skrewwww", "skrewwww"], ["ᵂˢᴮ Barrelroll77", "barrelroll"], ["ᵂˢᴮIngraham", "ingraham"]
     ]);
     document.querySelectorAll(".management-card").forEach(function (card) {
       const name = card.querySelector(".tier-name");
       const profile = name && profiles.get(managementMemberIds.get(name.textContent.trim()));
       const profileImage = profile && safeProfileImage(profile.profileImage);
+      const profileBio = profile && typeof profile.bio === "string" ? profile.bio.trim() : "";
+      const profileTikTok = profile && normalizeSocialUrl(profile.socials && profile.socials.tiktok);
+      if (profileBio) card.dataset.bio = profileBio;
+      if (profileTikTok) card.dataset.tiktok = profileTikTok;
       if (profileImage) {
         card.classList.add("has-tier-photo");
         card.style.setProperty("--tier-photo", 'url("' + profileImage + '")');
@@ -447,10 +451,12 @@ function updateAccountIndicator(user) {
     if (!link) {
       link = document.createElement("a");
       link.className = "firebase-account-link";
-      const siteRoot = document.body.dataset.siteRoot || (location.pathname.startsWith("/WsB-eSports/") ? "/WsB-eSports/" : "/");
-      link.href = siteRoot + "member-account.html";
       nav.append(link);
     }
+    const accountPath = location.hostname.endsWith("github.io")
+      ? (document.body.dataset.siteRoot || "/WsB-eSports/") + "member-account.html"
+      : "/member-account.html";
+    link.href = new URL(accountPath, window.location.href).href;
     if (!user) {
       link.textContent = "MY PROFILE";
       link.removeAttribute("title");
