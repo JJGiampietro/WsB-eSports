@@ -56,7 +56,8 @@ async function request(url, options = {}) {
     throw new Error(`Firebase Hosting request failed (${response.status}): ${await response.text()}`);
   }
 
-  return response.status === 204 ? null : response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 async function ensureChannel() {
