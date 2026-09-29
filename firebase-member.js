@@ -456,7 +456,9 @@ function updateAccountIndicator(user) {
     const accountPath = location.hostname.endsWith("github.io")
       ? (document.body.dataset.siteRoot || "/WsB-eSports/") + "member-account.html"
       : "/member-account.html";
-    link.href = new URL(accountPath, window.location.href).href;
+    // Keep the HTML route root-relative on Firebase. This avoids a nested stats
+    // page ever resolving the account page against its own folder.
+    link.setAttribute("href", accountPath);
     if (!user) {
       link.textContent = "MY PROFILE";
       link.removeAttribute("title");
