@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-29T22:06:02.108Z",
+  "fetchedAt": "2026-09-29T23:05:51.544Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -86,10 +86,10 @@
       "displayName": "ᵂˢᴮ Mysterious",
       "username": "ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ",
       "kd": 4.316,
-      "winrate": 13.004,
-      "wins": 2352,
-      "kills": 67905,
-      "matches": 18087
+      "winrate": 13.009,
+      "wins": 2353,
+      "kills": 67914,
+      "matches": 18088
     },
     "dmo": {
       "displayName": "ᵂˢᴮ Dmo",
@@ -140,10 +140,10 @@
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
       "username": "ᵂˢᴮGloSznFvᵀᵀ",
       "kd": 4.113,
-      "winrate": 14.601,
+      "winrate": 14.599,
       "wins": 1477,
-      "kills": 35530,
-      "matches": 10116
+      "kills": 35537,
+      "matches": 10117
     },
     "burrtio": {
       "displayName": "ᵂˢᴮBurrtio",
@@ -166,20 +166,20 @@
     "gabett4": {
       "displayName": "gabeTT4",
       "username": "gabeTT4",
-      "kd": 4.038,
-      "winrate": 21.103,
+      "kd": 4.039,
+      "winrate": 21.1,
       "wins": 1592,
-      "kills": 24037,
-      "matches": 7544
+      "kills": 24045,
+      "matches": 7545
     },
     "yoshi": {
       "displayName": "ᵂˢᴮYoshi",
       "username": "ᵂˢᴮYoshi",
-      "kd": 5.266,
+      "kd": 5.265,
       "winrate": 17.694,
-      "wins": 3686,
-      "kills": 90286,
-      "matches": 20832
+      "wins": 3687,
+      "kills": 90296,
+      "matches": 20838
     },
     "kato": {
       "displayName": "ᵂˢᴮ katoᵀᵀ",
