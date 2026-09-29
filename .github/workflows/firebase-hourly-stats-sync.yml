@@ -1,0 +1,40 @@
+name: Firebase Hourly Stats Sync
+
+on:
+  schedule:
+    # The canonical stats refresh starts on the hour; deploy its finished data shortly after.
+    - cron: "5 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-current-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Firebase site
+        uses: actions/checkout@v7
+
+      - name: Pull current stats from the canonical site repository
+        run: |
+          git remote add canonical https://github.com/adetrick7/WsB-eSports.git
+          git fetch canonical main --depth=1
+          git checkout FETCH_HEAD -- data stats
+
+      - name: Authenticate with Firebase
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: wsb-esports
+          workload_identity_provider: projects/999242676867/locations/global/workloadIdentityPools/github-actions/providers/wsb-repo
+          service_account: wsb-hosting-deploy@wsb-esports.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+
+      - name: Deploy refreshed stats to Firebase
+        run: node .github/scripts/deploy-firebase-preview.mjs
+        env:
+          FIREBASE_HOSTING_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          FIREBASE_HOSTING_CHANNEL: live
