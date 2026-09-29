@@ -1,14 +1,14 @@
 {
-  "fetchedAt": "2026-09-29T08:08:45.085Z",
+  "fetchedAt": "2026-09-29T09:07:41.308Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
       "username": "ᵂˢᴮℒizzíeᵀᵀʚїɞ",
       "kd": 3.345,
-      "winrate": 22.322,
-      "wins": 4847,
-      "kills": 56421,
-      "matches": 21714
+      "winrate": 22.332,
+      "wins": 4850,
+      "kills": 56430,
+      "matches": 21718
     },
     "jen": {
       "displayName": "ᵂˢᴮJenClipsMenᵀᵀ",
@@ -58,11 +58,11 @@
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
       "username": "Shloozyyy ᵀᵀ",
-      "kd": 4.233,
-      "winrate": 21.994,
+      "kd": 4.232,
+      "winrate": 21.985,
       "wins": 2543,
-      "kills": 38181,
-      "matches": 11562
+      "kills": 38188,
+      "matches": 11567
     },
     "allieontt": {
       "displayName": "ᵂˢᴮ alliecat",
@@ -131,10 +131,10 @@
       "displayName": "ᵀᵀMelloᵂˢᴮ",
       "username": "ᵀᵀMelloᵂˢᴮ",
       "kd": 2.305,
-      "winrate": 3.214,
-      "wins": 439,
-      "kills": 30466,
-      "matches": 13659
+      "winrate": 3.235,
+      "wins": 442,
+      "kills": 30473,
+      "matches": 13663
     },
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
@@ -152,7 +152,7 @@
       "winrate": 13.728,
       "wins": 6848,
       "kills": 93102,
-      "matches": 49883
+      "matches": 49885
     },
     "skrewwww": {
       "displayName": "ᵂˢᴮ Skrewwww",
