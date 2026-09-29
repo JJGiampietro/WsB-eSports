@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-29T11:06:32.599Z",
+  "fetchedAt": "2026-09-29T12:08:21.482Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -41,10 +41,10 @@
       "displayName": "ᵂˢᴮ ＤＵＢＳ",
       "username": "ᵂˢᴮ ＤＵＢＳ",
       "kd": 2.973,
-      "winrate": 9.113,
+      "winrate": 9.11,
       "wins": 772,
-      "kills": 22888,
-      "matches": 8471
+      "kills": 22896,
+      "matches": 8474
     },
     "btajordan": {
       "displayName": "ᵂˢᴮJordan TT",
@@ -59,10 +59,10 @@
       "displayName": "Shloozyyy ᵀᵀ",
       "username": "Shloozyyy ᵀᵀ",
       "kd": 4.231,
-      "winrate": 21.981,
+      "winrate": 21.975,
       "wins": 2543,
-      "kills": 38191,
-      "matches": 11569
+      "kills": 38201,
+      "matches": 11572
     },
     "allieontt": {
       "displayName": "ᵂˢᴮ alliecat",
@@ -104,19 +104,19 @@
       "displayName": "ᵂˢᴮohitskatie",
       "username": "ᵗᵗohitskatie ʚїɞ",
       "kd": 3.41,
-      "winrate": 16.429,
+      "winrate": 16.427,
       "wins": 1946,
-      "kills": 33754,
-      "matches": 11845
+      "kills": 33761,
+      "matches": 11846
     },
     "iinsanity": {
       "displayName": "ᵂˢᴮ iinsanity ᵀᵀ",
       "username": "ᵂˢᴮ iinsanity ᵀᵀ",
-      "kd": 4.869,
-      "winrate": 16.671,
+      "kd": 4.87,
+      "winrate": 16.669,
       "wins": 5369,
-      "kills": 130679,
-      "matches": 32206
+      "kills": 130698,
+      "matches": 32209
     },
     "envious": {
       "displayName": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
@@ -131,10 +131,10 @@
       "displayName": "ᵀᵀMelloᵂˢᴮ",
       "username": "ᵀᵀMelloᵂˢᴮ",
       "kd": 2.305,
-      "winrate": 3.241,
+      "winrate": 3.24,
       "wins": 443,
-      "kills": 30488,
-      "matches": 13670
+      "kills": 30493,
+      "matches": 13671
     },
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
