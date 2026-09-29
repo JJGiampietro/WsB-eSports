@@ -15,17 +15,16 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Authenticate with Firebase
+        id: auth
         uses: google-github-actions/auth@v3
         with:
           project_id: wsb-esports
           workload_identity_provider: projects/999242676867/locations/global/workloadIdentityPools/github-actions/providers/wsb-repo
           service_account: wsb-hosting-deploy@wsb-esports.iam.gserviceaccount.com
-
-      - name: Set up Google Cloud tools
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Create a short-lived deployment token
-        run: echo "FIREBASE_HOSTING_ACCESS_TOKEN=$(gcloud auth print-access-token)" >> "$GITHUB_ENV"
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
 
       - name: Refresh Firebase preview
         run: node .github/scripts/deploy-firebase-preview.mjs
+        env:
+          FIREBASE_HOSTING_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
