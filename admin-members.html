@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=circular-logo-20260927">
-  <link rel="stylesheet" href="redesign.css?v=20260927-member-picker">
+  <link rel="stylesheet" href="redesign.css?v=20260929-stats-profile-banner">
 </head>
 <body>
 <div class="site-glow"></div>
@@ -66,7 +66,7 @@
 
     <section class="member-account-card admin-editor">
       <div class="admin-editor-head"><div><p class="label" id="adminFormLabel">NEW MEMBER</p><h2 id="adminFormTitle">CREATE<br>ACCESS.</h2></div><button class="member-text-button" id="adminStartNew" type="button" hidden>+ NEW MEMBER</button></div>
-      <p class="admin-editor-note">Choose an existing member to update their Gmail, profile icon, or access. New members are added to the public roster automatically at the next hourly stats refresh.</p>
+      <p class="admin-editor-note">Choose an existing member to update their Gmail, profile icon, public bio, TikTok or Twitch link, or access. New members are added to the public roster automatically at the next hourly stats refresh.</p>
       <div class="admin-member-picker" aria-label="Select an existing member to edit">
         <label>SEARCH MEMBERS<input id="adminMemberSearch" type="search" placeholder="Start typing a name"></label>
         <label>EDIT EXISTING MEMBER<select id="adminMemberPicker" disabled><option value="">Loading members...</option></select></label>
@@ -81,6 +81,9 @@
           </div>
           <label>DISPLAY NAME<input id="adminDisplayName" type="text" maxlength="48" placeholder="WsB Player" required></label>
           <label>FORTNITE USERNAME<input id="adminFortniteUsername" type="text" maxlength="100" placeholder="Exact Epic display name"></label>
+          <label class="member-form-full">PUBLIC BIO<textarea id="adminProfileBio" rows="4" maxlength="280" placeholder="Optional member bio shown on their stats profile."></textarea></label>
+          <label>TIKTOK URL<input id="adminProfileTikTok" type="url" inputmode="url" placeholder="https://tiktok.com/@username"></label>
+          <label>TWITCH URL<input id="adminProfileTwitch" type="url" inputmode="url" placeholder="https://twitch.tv/username"></label>
           <label>GMAIL FOR INVITE<input id="adminInviteEmail" type="email" maxlength="160" placeholder="member@gmail.com" required></label>
           <label>ROLE<select id="adminRole"><option value="member">Member</option><option value="creator">Creator</option><option value="management">Management</option><option value="owner">Owner</option></select></label>
           <label>ACCESS STATUS<select id="adminStatus"><option value="invited">Invited</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
@@ -96,6 +99,6 @@
 
 <footer><span class="spooky-spider" aria-hidden="true">🕷️</span><div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div><div class="socials"><a href="#">X / TWITTER</a><a href="#">YOUTUBE</a><a href="#">TWITCH</a><a href="#">DISCORD</a></div><small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small></footer>
 <script src="script.js?v=20260927-profile-image-text"></script>
-<script type="module" src="firebase-admin.js?v=20260927-member-picker"></script>
+<script type="module" src="firebase-admin.js?v=20260929-profile-socials"></script>
 </body>
 </html>

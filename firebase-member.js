@@ -290,7 +290,7 @@ function memberIdFromStatsLink(link) {
 
 function appendPublicProfile(memberId, profile) {
   const detail = document.getElementById("playerDetail") || document.getElementById("profileDetail");
-  if (!detail || detail.querySelector(".member-public-profile") || !profile) return;
+  if (!detail || !profile) return;
   const heading = detail.querySelector(".profile-hero-card h1");
   if (heading && profile.displayName) heading.textContent = profile.displayName;
   const profileAvatar = detail.querySelector(".profile-hero-card .profile-avatar");
@@ -302,36 +302,41 @@ function appendPublicProfile(memberId, profile) {
   }
   const hasBio = safeText(profile.bio).trim();
   const socials = profile.socials || {};
-  const links = [["TIKTOK", socials.tiktok], ["TWITCH", socials.twitch], ["YOUTUBE", socials.youtube], ["INSTAGRAM", socials.instagram]]
+  const links = [["TIKTOK", socials.tiktok], ["TWITCH", socials.twitch]]
     .filter(function (entry) { return /^https:\/\//i.test(safeText(entry[1])); });
+
+  const heroCopy = detail.querySelector(".profile-hero-card > div:last-child");
+  if (!heroCopy) return;
+  heroCopy.querySelector(".profile-hero-public")?.remove();
   if (!hasBio && !links.length) return;
-  const panel = document.createElement("section");
-  panel.className = "profile-panel member-public-profile";
-  const label = document.createElement("p");
-  label.className = "label";
-  label.textContent = "ABOUT THE MEMBER";
-  panel.append(label);
+
+  if (links.length) {
+    heroCopy.querySelector(".profile-stream-link:not(.profile-member-social)")?.remove();
+  }
+
+  const publicDetails = document.createElement("div");
+  publicDetails.className = "profile-hero-public";
   if (hasBio) {
     const copy = document.createElement("p");
-    copy.className = "member-public-bio";
+    copy.className = "profile-hero-bio";
     copy.textContent = hasBio;
-    panel.append(copy);
+    publicDetails.append(copy);
   }
   if (links.length) {
     const socialList = document.createElement("div");
-    socialList.className = "member-public-socials";
+    socialList.className = "profile-member-socials";
     links.forEach(function (entry) {
       const anchor = document.createElement("a");
+      anchor.className = "profile-stream-link profile-member-social";
       anchor.href = entry[1];
       anchor.target = "_blank";
       anchor.rel = "noopener";
-      anchor.textContent = entry[0] + " ↗";
+      anchor.innerHTML = "<i></i>" + entry[0] + "<span>VIEW PROFILE ↗</span>";
       socialList.append(anchor);
     });
-    panel.append(socialList);
+    publicDetails.append(socialList);
   }
-  const hero = detail.querySelector(".profile-hero-card");
-  if (hero) hero.insertAdjacentElement("afterend", panel);
+  heroCopy.append(publicDetails);
   window.dispatchEvent(new Event("resize"));
 }
 
@@ -442,7 +447,8 @@ function updateAccountIndicator(user) {
     if (!link) {
       link = document.createElement("a");
       link.className = "firebase-account-link";
-      link.href = "member-account.html";
+      const siteRoot = document.body.dataset.siteRoot || (location.pathname.startsWith("/WsB-eSports/") ? "/WsB-eSports/" : "/");
+      link.href = siteRoot + "member-account.html";
       nav.append(link);
     }
     if (!user) {

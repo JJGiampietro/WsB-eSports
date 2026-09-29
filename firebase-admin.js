@@ -33,6 +33,9 @@ const profileImageInput = document.getElementById("adminProfileImageInput");
 const profileImagePreview = document.getElementById("adminProfileImagePreview");
 const profileImageName = document.getElementById("adminProfileImageName");
 const profileImageRemove = document.getElementById("adminProfileImageRemove");
+const profileBio = document.getElementById("adminProfileBio");
+const profileTikTok = document.getElementById("adminProfileTikTok");
+const profileTwitch = document.getElementById("adminProfileTwitch");
 
 let isAdmin = false;
 let editingId = null;
@@ -163,6 +166,10 @@ function showEditor(record) {
   displayName.value = emptyValue(record.displayName);
   fortniteUsername.value = emptyValue(record.fortniteUsername);
   inviteEmail.value = emptyValue(record.invitedEmail);
+  profileBio.value = emptyValue(record.bio);
+  const socials = record.socials || {};
+  profileTikTok.value = emptyValue(socials.tiktok);
+  profileTwitch.value = emptyValue(socials.twitch);
   role.value = ["member", "creator", "management", "owner"].includes(record.role) ? record.role : "member";
   status.value = ["invited", "active", "inactive"].includes(record.status) ? record.status : "invited";
   setProfileImage(record.profileImage, record.profileImage ? "Current profile icon" : "");
@@ -215,6 +222,8 @@ async function loadRecords() {
       id: member.id,
       displayName: profile.displayName || member.displayName,
       profileImage: profile.profileImage,
+      bio: profile.bio || "",
+      socials: profile.socials || {},
       fortniteUsername: memberAccess.fortniteUsername || member.username,
       ...memberAccess,
       hasAccess: access.has(member.id),
@@ -317,6 +326,7 @@ form.addEventListener("submit", async (event) => {
   try {
     const existing = records.get(id);
     const shouldReset = !existing || !existing.hasAccess || resetAccess.checked;
+    const existingSocials = existing && existing.socials ? existing.socials : {};
     const access = {
       memberId: id,
       displayName: name,
@@ -339,8 +349,14 @@ form.addEventListener("submit", async (event) => {
       setDoc(doc(db, "memberAccess", id), access, { merge: true }),
       setDoc(doc(db, "members", id), {
         displayName: name,
+        bio: profileBio.value.trim(),
+        socials: {
+          ...existingSocials,
+          tiktok: profileTikTok.value.trim(),
+          twitch: profileTwitch.value.trim()
+        },
         profileImage: profileImageData,
-        ...(!existing || !existing.hasProfile ? { bio: "", socials: {}, createdAt: serverTimestamp() } : {}),
+        ...(!existing || !existing.hasProfile ? { createdAt: serverTimestamp() } : {}),
         updatedAt: serverTimestamp()
       }, { merge: true })
     ]);
