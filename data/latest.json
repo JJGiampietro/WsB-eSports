@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-29T19:07:26.171Z",
+  "fetchedAt": "2026-09-29T20:07:13.716Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -77,10 +77,10 @@
       "displayName": "ʷˢᵇLazy",
       "username": "ʷˢᵇLazy",
       "kd": 7.06,
-      "winrate": 24.829,
-      "wins": 6806,
-      "kills": 145461,
-      "matches": 27411
+      "winrate": 24.837,
+      "wins": 6809,
+      "kills": 145482,
+      "matches": 27415
     },
     "mysterious": {
       "displayName": "ᵂˢᴮ Mysterious",
@@ -139,20 +139,20 @@
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
       "username": "ᵂˢᴮGloSznFvᵀᵀ",
-      "kd": 4.11,
-      "winrate": 14.577,
-      "wins": 1474,
-      "kills": 35506,
-      "matches": 10112
+      "kd": 4.113,
+      "winrate": 14.601,
+      "wins": 1477,
+      "kills": 35530,
+      "matches": 10116
     },
     "burrtio": {
       "displayName": "ᵂˢᴮBurrtio",
       "username": "Runito_",
       "kd": 2.163,
-      "winrate": 13.728,
+      "winrate": 13.726,
       "wins": 6848,
-      "kills": 93102,
-      "matches": 49885
+      "kills": 93108,
+      "matches": 49889
     },
     "skrewwww": {
       "displayName": "ᵂˢᴮ Skrewwww",
