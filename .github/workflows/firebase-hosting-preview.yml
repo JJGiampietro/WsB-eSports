@@ -21,5 +21,11 @@ jobs:
           workload_identity_provider: projects/999242676867/locations/global/workloadIdentityPools/github-actions/providers/wsb-repo
           service_account: wsb-hosting-deploy@wsb-esports.iam.gserviceaccount.com
 
+      - name: Set up Google Cloud tools
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Create a short-lived deployment token
+        run: echo "FIREBASE_HOSTING_ACCESS_TOKEN=$(gcloud auth print-access-token)" >> "$GITHUB_ENV"
+
       - name: Refresh Firebase preview
-        run: npx firebase-tools@latest hosting:channel:deploy firebase-preview --project wsb-esports --expires 7d --non-interactive
+        run: node .github/scripts/deploy-firebase-preview.mjs
