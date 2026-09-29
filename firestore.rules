@@ -54,6 +54,111 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerUid', 'status', 'claimedAt']));
     }
 
+    function validBounty(data) {
+      return data.keys().hasAll(['targetName', 'amount', 'mode', 'instructions', 'image', 'status', 'winningClaimId', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['targetName', 'amount', 'mode', 'instructions', 'image', 'status', 'winningClaimId', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.targetName is string && data.targetName.size() > 0 && data.targetName.size() <= 80
+        && data.amount is int && data.amount >= 5 && data.amount <= 20
+        && data.mode in ['Any mode', 'Battle Royale', 'Zero Build', 'Reload']
+        && data.instructions is string && data.instructions.size() > 0 && data.instructions.size() <= 1500
+        && data.image in ['wsb-logo.png', 'elusion.png', 'mysterious.png', 'mello.png', 'kato.png']
+        && data.status in ['open', 'paused', 'claimed', 'archived']
+        && data.winningClaimId is string && data.winningClaimId.size() <= 200
+        && data.createdBy is string && data.createdAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function validBountyWinner(bountyId) {
+      let next = request.resource.data;
+      let previous = resource.data;
+      return (next.winningClaimId == previous.winningClaimId
+          && (next.winningClaimId == '' ? next.status != 'claimed' : next.status in ['claimed', 'archived']))
+        || (previous.winningClaimId == '' && previous.status == 'open'
+          && next.status == 'claimed' && next.winningClaimId != ''
+          && getAfter(/databases/$(database)/documents/bountyClaims/$(next.winningClaimId)).data.bountyId == bountyId
+          && getAfter(/databases/$(database)/documents/bountyClaims/$(next.winningClaimId)).data.status == 'approved'
+          && getAfter(/databases/$(database)/documents/bountyClaims/$(next.winningClaimId)).data.reviewedAt == request.time);
+    }
+
+    match /bounties/{bountyId} {
+      allow read: if signedIn();
+      allow create: if isAdmin() && validBounty(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.status in ['open', 'paused']
+        && request.resource.data.winningClaimId == '';
+      allow update: if isAdmin() && validBounty(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && validBountyWinner(bountyId);
+      // Removal is an archive operation, preserving evidence and decisions.
+      allow delete: if false;
+    }
+
+    function activeBountyMember(data) {
+      return signedIn() && ((isAdmin() && data.memberId == '')
+        || (data.memberId != ''
+          && get(/databases/$(database)/documents/memberAccess/$(data.memberId)).data.ownerUid == request.auth.uid
+          && get(/databases/$(database)/documents/memberAccess/$(data.memberId)).data.status == 'active'));
+    }
+
+    function validClaim(data) {
+      return data.keys().hasAll(['bountyId', 'ownerUid', 'memberId', 'claimantName', 'targetName', 'amount', 'mode', 'clipUrl', 'notes', 'status', 'createdAt', 'updatedAt', 'reviewedAt', 'reviewerUid', 'reason'])
+        && data.keys().hasOnly(['bountyId', 'ownerUid', 'memberId', 'claimantName', 'targetName', 'amount', 'mode', 'clipUrl', 'notes', 'status', 'createdAt', 'updatedAt', 'reviewedAt', 'reviewerUid', 'reason'])
+        && data.bountyId is string && data.bountyId.matches('^[A-Za-z0-9_-]{1,80}$')
+        && data.ownerUid is string && data.ownerUid.size() > 0 && data.ownerUid.size() <= 128
+        && data.memberId is string && data.memberId.size() <= 100
+        && data.claimantName is string && data.claimantName.size() > 0 && data.claimantName.size() <= 80
+        && data.targetName is string && data.targetName.size() > 0 && data.targetName.size() <= 80
+        && data.amount is int && data.amount >= 5 && data.amount <= 20
+        && data.mode in ['Any mode', 'Battle Royale', 'Zero Build', 'Reload']
+        && data.clipUrl is string && data.clipUrl.size() <= 2000
+        && data.clipUrl.matches('^https://(www[.])?(youtube[.]com|youtu[.]be|streamable[.]com|clips[.]twitch[.]tv)/[A-Za-z0-9_/?&=.%#~+-]+$')
+        && data.notes is string && data.notes.size() <= 600
+        && data.status in ['pending', 'approved', 'denied']
+        && data.createdAt is timestamp && data.updatedAt == request.time
+        && data.reviewerUid is string && data.reason is string && data.reason.size() <= 600;
+    }
+
+    function validSubmission(claimId) {
+      let data = request.resource.data;
+      let bounty = get(/databases/$(database)/documents/bounties/$(data.bountyId)).data;
+      return activeBountyMember(data)
+        && data.ownerUid == request.auth.uid
+        && claimId == data.bountyId + '_' + request.auth.uid
+        && bounty.status == 'open' && bounty.winningClaimId == ''
+        && data.targetName == bounty.targetName && data.amount == bounty.amount && data.mode == bounty.mode
+        && data.status == 'pending' && data.reviewedAt == null && data.reviewerUid == '' && data.reason == '';
+    }
+
+    function validClaimReview(claimId) {
+      let next = request.resource.data;
+      return isAdmin() && resource.data.status == 'pending'
+        && next.diff(resource.data).affectedKeys().hasOnly(['status', 'reviewedAt', 'reviewerUid', 'reason', 'updatedAt'])
+        && next.reviewerUid == request.auth.uid && next.reviewedAt == request.time
+        && ((next.status == 'denied' && next.reason.size() > 0)
+          || (next.status == 'approved'
+            && get(/databases/$(database)/documents/bounties/$(next.bountyId)).data.status == 'open'
+            && get(/databases/$(database)/documents/bounties/$(next.bountyId)).data.winningClaimId == ''
+            && getAfter(/databases/$(database)/documents/bounties/$(next.bountyId)).data.status == 'claimed'
+            && getAfter(/databases/$(database)/documents/bounties/$(next.bountyId)).data.winningClaimId == claimId));
+    }
+
+    match /bountyClaims/{claimId} {
+      // List queries must be scoped to the caller's ownerUid unless they are an admin.
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow create: if validClaim(request.resource.data) && validSubmission(claimId)
+        && request.resource.data.createdAt == request.time;
+      allow update: if validClaim(request.resource.data)
+        && (validClaimReview(claimId)
+          || (resource.data.ownerUid == request.auth.uid && resource.data.status == 'denied'
+            && request.resource.data.bountyId == resource.data.bountyId
+            && request.resource.data.ownerUid == resource.data.ownerUid
+            && request.resource.data.createdAt == resource.data.createdAt
+            && validSubmission(claimId)));
+      allow delete: if false;
+    }
+
     match /admins/{userId} {
       allow get: if signedIn() && userId == request.auth.uid;
       allow list, create, update, delete: if isAdmin();

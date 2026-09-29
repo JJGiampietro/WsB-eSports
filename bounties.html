@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>WsB | Bounty Board</title>
+  <meta name="description" content="Find a Fortnite bounty, capture your elimination, and submit your clip for review.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=circular-logo-20260927">
+  <link rel="stylesheet" href="redesign.css?v=20260929-stats-profile-banner">
+  <link rel="stylesheet" href="bounties.css?v=2">
+</head>
+<body class="bounty-page">
+<header class="nav">
+  <a class="mini-brand" href="index.html#home"><img src="wsb-logo.png" alt="WsB logo"><span>WsB</span></a>
+  <nav id="navlinks" aria-label="Main navigation">
+    <a href="management.html">MANAGEMENT</a><a href="members.html">MEMBERS</a>
+    <details class="nav-group"><summary>PERFORMANCE <span aria-hidden="true">⌄</span></summary><div class="nav-menu"><a href="stats.html">STATS</a><a href="leaderboards.html">LEADERBOARDS</a></div></details>
+    <details class="nav-group"><summary>COMMUNITY <span aria-hidden="true">⌄</span></summary><div class="nav-menu"><a href="index.html#about">ABOUT</a><a href="events.html">EVENTS</a><a href="announcements.html">ANNOUNCEMENTS</a><a href="questions.html">QUESTIONS</a><a href="games.html">MINI GAMES</a></div></details>
+    <a href="index.html#join" id="navJoinLink">JOIN WsB</a><a class="firebase-account-link" href="member-account.html">MY PROFILE</a>
+  </nav>
+  <button type="button" class="spooky-btn" id="spookyToggle" aria-pressed="false">🎃 Spooky Surprise</button>
+  <button class="menu" aria-label="Toggle navigation">☰</button>
+</header>
+<main class="bounty-shell">
+  <div class="bounty-preview"><span id="bountyAccountStatus" role="status">Checking your account…</span><button id="bountySignIn" class="bounty-text-btn" hidden>Continue with Google</button></div>
+  <div id="bountyError" class="bounty-notice" role="alert" hidden></div>
+  <noscript><p class="bounty-notice">Enable JavaScript to sign in and use the bounty board.</p></noscript>
+  <section class="bounty-hero" aria-labelledby="bountyTitle">
+    <div class="bounty-hero-copy"><p class="bounty-eyebrow">WsB COMMUNITY CHALLENGES</p><h1 id="bountyTitle">BOUNTY<br><span>BOARD.</span></h1><p>Find the player. Get the elimination.<br>Bring the clip. Claim the reward.</p><a class="bounty-btn" href="#board">EXPLORE BOUNTIES <span aria-hidden="true">↗</span></a></div>
+    <div class="bounty-hero-art"><img src="wsb-logo.png" alt="" class="bounty-brand-mark"><div class="bounty-reward-summary"><span>V-BUCKS REWARDS</span><strong>$5<span>-</span>$20</strong><p>Reward value in USD.<br>Every claim reviewed by the WsB team.</p></div></div>
+  </section>
+  <div class="bounty-steps" aria-label="How bounties work"><p><b>01</b><span><strong>Find your bounty</strong>Choose an open target.</span></p><p><b>02</b><span><strong>Capture the elimination</strong>Keep names and the elimination visible.</span></p><p><b>03</b><span><strong>Submit for review</strong>An admin approves or denies your clip.</span></p></div>
+  <section id="board" class="bounty-workspace" aria-label="Bounty board">
+    <div class="bounty-tabs" role="tablist" aria-label="Bounty views">
+      <button id="tab-board" role="tab" aria-selected="true" aria-controls="panel-board" data-view="board">Bounty board <span id="openCount">0</span></button>
+      <button id="tab-claims" role="tab" aria-selected="false" aria-controls="panel-claims" tabindex="-1" data-view="claims" hidden>My claims <span id="claimCount">0</span></button>
+      <button id="tab-review" role="tab" aria-selected="false" aria-controls="panel-review" tabindex="-1" data-view="review" hidden>Admin review</button>
+      <button id="tab-manage" role="tab" aria-selected="false" aria-controls="panel-manage" tabindex="-1" data-view="manage" hidden>Manage bounties</button>
+    </div>
+    <div id="panel-board" role="tabpanel" aria-labelledby="tab-board">
+      <div class="bounty-toolbar"><div><h2>Who's on the board?</h2><p id="resultCount" aria-live="polite">Sign in to see the bounty board.</p></div><div class="bounty-filters"><label><span class="bounty-sr">Search bounty players</span><input type="search" id="bountySearch" placeholder="Search player name…"></label><label><span class="bounty-sr">Bounty status</span><select id="bountyFilter"><option value="all">All bounties</option><option value="open">Open</option><option value="paused">Paused</option><option value="claimed">Claimed</option></select></label></div></div>
+      <div class="bounty-grid" id="bountyGrid"><div class="bounty-empty"><h3>Loading your bounty board.</h3><p>Checking account access.</p></div></div>
+    </div>
+    <div id="panel-claims" role="tabpanel" aria-labelledby="tab-claims" hidden><div class="bounty-toolbar"><div><h2>Your clips. Your claims.</h2><p>Track your submissions and see the team's decision.</p></div></div><div id="claimList" class="bounty-claim-list"></div></div>
+    <div id="panel-review" role="tabpanel" aria-labelledby="tab-review" hidden><div class="bounty-toolbar"><div><h2>Review the evidence.</h2><p>Open the clip, verify the elimination, then approve or deny the claim.</p></div></div><div id="reviewList" class="bounty-claim-list"></div></div>
+    <div id="panel-manage" role="tabpanel" aria-labelledby="tab-manage" hidden><div class="bounty-toolbar"><div><h2>Set the next target.</h2><p>Add, edit, pause, or remove bounties. Removed bounties retain their claim history.</p></div><button id="addBounty" class="bounty-btn">ADD BOUNTY <span aria-hidden="true">+</span></button></div><div id="manageList" class="bounty-claim-list"></div></div>
+  </section>
+  <section class="bounty-rules"><div><p class="bounty-eyebrow">BEFORE YOU SUBMIT</p><h2>THE CLIP<br>IS THE PROOF.</h2><p>Fortnite eliminations only. Keep it competitive and respectful.</p></div><div class="bounty-rule-list"><details open><summary>What should my clip show?</summary><p>Show your in-game name, the target's exact name, and the elimination clearly. Upload your clip to YouTube (unlisted is fine), Streamable, or Twitch Clips, then paste its link. Keep it available until review is complete.</p></details><details><summary>When is a reward approved?</summary><p>Submitting a clip does not reserve or award a bounty. An admin reviews the evidence and approves one winning claim per bounty. Denied claims include feedback and can be resubmitted while the bounty is open.</p></details><details><summary>How do V-Bucks rewards work?</summary><p>Bounties show a $5-$20 reward value in USD toward V-Bucks. Approval does not automatically deliver a reward. The WsB team arranges delivery with the winning member.</p></details></div></section>
+  <p class="bounty-footnote">Claim details and clip links are visible to the submitting member and WsB admins. Video visibility is controlled by its hosting service.</p>
+</main>
+<footer><div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div><small>© 2026 WsB. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small></footer>
+<dialog id="claimDialog" class="bounty-dialog" aria-labelledby="dialogTitle"><button id="closeDialog" class="bounty-close" aria-label="Close bounty details">×</button><div class="bounty-dialog-top"><img id="dialogImage" src="elusion.png" alt=""><div><p class="bounty-eyebrow">BOUNTY DETAILS</p><h2 id="dialogTitle"></h2><p id="dialogReward"></p></div></div><p id="dialogRules" class="bounty-dialog-rules"></p>
+  <form id="claimForm"><h3>GOT THE ELIMINATION?</h3><p>Share your evidence for the WsB team to review.</p><label class="bounty-field">Your Fortnite name<input id="claimName" maxlength="80" required placeholder="Your exact in-game name" autocomplete="off"></label><label class="bounty-field">Clip link<input id="claimClipUrl" type="url" maxlength="2000" required placeholder="https://youtu.be/…" aria-describedby="clipHelp"></label><p id="clipHelp" class="bounty-help">YouTube, Streamable, or Twitch Clips. Use a shareable link that an admin can open without signing in. WsB stores the link, not the video.</p><label class="bounty-field">Notes <span>(optional)</span><textarea id="claimNotes" maxlength="600" rows="2" placeholder="Elimination timestamp or anything we should know"></textarea></label><label class="bounty-check"><input id="claimConfirm" type="checkbox" required><span>This is my gameplay and the clip clearly shows the bounty player's elimination.</span></label><p id="claimError" class="bounty-error" role="alert"></p><button class="bounty-btn" id="submitClaim" type="submit">SUBMIT CLAIM <span aria-hidden="true">↗</span></button></form>
+</dialog>
+<dialog id="editorDialog" class="bounty-dialog" aria-labelledby="editorTitle"><button id="closeEditor" class="bounty-close" aria-label="Close bounty editor">×</button><h2 id="editorTitle">ADD BOUNTY</h2><form id="bountyEditor"><label class="bounty-field">Target's exact Fortnite name<input id="editTarget" maxlength="80" required></label><div class="bounty-editor-row"><label class="bounty-field">V-Bucks reward value (USD)<input id="editAmount" type="number" min="5" max="20" step="1" value="5" required></label><label class="bounty-field">Mode<select id="editMode"><option>Any mode</option><option>Battle Royale</option><option>Zero Build</option><option>Reload</option></select></label></div><label class="bounty-field">Bounty requirements<textarea id="editInstructions" maxlength="1500" rows="4" required placeholder="Eligible mode, proof required, and any special conditions"></textarea></label><label class="bounty-field">Card artwork<select id="editImage"><option value="wsb-logo.png">WsB logo</option><option value="elusion.png">Psycho Bandit</option><option value="mysterious.png">Raven</option><option value="mello.png">Masked fighter</option><option value="kato.png">Racing pilot</option></select></label><label class="bounty-field">Status<select id="editStatus"><option value="open">Open for claims</option><option value="paused">Paused</option></select></label><p class="bounty-help">Existing claims keep the target and reward details from when they were submitted. Removing a bounty archives it and keeps the review history.</p><p id="editorError" class="bounty-error" role="alert"></p><button id="saveBounty" class="bounty-btn" type="submit">SAVE BOUNTY</button></form></dialog>
+<dialog id="removeDialog" class="bounty-dialog" aria-labelledby="removeTitle"><h2 id="removeTitle">REMOVE BOUNTY?</h2><p id="removeDescription"></p><p class="bounty-help">It will leave the member board and stop accepting claims. Existing evidence and decisions are preserved.</p><p id="removeError" class="bounty-error" role="alert"></p><div class="bounty-review-actions"><button id="confirmRemove" class="bounty-btn">REMOVE BOUNTY</button><button id="cancelRemove" class="bounty-btn secondary">CANCEL</button></div></dialog>
+<div id="bountyToast" class="bounty-toast" role="status" hidden></div>
+<script src="script.js?v=circular-logo-20260927"></script>
+<script type="module" src="bounties.js?v=2"></script>
+</body>
+</html>

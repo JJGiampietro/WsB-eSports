@@ -1,2 +1,6 @@
 .firebase/
 firebase-debug.log
+**/node_modules/
+**/firestore-debug.log
+**/ui-debug.log
+.tests/bounties/artifacts/
