@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-09-29T14:08:25.296Z",
+  "fetchedAt": "2026-09-29T15:09:40.471Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -59,10 +59,10 @@
       "displayName": "Shloozyyy ᵀᵀ",
       "username": "Shloozyyy ᵀᵀ",
       "kd": 4.23,
-      "winrate": 21.975,
+      "winrate": 21.973,
       "wins": 2544,
-      "kills": 38210,
-      "matches": 11577
+      "kills": 38214,
+      "matches": 11578
     },
     "allieontt": {
       "displayName": "ᵂˢᴮ alliecat",
@@ -77,10 +77,10 @@
       "displayName": "ʷˢᵇLazy",
       "username": "ʷˢᵇLazy",
       "kd": 7.059,
-      "winrate": 24.824,
-      "wins": 6802,
-      "kills": 145402,
-      "matches": 27401
+      "winrate": 24.829,
+      "wins": 6805,
+      "kills": 145432,
+      "matches": 27407
     },
     "mysterious": {
       "displayName": "ᵂˢᴮ Mysterious",
@@ -104,19 +104,19 @@
       "displayName": "ᵂˢᴮohitskatie",
       "username": "ᵗᵗohitskatie ʚїɞ",
       "kd": 3.411,
-      "winrate": 16.437,
-      "wins": 1948,
-      "kills": 33778,
-      "matches": 11851
+      "winrate": 16.443,
+      "wins": 1949,
+      "kills": 33786,
+      "matches": 11853
     },
     "iinsanity": {
       "displayName": "ᵂˢᴮ iinsanity ᵀᵀ",
       "username": "ᵂˢᴮ iinsanity ᵀᵀ",
       "kd": 4.871,
-      "winrate": 16.674,
-      "wins": 5372,
-      "kills": 130754,
-      "matches": 32217
+      "winrate": 16.675,
+      "wins": 5373,
+      "kills": 130784,
+      "matches": 32221
     },
     "envious": {
       "displayName": "ᵂˢᴮᴇɴᴠɪᴏᴜꜱǃ",
@@ -139,11 +139,11 @@
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
       "username": "ᵂˢᴮGloSznFvᵀᵀ",
-      "kd": 4.109,
-      "winrate": 14.542,
-      "wins": 1469,
-      "kills": 35473,
-      "matches": 10102
+      "kd": 4.11,
+      "winrate": 14.556,
+      "wins": 1471,
+      "kills": 35488,
+      "matches": 10106
     },
     "burrtio": {
       "displayName": "ᵂˢᴮBurrtio",
@@ -176,10 +176,10 @@
       "displayName": "ᵂˢᴮYoshi",
       "username": "ᵂˢᴮYoshi",
       "kd": 5.268,
-      "winrate": 17.699,
-      "wins": 3683,
-      "kills": 90220,
-      "matches": 20809
+      "winrate": 17.7,
+      "wins": 3684,
+      "kills": 90231,
+      "matches": 20813
     },
     "kato": {
       "displayName": "ᵂˢᴮ katoᵀᵀ",
