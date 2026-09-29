@@ -2,8 +2,8 @@ name: Firebase Hourly Stats Sync
 
 on:
   schedule:
-    # The canonical stats refresh starts on the hour; deploy its finished data shortly after.
-    - cron: "5 * * * *"
+    # The canonical refresh starts on the hour and can take several minutes to finish.
+    - cron: "20 * * * *"
   workflow_dispatch: {}
 
 permissions:
