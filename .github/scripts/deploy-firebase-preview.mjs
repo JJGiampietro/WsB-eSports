@@ -4,7 +4,7 @@ import path from "node:path";
 import { gzipSync } from "node:zlib";
 
 const siteId = "wsb-esports";
-const channelId = "firebase-preview";
+const channelId = process.env.FIREBASE_HOSTING_CHANNEL ?? "firebase-preview";
 const token = process.env.FIREBASE_HOSTING_ACCESS_TOKEN;
 
 if (!token) {
@@ -94,7 +94,9 @@ function hostingConfig() {
   };
 }
 
-await ensureChannel();
+if (channelId !== "live") {
+  await ensureChannel();
+}
 
 const root = process.cwd();
 const assets = await listFiles(root);
@@ -137,8 +139,12 @@ await request(`https://firebasehosting.googleapis.com/v1beta1/${version.name}?up
   body: JSON.stringify({ status: "FINALIZED" }),
 });
 
+const releasePath = channelId === "live"
+  ? `sites/${siteId}/releases`
+  : `sites/${siteId}/channels/${channelId}/releases`;
+
 const release = await request(
-  `https://firebasehosting.googleapis.com/v1beta1/sites/${siteId}/channels/${channelId}/releases?versionName=${encodeURIComponent(version.name)}`,
+  `https://firebasehosting.googleapis.com/v1beta1/${releasePath}?versionName=${encodeURIComponent(version.name)}`,
   {
     method: "POST",
     headers: { "Content-Type": "application/json" },
