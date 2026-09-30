@@ -10,6 +10,7 @@ const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).trim().s
 const pages = tracked.filter(name => name.endsWith('.html'));
 const payload = JSON.parse(execFileSync(process.execPath, ['.github/scripts/deploy-firebase-preview.mjs', '--dry-run'], { encoding: 'utf8' }));
 assert(payload.files.includes('/deployment.json'));
+assert(payload.config.headers.some(rule => rule.glob === '/' && rule.headers['Cache-Control'] === 'no-cache'));
 assert(!payload.files.some(name => /(?:^\/scripts\/|\/\.|gha-creds-|\.md$|firestore.rules|firebase.json)/.test(name)));
 for (const name of pages) {
   assert(payload.files.includes('/' + name), `Missing deployed page: ${name}`);
