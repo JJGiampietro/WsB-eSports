@@ -61,7 +61,9 @@ service cloud.firestore {
         && data.amount is int && data.amount >= 5 && data.amount <= 20
         && data.mode in ['Any mode', 'Battle Royale', 'Zero Build', 'Reload']
         && data.instructions is string && data.instructions.size() > 0 && data.instructions.size() <= 1500
-        && data.image in ['wsb-logo.png', 'elusion.png', 'mysterious.png', 'mello.png', 'kato.png']
+        && data.image is string && data.image.size() <= 200000
+        && (data.image in ['wsb-logo.png', 'elusion.png', 'mysterious.png', 'mello.png', 'kato.png']
+          || data.image.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$'))
         && data.status in ['open', 'paused', 'claimed', 'archived']
         && data.winningClaimId is string && data.winningClaimId.size() <= 200
         && data.createdBy is string && data.createdAt is timestamp

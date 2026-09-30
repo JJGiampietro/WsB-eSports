@@ -24,6 +24,15 @@ async function approve(db,bid,cid){return runTransaction(db,async tx=>{const br=
  const inactive=env.authenticatedContext('inactive').firestore(), stranger=env.authenticatedContext('stranger').firestore(), anonymous=env.unauthenticatedContext().firestore();
  await test('Only admins create and edit bounties',async()=>{await assertSucceeds(setDoc(doc(admin,'bounties','target'),bounty()));await assertFails(setDoc(doc(member,'bounties','fake'),bounty({createdBy:'member'})));await assertFails(updateDoc(doc(member,'bounties','target'),{amount:20,updatedAt:serverTimestamp()}));await assertSucceeds(updateDoc(doc(admin,'bounties','target'),{instructions:'Keep names visible.',updatedAt:serverTimestamp()}));});
  await test('Reward range, image whitelist, status and extra fields validated',async()=>{for(const bad of [{amount:21},{amount:4},{amount:5.5},{image:'javascript:alert(1)'},{status:'claimed'},{extra:true}])await assertFails(setDoc(doc(admin,'bounties','bad'),bounty(bad)));});
+ await test('Uploaded bounty images are bounded raster data, admin-only and backward-compatible',async()=>{
+  const image='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aTfsAAAAASUVORK5CYII=';
+  await assertSucceeds(setDoc(doc(admin,'bounties','upload'),bounty({image})));
+  await assertSucceeds(updateDoc(doc(admin,'bounties','upload'),{image:'kato.png',updatedAt:serverTimestamp()}));
+  await assertSucceeds(updateDoc(doc(admin,'bounties','upload'),{image,updatedAt:serverTimestamp()}));
+  await assertFails(updateDoc(doc(member,'bounties','upload'),{image,updatedAt:serverTimestamp()}));
+  await assertFails(setDoc(doc(anonymous,'bounties','upload-anon'),bounty({image})));
+  for(const invalid of ['https://example.com/picture.png','data:image/svg+xml;base64,PHN2Zz4=','data:text/html;base64,PHNjcmlwdD4=','data:image/png;base64,x" onerror="alert(1)','data:image/png;base64,'+'A'.repeat(200000),42])await assertFails(setDoc(doc(admin,'bounties','invalid-image'),bounty({image:invalid})));
+ });
  await test('Bounty reads require sign-in',async()=>{await assertFails(getDocs(collection(anonymous,'bounties')));await assertSucceeds(getDocs(collection(member,'bounties')));});
  await test('Inactive, unlinked and anonymous accounts cannot claim',async()=>{await assertFails(setDoc(doc(inactive,'bountyClaims','target_inactive'),claim('inactive')));await assertFails(setDoc(doc(stranger,'bountyClaims','target_stranger'),claim('stranger')));await assertFails(setDoc(doc(anonymous,'bountyClaims','target_anon'),claim('anon')));});
  await test('Cannot spoof owner, member, reward or claim ID',async()=>{await assertFails(setDoc(doc(member,'bountyClaims','target_other'),claim('other')));await assertFails(setDoc(doc(member,'bountyClaims','target_member'),claim('member','target',{memberId:'other'})));await assertFails(setDoc(doc(member,'bountyClaims','target_member'),claim('member','target',{amount:20})));await assertFails(setDoc(doc(member,'bountyClaims','arbitrary'),claim()));});

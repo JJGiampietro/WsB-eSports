@@ -108,6 +108,13 @@
 .bounty-notice { border:1px solid var(--wsb-danger); border-radius:8px; padding:16px; margin-bottom:20px; color:var(--wsb-text); }
 .bounty-error { color:var(--wsb-danger); }
 .bounty-editor-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.bounty-image-editor { display:grid; grid-template-columns:100px minmax(0,1fr); gap:16px; align-items:start; margin:20px 0; padding:16px; border:1px solid var(--wsb-line); border-radius:10px; }
+.bounty-image-editor img { width:100px; height:100px; border-radius:8px; object-fit:cover; }
+.bounty-image-editor label { display:block; font-weight:700; }
+.bounty-image-editor input { display:block; width:100%; margin:10px 0; font-size:13px; }
+.bounty-image-editor input::file-selector-button { padding:9px; margin-right:8px; border:1px solid var(--wsb-line-strong); border-radius:6px; background:var(--wsb-surface-strong); color:var(--wsb-violet-soft); cursor:pointer; }
+.bounty-image-editor .bounty-text-btn { padding:10px 0; }
+@media(max-width:460px) { .bounty-image-editor { grid-template-columns:1fr; } }
 .bounty-field select { display:block; width:100%; margin-top:7px; padding:12px; border:1px solid var(--wsb-line-strong); border-radius:8px; color:var(--wsb-text); background:#0d0b13; font-size:15px; }
 .bounty-card-image { height:auto; }
 .bounty-manage-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:16px; }

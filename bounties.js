@@ -1,4 +1,5 @@
 import { auth, db, provider } from './firebase-member.js?v=20260929-stats-nav-root-account';
+import { safeProfileImage, makeProfileIcon } from './profile-image.js?v=1';
 import { onAuthStateChanged, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { collection, doc, getDoc, onSnapshot, query, where, runTransaction, serverTimestamp, setDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 
@@ -11,6 +12,7 @@ let bounties = [], claims = [], boardReady = false, claimsReady = false;
 let view = 'board', activeTarget = '', editingId = '', removingId = '', toastTimer;
 let epoch = 0, roleKnown = false, subscriptions = [], claimsUnsubscribe = null, claimsGeneration = 0, editorVersion = null;
 let submitting = false, saving = false, removing = false, reviewing = false;
+let editorImage = 'wsb-logo.png', imageProcessing = false, imageGeneration = 0;
 
 function readableError(error) {
   if (error.code === 'permission-denied') return 'Access denied. Your role may have changed, or bounty permissions are not available yet. Refresh and try again.';
@@ -27,7 +29,7 @@ function empty(title, message) { return '<div class="bounty-empty"><h3>' + esc(t
 function canSubmit() { return Boolean(user && (admin || memberReady)); }
 function ownClaim(id) { return claims.find(c => c.bountyId === id && c.ownerUid === user?.uid); }
 function date(value) { return value?.toDate ? value.toDate().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Saving…'; }
-function imageFor(value) { return images.includes(value) ? value : 'wsb-logo.png'; }
+function imageFor(value) { return safeProfileImage(value) || (images.includes(value) && value !== 'wsb-logo.png' ? value : 'wsb-logo.webp'); }
 
 function setView(next, focus = false) {
   if (!user && next !== 'board') next = 'board';
@@ -64,22 +66,25 @@ function renderBoard() {
 function claimMarkup(c, review) {
   const bounty = bounties.find(b => b.id === c.bountyId);
   const closed = !bounty || bounty.status !== 'open';
+  const removed = !bounty || bounty.status === 'archived';
   const clip = clipPattern.test(c.clipUrl) ? '<a class="bounty-btn secondary" href="' + esc(c.clipUrl) + '" target="_blank" rel="noopener noreferrer">OPEN CLIP ↗</a>' : '<p class="bounty-error">The saved clip link is invalid.</p>';
   return '<article class="bounty-claim"><div class="bounty-claim-head"><div><h3>' + esc(c.targetName) + ' / $' + c.amount + '</h3><p>' + esc(c.claimantName) + ' · ' + esc(date(c.updatedAt)) + '</p></div><span class="bounty-status ' + esc(c.status) + '">' + (c.status === 'pending' ? 'Pending review' : esc(c.status)) + '</span></div><p>' + esc(c.mode) + '. Reward and target details shown are from the submitted claim.</p>' + clip
     + (c.notes ? '<p><strong>Member notes:</strong> ' + esc(c.notes) + '</p>' : '')
     + (c.reason ? '<p><strong>Admin feedback:</strong> ' + esc(c.reason) + '</p>' : '')
     + (c.status === 'approved' ? '<p>Winning claim approved. The WsB team will arrange your reward separately.</p>' : '')
-    + (closed && c.status === 'pending' ? '<p>This bounty is no longer open. It cannot award another claim.</p>' : '')
+    + (removed ? '<p><strong>Removed bounty — retained for admin history only.</strong></p>' : closed && c.status === 'pending' ? '<p>This bounty is no longer open. It cannot award another claim.</p>' : '')
     + (!review && c.status === 'denied' && !closed && canSubmit() ? '<button class="bounty-btn secondary" data-target="' + esc(c.bountyId) + '">RESUBMIT CLAIM</button>' : '')
-    + (review && c.status === 'pending' ? '<label>Review notes (required when denying)<textarea class="bounty-review-note" id="reason-' + esc(c.id) + '" maxlength="600" rows="2" placeholder="Explain the decision to the member"></textarea></label><p id="review-error-' + esc(c.id) + '" class="bounty-error" role="alert"></p><div class="bounty-review-actions"><button class="bounty-btn" data-decision="approved" data-review="' + esc(c.id) + '" ' + (closed ? 'disabled' : '') + '>APPROVE CLAIM</button><button class="bounty-btn secondary" data-decision="denied" data-review="' + esc(c.id) + '">DENY CLAIM</button></div>' : '') + '</article>';
+    + (review && !removed && c.status === 'pending' ? '<label>Review notes (required when denying)<textarea class="bounty-review-note" id="reason-' + esc(c.id) + '" maxlength="600" rows="2" placeholder="Explain the decision to the member"></textarea></label><p id="review-error-' + esc(c.id) + '" class="bounty-error" role="alert"></p><div class="bounty-review-actions"><button class="bounty-btn" data-decision="approved" data-review="' + esc(c.id) + '" ' + (closed ? 'disabled' : '') + '>APPROVE CLAIM</button><button class="bounty-btn secondary" data-decision="denied" data-review="' + esc(c.id) + '">DENY CLAIM</button></div>' : '') + '</article>';
 }
 function renderClaims() {
   // Preserve typed review notes when a realtime update arrives.
   const drafts = new Map([...document.querySelectorAll('#reviewList textarea')].map(t => [t.id, t.value]));
-  const mine = claims.filter(c => c.ownerUid === user?.uid);
+  const available = new Set(bounties.filter(b => b.status !== 'archived').map(b => b.id));
+  const mine = claims.filter(c => c.ownerUid === user?.uid && available.has(c.bountyId));
+  const reviews = admin && $('showRemovedClaims').checked ? claims : claims.filter(c => available.has(c.bountyId));
   $('claimCount').textContent = mine.length;
-  $('claimList').innerHTML = !user ? '' : !claimsReady ? empty('Loading claims…', 'Retrieving your submissions.') : mine.map(c => claimMarkup(c, false)).join('') || empty('Your first claim starts here.', 'Choose an open bounty and submit your clip link for review.');
-  $('reviewList').innerHTML = !admin ? '' : !claimsReady ? empty('Loading reviews…', 'Retrieving submitted claims.') : claims.map(c => claimMarkup(c, true)).join('') || empty('The review queue is clear.', 'New member claims will appear here.');
+  $('claimList').innerHTML = !user ? '' : !claimsReady || !boardReady ? empty('Loading claims…', 'Retrieving your submissions.') : mine.map(c => claimMarkup(c, false)).join('') || empty('Your first claim starts here.', 'Choose an open bounty and submit your clip link for review. Claims for removed bounties are hidden here.');
+  $('reviewList').innerHTML = !admin ? '' : !claimsReady || !boardReady ? empty('Loading reviews…', 'Retrieving submitted claims.') : reviews.map(c => claimMarkup(c, true)).join('') || empty('The review queue is clear.', 'New member claims will appear here. Enable removed bounty history to see archived claims.');
   if (admin) drafts.forEach((value, id) => { if ($(id)) $(id).value = value; });
 }
 function renderManagement() {
@@ -113,6 +118,7 @@ onAuthStateChanged(auth, nextUser => {
   ++claimsGeneration;
   ['claimDialog', 'editorDialog', 'removeDialog'].forEach(id => { if ($(id).open) $(id).close(); });
   user = nextUser; admin = false; roleKnown = false; memberReady = false; memberId = ''; memberName = '';
+  $('showRemovedClaims').checked = false;
   bounties = []; claims = []; boardReady = false; claimsReady = false;
   $('bountyError').hidden = true; updateAccess();
   if (!user) return;
@@ -196,6 +202,44 @@ $('claimForm').addEventListener('submit', async e => {
   finally { submitting = false; $('submitClaim').disabled = false; $('submitClaim').textContent = 'SUBMIT CLAIM ↗'; }
 });
 
+function updateImageControls() {
+  $('saveBounty').disabled = saving || imageProcessing;
+  $('editImageFile').disabled = saving || imageProcessing;
+  $('removeBountyImage').disabled = saving;
+}
+function setEditorImage(value, label) {
+  editorImage = safeProfileImage(value) || (images.includes(value) ? value : 'wsb-logo.png');
+  $('editImagePreview').src = imageFor(editorImage);
+  $('editImageStatus').textContent = label || (editorImage === 'wsb-logo.png' ? 'Default WsB logo' : 'Current bounty image');
+  $('removeBountyImage').hidden = editorImage === 'wsb-logo.png';
+}
+$('editImageFile').addEventListener('change', async () => {
+  const file = $('editImageFile').files?.[0];
+  if (!file || !admin || saving) return;
+  const generation = ++imageGeneration, version = epoch;
+  imageProcessing = true; updateImageControls(); $('editorError').textContent = '';
+  $('editImageStatus').textContent = 'Preparing image…';
+  try {
+    const data = await makeProfileIcon(file);
+    if (generation !== imageGeneration || version !== epoch || !admin || !$('editorDialog').open) return;
+    setEditorImage(data, 'Image ready — save the bounty to apply it.');
+  } catch (error) {
+    if (generation === imageGeneration && version === epoch) {
+      setEditorImage(editorImage); $('editorError').textContent = error.message;
+    }
+  } finally {
+    if (generation === imageGeneration) { imageProcessing = false; $('editImageFile').value = ''; updateImageControls(); }
+  }
+});
+$('removeBountyImage').addEventListener('click', () => {
+  if (!admin || saving) return;
+  ++imageGeneration; imageProcessing = false; $('editImageFile').value = '';
+  setEditorImage('wsb-logo.png'); $('editorError').textContent = ''; updateImageControls();
+});
+$('editorDialog').addEventListener('close', () => {
+  ++imageGeneration; imageProcessing = false; $('editImageFile').value = ''; updateImageControls();
+});
+
 function openEditor(id = '') {
   if (!admin) return;
   const target = bounties.find(t => t.id === id);
@@ -203,7 +247,9 @@ function openEditor(id = '') {
   editingId = id; editorVersion = target?.updatedAt || null;
   $('bountyEditor').reset(); $('editorError').textContent = ''; $('editorTitle').textContent = id ? 'EDIT BOUNTY' : 'ADD BOUNTY';
   $('editTarget').value = target?.targetName || ''; $('editAmount').value = target?.amount || 5;
-  $('editMode').value = target?.mode || 'Any mode'; $('editImage').value = target?.image || 'wsb-logo.png';
+  $('editMode').value = target?.mode || 'Any mode';
+  ++imageGeneration; imageProcessing = false;
+  setEditorImage(target?.image || 'wsb-logo.png'); updateImageControls();
   $('editInstructions').value = target?.instructions || "Show your in-game name, the target's exact name, and the elimination clearly in your clip.";
   $('editStatus').value = target?.status || 'open'; $('editorDialog').showModal();
 }
@@ -211,11 +257,12 @@ $('addBounty').addEventListener('click', () => openEditor());
 $('closeEditor').addEventListener('click', () => { if (!saving) $('editorDialog').close(); });
 $('editorDialog').addEventListener('cancel', e => { if (saving) e.preventDefault(); });
 $('bountyEditor').addEventListener('submit', async e => {
-  e.preventDefault(); if (!admin || saving) return;
+  e.preventDefault(); if (!admin || saving || imageProcessing) return;
   const version = epoch;
-  const changes = { targetName: $('editTarget').value.trim(), amount: Number($('editAmount').value), mode: $('editMode').value, instructions: $('editInstructions').value.trim(), image: $('editImage').value, status: $('editStatus').value, updatedAt: serverTimestamp() };
+  const changes = { targetName: $('editTarget').value.trim(), amount: Number($('editAmount').value), mode: $('editMode').value, instructions: $('editInstructions').value.trim(), image: editorImage, status: $('editStatus').value, updatedAt: serverTimestamp() };
   if (!changes.targetName || !changes.instructions || !Number.isInteger(changes.amount) || changes.amount < 5 || changes.amount > 20) { $('editorError').textContent = 'Enter a target, requirements, and a whole-dollar reward from $5 to $20.'; return; }
   saving = true; $('saveBounty').disabled = true; $('editorError').textContent = '';
+  updateImageControls();
   try {
     if (editingId) {
       const reference = doc(db, 'bounties', editingId);
@@ -231,7 +278,7 @@ $('bountyEditor').addEventListener('submit', async e => {
     if (version !== epoch) return;
     $('editorDialog').close(); toast('Bounty saved.');
   } catch (error) { if (version === epoch) $('editorError').textContent = readableError(error); }
-  finally { saving = false; $('saveBounty').disabled = false; }
+  finally { saving = false; updateImageControls(); }
 });
 
 async function reviewClaim(id, decision, button) {
@@ -284,6 +331,7 @@ document.querySelectorAll('[data-view]').forEach(tab => {
   });
 });
 $('bountySearch').addEventListener('input', renderBoard);
+$('showRemovedClaims').addEventListener('change', renderClaims);
 $('bountyFilter').addEventListener('change', renderBoard);
 $('board').addEventListener('click', e => {
   const button = e.target.closest('button'); if (!button) return;
