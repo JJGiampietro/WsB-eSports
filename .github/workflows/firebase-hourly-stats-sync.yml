@@ -2,9 +2,8 @@ name: Firebase Hourly Stats Sync
 
 on:
   schedule:
-    # The canonical refresh starts on the hour and can take several minutes to finish.
-    # Check a few minutes apart so a delayed GitHub schedule cannot leave Firebase stale
-    # for an entire hour. A deployment happens only when the source data changed.
+    # Recovery only: pushes and completed stats refreshes publish immediately.
+    # Compare the live release to current main, not to an old fork checkout.
     - cron: "12,22,32,42,52 * * * *"
   workflow_dispatch: {}
 
@@ -13,29 +12,22 @@ permissions:
   id-token: write
 
 concurrency:
-  group: firebase-stats-sync
+  group: firebase-production
   cancel-in-progress: false
 
 jobs:
   deploy-current-stats:
+    if: github.repository == 'adetrick7/WsB-eSports'
     runs-on: ubuntu-latest
     steps:
       - name: Check out Firebase site
         uses: actions/checkout@v7
+        with:
+          ref: main
 
-      - name: Check for newer canonical stats
+      - name: Check current Firebase release
         id: stats
-        run: |
-          git remote add canonical https://github.com/adetrick7/WsB-eSports.git
-          git fetch canonical main --depth=1
-          if git diff --quiet FETCH_HEAD -- data stats; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Canonical stats are already deployed."
-          else
-            git checkout FETCH_HEAD -- data stats
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "New canonical stats found."
-          fi
+        run: node .github/scripts/check-firebase-current.mjs
 
       - name: Authenticate with Firebase
         if: steps.stats.outputs.changed == 'true'

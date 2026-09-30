@@ -2,7 +2,9 @@
 
 Website for the WsB Fortnite clan and esports community.
 
-This repository is a static website built with HTML, CSS, and JavaScript. It also contains a GitHub Actions workflow that creates weekly Fortnite stat snapshots for the leaderboard.
+The primary website is [wsb-esports.web.app](https://wsb-esports.web.app/). This repository holds the HTML, CSS, and JavaScript source and the hourly Fortnite stats automation. Canonical `main` changes and successful stats refreshes automatically publish to Firebase. Existing GitHub Pages links forward to Firebase.
+
+See [Firebase migration and operations](FIREBASE-MIGRATION.md) for publishing, accounts, stats freshness, and rollback.
 
 ## Pages
 
@@ -15,7 +17,7 @@ This repository is a static website built with HTML, CSS, and JavaScript. It als
 - `script.js` — shared browser-side JavaScript
 - `data/` — roster and leaderboard snapshot data
 - `scripts/` — server-side maintenance scripts used by GitHub Actions
-- `.github/workflows/weekly-stats.yml` — weekly Fortnite stats automation
+- `.github/workflows/weekly-stats.yml` — hourly Fortnite stats automation
 
 ## Local development in VS Code
 
