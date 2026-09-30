@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    // Preserve old GitHub Pages links while Firebase is the primary website.
+    if (location.hostname === "adetrick7.github.io" && /^\/WsB-eSports(?:\/|$)/.test(location.pathname)) {
+      const destinationPath = location.pathname.slice("/WsB-eSports".length) || "/";
+      location.replace("https://wsb-esports.web.app" + destinationPath + location.search + location.hash);
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WsB | Admin Workspace</title>
+  <meta name="description" content="WsB member profile administration.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=circular-logo-20260927">
+  <link rel="stylesheet" href="redesign.css?v=20260929-local-polish">
+  <link rel="stylesheet" href="polish.css?v=20260929-local-polish">
+  <link rel="canonical" href="https://wsb-esports.web.app/admin.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WsB eSports">
+  <meta property="og:title" content="WsB | Member Admin">
+  <meta property="og:description" content="WsB member profile administration.">
+  <meta property="og:image" content="https://wsb-esports.web.app/wsb-logo.png">
+  <meta property="og:image:alt" content="WsB eSports crest">
+  <meta property="og:url" content="https://wsb-esports.web.app/admin.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="bounties.css?v=3">
+<link rel="stylesheet" href="workspace.css?v=1">
+</head>
+<body>
+<div class="site-glow"></div>
+
+<header class="nav">
+  <span class="spooky-web left" aria-hidden="true">🕸️</span><span class="spooky-web right" aria-hidden="true">🕸️</span>
+  <a class="mini-brand" href="index.html#home"><img src="wsb-logo-128.webp" alt="WsB logo"><span>WsB</span></a>
+  <nav id="navlinks" aria-label="Main navigation">
+    <a href="management.html">MANAGEMENT</a><a href="members.html">MEMBERS</a>
+    <details class="nav-group"><summary>PERFORMANCE <span aria-hidden="true">⌄</span></summary><div class="nav-menu"><a href="stats.html">STATS</a><a href="leaderboards.html">LEADERBOARDS</a></div></details>
+    <details class="nav-group"><summary>COMMUNITY <span aria-hidden="true">⌄</span></summary><div class="nav-menu"><a href="index.html#about">ABOUT</a><a href="events.html">EVENTS</a><a href="bounties.html">BOUNTIES</a><a href="announcements.html">ANNOUNCEMENTS</a><a href="questions.html">QUESTIONS</a><a href="games.html">MINI GAMES</a><a href="privacy.html">PRIVACY</a></div></details>
+    <a href="index.html#join" id="navJoinLink">JOIN WsB</a><a class="firebase-account-link" href="member-account.html">MY PROFILE</a>
+  </nav>
+  <button type="button" class="spooky-btn" id="spookyToggle" aria-pressed="false">🎃 Spooky Surprise</button>
+  <button class="menu" aria-label="Toggle navigation">☰</button>
+</header>
+
+<main class="member-account-page admin-members-page">
+  <div class="admin-workspace-heading"><p class="label">WsB ADMIN</p><h1>Team workspace.</h1><p>Members, invites, bounties, rewards, and site health in one place.</p></div>
+<section id="adminAuthPanel" class="admin-auth-panel member-account-card" aria-live="polite">
+    <div id="adminSignedOut">
+      <p class="label">ADMIN SIGN-IN</p>
+      <h2>TEAM ONLY.</h2>
+      <p>Sign in with the Google account approved for WsB administration.</p>
+      <button class="member-auth-button" id="adminGoogleSignIn" type="button">CONTINUE WITH GOOGLE <b>→</b></button>
+    </div>
+    <div id="adminLoading" hidden><p class="member-account-status">Checking admin access...</p></div>
+    <div id="adminDenied" hidden>
+      <p class="label">NO ADMIN ACCESS</p>
+      <h2>NOT APPROVED.</h2>
+      <p>This Google account is not on the WsB admin list. Ask an existing admin to approve it before using this page.</p>
+      <button class="member-text-button" id="adminSignOutDenied" type="button">SIGN OUT</button>
+    </div>
+    <div id="adminError" class="member-account-error" hidden></div>
+  </section>
+
+  <section id="adminDashboard" class="admin-workspace" hidden>
+<div class="admin-workspace-tabs" role="tablist" aria-label="Administration">
+<button id="admin-tab-overview" role="tab" aria-controls="admin-panel-overview" data-admin-view="overview" aria-selected="true" tabindex="0">Overview</button><button id="admin-tab-members" role="tab" aria-controls="admin-panel-members" data-admin-view="members" aria-selected="false" tabindex="-1">Members</button><button id="admin-tab-events" role="tab" aria-controls="admin-panel-events" data-admin-view="events" aria-selected="false" tabindex="-1">Events</button><button id="admin-tab-announcements" role="tab" aria-controls="admin-panel-announcements" data-admin-view="announcements" aria-selected="false" tabindex="-1">Announcements</button><button id="admin-tab-bounties" role="tab" aria-controls="admin-panel-bounties" data-admin-view="bounties" aria-selected="false" tabindex="-1">Bounties</button><button id="admin-tab-rewards" role="tab" aria-controls="admin-panel-rewards" data-admin-view="rewards" aria-selected="false" tabindex="-1">Rewards</button><button id="admin-tab-activity" role="tab" aria-controls="admin-panel-activity" data-admin-view="activity" aria-selected="false" tabindex="-1">Activity</button><button id="admin-tab-backups" role="tab" aria-controls="admin-panel-backups" data-admin-view="backups" aria-selected="false" tabindex="-1">Backups</button><button id="admin-tab-status" role="tab" aria-controls="admin-panel-status" data-admin-view="status" aria-selected="false" tabindex="-1">Status</button>
+</div>
+<section id="admin-panel-overview" data-admin-panel="overview" role="tabpanel" aria-labelledby="admin-tab-overview"><h2>Your team, at a glance.</h2><div id="adminOverview" class="admin-metrics" aria-live="polite"></div><h3>Member sync health</h3><div class="admin-health-controls"><label>Search members<input id="adminSyncSearch" type="search" placeholder="Name or profile ID"></label><label>Show<select id="adminSyncFilter"><option value="issues">Needs attention</option><option value="all">All members</option><option value="synced">Up to date</option></select></label><button id="adminRefreshHealth" class="bounty-btn secondary">REFRESH STATUS</button></div><p id="adminHealthStatus" role="status"></p><div id="adminSyncList" class="admin-table-list"></div></section>
+<section id="admin-panel-members" data-admin-panel="members" role="tabpanel" aria-labelledby="admin-tab-members" hidden><div class="admin-member-columns">
+    <div class="member-account-intro admin-members-guide">
+      <p class="label">HOW IT WORKS</p>
+      <h2>INVITE.<br><span>CLAIM.</span></h2>
+      <p>Add the member’s Gmail and prepare the invite. They sign in with that exact Google account, then can update their own public name, bio, and socials.</p>
+      <ul><li>Admins control membership and roles</li><li>Members control public profile details</li><li>Fortnite identity stays admin-managed</li></ul>
+      <button class="member-text-button" id="adminSignOut" type="button">SIGN OUT</button>
+    </div>
+
+    <section class="member-account-card admin-editor">
+      <div class="admin-editor-head"><div><p class="label" id="adminFormLabel">NEW MEMBER</p><h2 id="adminFormTitle">CREATE<br>ACCESS.</h2></div><button class="member-text-button" id="adminStartNew" type="button" hidden>+ NEW MEMBER</button></div>
+      <p class="admin-editor-note">Choose an existing member to update their Gmail, profile icon, public bio, TikTok or Twitch link, or access. New members are added to the public roster automatically at the next hourly stats refresh.</p>
+      <div class="admin-member-picker" aria-label="Select an existing member to edit">
+        <label>SEARCH MEMBERS<input id="adminMemberSearch" type="search" placeholder="Start typing a name"></label>
+        <label>EDIT EXISTING MEMBER<select id="adminMemberPicker" disabled><option value="">Loading members...</option></select></label>
+      </div>
+      <form id="adminMemberForm">
+        <input id="adminMemberId" type="hidden">
+        <div class="member-form-grid">
+          <div class="member-avatar-editor member-form-full">
+            <div class="member-avatar-preview member-avatar-preview-empty" id="adminProfileImagePreview" aria-hidden="true"><span>WsB</span></div>
+            <div class="member-avatar-copy"><p>PROFILE ICON</p><strong id="adminProfileImageName">No icon selected</strong><span>Square images only. It will be resized automatically for fast loading.</span><div><label class="member-avatar-picker" for="adminProfileImageInput">CHOOSE IMAGE <b>→</b></label><button class="member-text-button member-avatar-remove" id="adminProfileImageRemove" type="button" hidden>REMOVE ICON</button></div></div>
+            <input id="adminProfileImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          </div>
+          <label>DISPLAY NAME<input id="adminDisplayName" type="text" maxlength="48" placeholder="WsB Player" required></label>
+          <label>FORTNITE USERNAME<input id="adminFortniteUsername" type="text" maxlength="100" placeholder="Exact Epic display name"></label>
+          <label class="member-form-full">PUBLIC BIO<textarea id="adminProfileBio" rows="4" maxlength="280" placeholder="Optional member bio shown on their stats profile."></textarea></label>
+          <label>TIKTOK URL<input id="adminProfileTikTok" type="url" inputmode="url" placeholder="https://tiktok.com/@username"></label>
+          <label>TWITCH URL<input id="adminProfileTwitch" type="url" inputmode="url" placeholder="https://twitch.tv/username"></label>
+          <label>GMAIL FOR INVITE<input id="adminInviteEmail" type="email" maxlength="160" placeholder="member@gmail.com" required></label>
+          <label>ROLE<select id="adminRole"><option value="member">Member</option><option value="creator">Creator</option><option value="management">Management</option><option value="owner">Owner</option><option value="admin">Admin (website access)</option></select></label>
+          <p class="member-form-full admin-role-note">Only Admin grants website privileges. Owner, Management, Creator, and Member are display roles.</p><label>ACCESS STATUS<select id="adminStatus"><option value="invited">Invited</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+        </div>
+        <label class="admin-reset-access"><input id="adminResetAccess" type="checkbox"><span><b>RESET PROFILE ACCESS</b> Use this only when moving the profile to a different Gmail. The prior Google account will lose editing access.</span></label>
+        <div class="member-form-actions"><p id="adminSaveStatus" class="member-save-status"></p><button class="member-auth-button" id="adminSave" type="submit">SAVE MEMBER <b>→</b></button></div>
+      </form>
+      <div id="adminInviteActions" class="admin-invite-actions" hidden><div><p class="label">READY TO INVITE</p><p id="adminInviteSummary"></p><textarea id="adminInviteMessage" class="admin-invite-message" readonly aria-label="Member invite message"></textarea></div><button class="member-auth-button member-auth-button-secondary" id="adminPrepareInvite" type="button">COPY INVITE MESSAGE <b>⧉</b></button></div>
+    </section></div></section>
+<section id="admin-panel-events" data-admin-panel="events" role="tabpanel" aria-labelledby="admin-tab-events" hidden>
+  <h2>Events.</h2>
+  <p>Only admins can create or edit content. Drafts stay private; Published items appear on the website immediately. Lower display-order numbers appear first.</p>
+  <p id="eventsSourceStatus" class="content-source-note"></p>
+  <div class="content-admin-layout">
+    <div class="content-picker">
+      <label>Find events<input id="eventsSearch" type="search" placeholder="Search titles"></label>
+      <label>Existing events<select id="eventsPicker"><option value="">Create new event</option></select></label>
+      <button id="eventsNew" class="bounty-btn secondary" type="button">NEW EVENT</button>
+      <a class="arrow-link" href="events.html" target="_blank" rel="noopener">VIEW PUBLIC PAGE ↗</a>
+    </div>
+    <form id="eventsForm" class="content-editor">
+      <h3 id="eventsEditorHeading">New event</h3>
+      <label>Title<input id="eventsTitle" maxlength="120" required></label>
+      <div class="content-field-grid">
+        <label>Category / label<input id="eventsLabel" maxlength="80" placeholder="WsB TEAM NEWS"></label>
+        <label>Visibility<select id="eventsStatus"><option value="draft">Draft (admins only)</option><option value="published">Published (public)</option><option value="archived">Archived (hidden)</option></select></label>
+        <label>Display order<input id="eventsOrder" type="number" min="-10000" max="10000" step="1" value="0" required></label>
+      </div>
+      <label>Details<textarea id="eventsBody" maxlength="10000" rows="8" required placeholder="Write the details. Use blank lines between paragraphs; HTML is shown as text."></textarea></label>
+      <div class="content-field-grid"><label>Start date / time (optional)<input id="eventsStartsAt" type="datetime-local"></label><label>End date / time (optional)<input id="eventsEndsAt" type="datetime-local"></label><label>Event status<select id="eventsEventState"><option value="upcoming">Upcoming / in progress</option><option value="ended">Ended</option><option value="cancelled">Cancelled</option></select></label></div><label>Winner / result<input id="eventsResult" maxlength="200" placeholder="WsB won / Winner: Player"></label><div class="content-field-grid"><label>Mode / format<input id="eventsMode" maxlength="120" placeholder="Solo Reload Custom"></label><label>Prize (optional)<input id="eventsReward" maxlength="120" placeholder="$40"></label></div><label>Participating players (one name per line)<textarea id="eventsParticipants" maxlength="4000" rows="4"></textarea></label>
+      <div class="content-field-grid">
+        <label>Optional details link<input id="eventsLink" maxlength="1000" placeholder="https://… or events.html"></label>
+        <label>Link button text<input id="eventsLinkLabel" maxlength="80" placeholder="VIEW DETAILS"></label>
+      </div>
+      <p class="content-timezone">Dates use your browser's time zone and are saved as an exact instant. Public dates are labeled Pacific Time.</p>
+      <div class="content-editor-actions"><button id="eventsSave" class="bounty-btn" type="submit">SAVE EVENT</button><button id="eventsCancel" class="bounty-btn secondary" type="button">DISCARD CHANGES</button></div>
+      <p id="eventsSaveStatus" role="status" aria-live="polite"></p>
+      <section class="content-preview" aria-label="Public card preview"><h3>Public card preview</h3><p>Draft previews are visible only here, not on the public page.</p><div id="eventsPreview"></div></section>
+    </form>
+  </div>
+</section>
+
+<section id="admin-panel-announcements" data-admin-panel="announcements" role="tabpanel" aria-labelledby="admin-tab-announcements" hidden>
+  <h2>Announcements.</h2>
+  <p>Only admins can create or edit content. Drafts stay private; Published items appear on the website immediately. Lower display-order numbers appear first.</p>
+  <p id="announcementsSourceStatus" class="content-source-note"></p>
+  <div class="content-admin-layout">
+    <div class="content-picker">
+      <label>Find announcements<input id="announcementsSearch" type="search" placeholder="Search titles"></label>
+      <label>Existing announcements<select id="announcementsPicker"><option value="">Create new announcement</option></select></label>
+      <button id="announcementsNew" class="bounty-btn secondary" type="button">NEW ANNOUNCEMENT</button>
+      <a class="arrow-link" href="announcements.html" target="_blank" rel="noopener">VIEW PUBLIC PAGE ↗</a>
+    </div>
+    <form id="announcementsForm" class="content-editor">
+      <h3 id="announcementsEditorHeading">New announcement</h3>
+      <label>Title<input id="announcementsTitle" maxlength="120" required></label>
+      <div class="content-field-grid">
+        <label>Category / label<input id="announcementsLabel" maxlength="80" placeholder="WsB TEAM NEWS"></label>
+        <label>Visibility<select id="announcementsStatus"><option value="draft">Draft (admins only)</option><option value="published">Published (public)</option><option value="archived">Archived (hidden)</option></select></label>
+        <label>Display order<input id="announcementsOrder" type="number" min="-10000" max="10000" step="1" value="0" required></label>
+      </div>
+      <label>Details<textarea id="announcementsBody" maxlength="10000" rows="8" required placeholder="Write the details. Use blank lines between paragraphs; HTML is shown as text."></textarea></label>
+      <div class="content-field-grid"><label>Announcement date (optional)<input id="announcementsPublishedAt" type="datetime-local"></label><label>Countdown target (optional)<input id="announcementsCountdownAt" type="datetime-local"></label><label class="bounty-check"><input id="announcementsFeatured" type="checkbox"><span>Feature this announcement at the top</span></label></div>
+      <div class="content-field-grid">
+        <label>Optional details link<input id="announcementsLink" maxlength="1000" placeholder="https://… or events.html"></label>
+        <label>Link button text<input id="announcementsLinkLabel" maxlength="80" placeholder="VIEW DETAILS"></label>
+      </div>
+      <p class="content-timezone">Dates use your browser's time zone and are saved as an exact instant. Public dates are labeled Pacific Time.</p>
+      <div class="content-editor-actions"><button id="announcementsSave" class="bounty-btn" type="submit">SAVE ANNOUNCEMENT</button><button id="announcementsCancel" class="bounty-btn secondary" type="button">DISCARD CHANGES</button></div>
+      <p id="announcementsSaveStatus" role="status" aria-live="polite"></p>
+      <section class="content-preview" aria-label="Public card preview"><h3>Public card preview</h3><p>Draft previews are visible only here, not on the public page.</p><div id="announcementsPreview"></div></section>
+    </form>
+  </div>
+</section>
+
+<section id="admin-panel-bounties" data-admin-panel="bounties" role="tabpanel" aria-labelledby="admin-tab-bounties" hidden><div class="bounty-preview"><span id="bountyAccountStatus" role="status">Checking access…</span><button id="bountySignIn" hidden>Sign in</button></div><div id="bountyError" role="alert" hidden></div><section id="board" class="bounty-workspace" aria-label="Bounty board">
+    <div class="bounty-tabs" role="tablist" aria-label="Bounty views">
+      <button id="tab-board" role="tab" aria-selected="true" aria-controls="panel-board" data-view="board">Bounty board <span id="openCount">0</span></button>
+      <button id="tab-claims" role="tab" aria-selected="false" aria-controls="panel-claims" tabindex="-1" data-view="claims" hidden>My claims <span id="claimCount">0</span></button>
+      <button id="tab-review" role="tab" aria-selected="false" aria-controls="panel-review" tabindex="-1" data-view="review" hidden>Admin review</button>
+      <button id="tab-manage" role="tab" aria-selected="false" aria-controls="panel-manage" tabindex="-1" data-view="manage" hidden>Manage bounties</button>
+    </div>
+    <div id="panel-board" role="tabpanel" aria-labelledby="tab-board">
+      <div class="bounty-toolbar"><div><h2>Who's on the board?</h2><p id="resultCount" aria-live="polite">Sign in to see the bounty board.</p></div><div class="bounty-filters"><label><span class="bounty-sr">Search bounty players</span><input type="search" id="bountySearch" placeholder="Search player name…"></label><label><span class="bounty-sr">Bounty status</span><select id="bountyFilter"><option value="all">All bounties</option><option value="open">Open</option><option value="paused">Paused</option><option value="claimed">Claimed</option></select></label></div></div>
+      <div class="bounty-grid" id="bountyGrid"><div class="bounty-empty"><h3>Loading your bounty board.</h3><p>Checking account access.</p></div></div>
+    </div>
+    <div id="panel-claims" role="tabpanel" aria-labelledby="tab-claims" hidden><div class="bounty-toolbar"><div><h2>Your clips. Your claims.</h2><p>Track your submissions and see the team's decision.</p></div></div><div id="claimList" class="bounty-claim-list"></div></div>
+    <div id="panel-review" role="tabpanel" aria-labelledby="tab-review" hidden><div class="bounty-toolbar"><div><h2>Review the evidence.</h2><p>Open the clip, verify the elimination, then approve or deny the claim.</p></div><label class="bounty-check"><input id="showRemovedClaims" type="checkbox"><span>Show removed bounty history</span></label></div><div id="reviewList" class="bounty-claim-list"></div></div>
+    <div id="panel-manage" role="tabpanel" aria-labelledby="tab-manage" hidden><div class="bounty-toolbar"><div><h2>Set the next target.</h2><p>Add, edit, pause, or remove bounties. Removed bounties retain their claim history.</p></div><button id="addBounty" class="bounty-btn">ADD BOUNTY <span aria-hidden="true">+</span></button></div><div id="manageList" class="bounty-claim-list"></div></div>
+  </section>
+  <h3>Dispute requests</h3><div id="adminDisputes" class="admin-table-list"></div></section>
+<section id="admin-panel-rewards" data-admin-panel="rewards" role="tabpanel" aria-labelledby="admin-tab-rewards" hidden><h2>Reward delivery.</h2><p>Approval and payment are separate. Never include gift-card codes or payment details in notes.</p><div id="adminRewards" class="admin-table-list"></div></section>
+<section id="admin-panel-activity" data-admin-panel="activity" role="tabpanel" aria-labelledby="admin-tab-activity" hidden><h2>Activity log.</h2><p>Recent website actions, with the account responsible. Historical actions before this update are not available.</p><label>Filter activity<input id="adminActivitySearch" type="search" placeholder="Name, action, or target"></label><div id="adminActivityList" class="admin-table-list"></div></section>
+<section id="admin-panel-backups" data-admin-panel="backups" role="tabpanel" aria-labelledby="admin-tab-backups" hidden><h2>Private backups.</h2><p>Download an encrypted copy of profiles, account links, profile images, bounties, claims, and operational history. Store it privately outside GitHub, with a separate copy of the passphrase.</p><p>No Blaze upgrade. This is a manual Firestore data backup, not an export of Google accounts or authentication credentials.</p><label>Backup passphrase (at least 16 characters)<input id="backupPassphrase" type="password" minlength="16" autocomplete="new-password"></label><button id="backupExport" class="bounty-btn">DOWNLOAD ENCRYPTED BACKUP</button><hr><h3>Verify / restore a backup</h3><label>Encrypted backup file<input id="backupFile" type="file" accept=".json"></label><button id="backupInspect" class="bounty-btn secondary">VERIFY BACKUP</button><p id="backupSummary" role="status"></p><p>Restoration is tested locally first. Production restore is deliberately locked until this local review is approved. Administrator grants, notifications, and immutable activity/evidence are exported but never blindly overwritten.</p><label class="bounty-check"><input id="backupConfirm" type="checkbox"><span>I understand this merges profile and account-link records into the local test database only.</span></label><button id="backupRestore" class="bounty-btn secondary" disabled>RESTORE TO LOCAL TEST DATABASE</button><p id="backupStatus" role="status"></p></section>
+<section id="admin-panel-status" data-admin-panel="status" role="tabpanel" aria-labelledby="admin-tab-status" hidden><h2>Publishing & protection.</h2><div id="adminPublishStatus"></div><p>Production releases require automatic navigation, stats, member workflow, backup, and permission tests.</p><a class="bounty-btn secondary" href="https://github.com/adetrick7/WsB-eSports/actions" target="_blank" rel="noopener">VIEW PUBLISHING RUNS ↗</a><h3>Abuse protection</h3><p>App Check is not enforced yet. Register a provider, observe legitimate traffic, and test Google sign-in before enabling enforcement. Browser headers are prepared without blocking existing scripts or media.</p></section></section>
+</main>
+
+<footer><span class="spooky-spider" aria-hidden="true">🕷️</span><div class="footer-brand"><img src="wsb-logo-128.webp" alt="WsB"><span>WE SHOOT BODIES</span></div><div class="socials"><a href="https://www.tiktok.com/@wsb.esports0" target="_blank" rel="noopener">TIKTOK ↗</a><a href="questions.html">HELP &amp; CONTACT</a></div><small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small></footer>
+<script src="sync-status.js?v=1"></script>
+<script src="script.js?v=20260927-profile-image-text"></script>
+<script type="module" src="firebase-admin.js?v=workspace-1"></script>
+<script src="site-polish.js?v=20260929-local-polish"></script>
+<dialog id="claimDialog" class="bounty-dialog" aria-labelledby="dialogTitle"><button id="closeDialog" class="bounty-close" aria-label="Close bounty details">×</button><div class="bounty-dialog-top"><img id="dialogImage" src="elusion.png" alt=""><div><p class="bounty-eyebrow">BOUNTY DETAILS</p><h2 id="dialogTitle"></h2><p id="dialogReward"></p></div></div><p id="dialogRules" class="bounty-dialog-rules"></p>
+  <form id="claimForm"><h3>GOT THE ELIMINATION?</h3><p>Share your evidence for the WsB team to review.</p><label class="bounty-field">Your Fortnite name<input id="claimName" maxlength="80" required placeholder="Your exact in-game name" autocomplete="off"></label><label class="bounty-field">Clip link<input id="claimClipUrl" type="url" maxlength="2000" required placeholder="https://youtu.be/…" aria-describedby="clipHelp"></label><p id="clipHelp" class="bounty-help">YouTube, Streamable, or Twitch Clips. Use a shareable link that an admin can open without signing in. WsB stores the link, not the video.</p><label class="bounty-field">Notes <span>(optional)</span><textarea id="claimNotes" maxlength="600" rows="2" placeholder="Elimination timestamp or anything we should know"></textarea></label><label class="bounty-check"><input id="claimConfirm" type="checkbox" required><span>This is my gameplay and the clip clearly shows the bounty player's elimination.</span></label><p id="claimError" class="bounty-error" role="alert"></p><button class="bounty-btn" id="submitClaim" type="submit">SUBMIT CLAIM <span aria-hidden="true">↗</span></button></form>
+</dialog>
+<dialog id="editorDialog" class="bounty-dialog" aria-labelledby="editorTitle"><button id="closeEditor" class="bounty-close" aria-label="Close bounty editor">×</button><h2 id="editorTitle">ADD BOUNTY</h2><form id="bountyEditor"><label class="bounty-field">Target's exact Fortnite name<input id="editTarget" maxlength="80" required></label><div class="bounty-editor-row"><label class="bounty-field">V-Bucks reward value (USD)<input id="editAmount" type="number" min="5" max="20" step="1" value="5" required></label><label class="bounty-field">Mode<select id="editMode"><option>Any mode</option><option>Battle Royale</option><option>Zero Build</option><option>Reload</option></select></label></div><label class="bounty-field">Bounty requirements<textarea id="editInstructions" maxlength="1500" rows="4" required placeholder="Eligible mode, proof required, and any special conditions"></textarea></label><div class="bounty-image-editor"><img id="editImagePreview" src="wsb-logo.webp" alt="Bounty image preview" width="100" height="100"><div><label for="editImageFile">Bounty image <span>(optional)</span></label><input id="editImageFile" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="editImageHelp editImageStatus"><p id="editImageHelp" class="bounty-help">PNG, JPG, or WebP, up to 5 MB. Center-cropped to a square and resized automatically, just like profile icons.</p><p id="editImageStatus" class="bounty-help" role="status">Default WsB logo</p><button id="removeBountyImage" type="button" class="bounty-text-btn" hidden>REMOVE IMAGE</button></div></div><label class="bounty-field">Deadline (your local time; optional)<input id="editExpiry" type="datetime-local"></label><label class="bounty-field">Eligibility rules<textarea id="editEligibility" maxlength="1000" rows="3"></textarea></label><label class="bounty-field">Dispute policy<textarea id="editDisputePolicy" maxlength="1000" rows="3"></textarea></label><label class="bounty-field">Status<select id="editStatus"><option value="open">Open for claims</option><option value="paused">Paused</option></select></label><p class="bounty-help">Existing claims keep the target and reward details from when they were submitted. Removing a bounty archives it and keeps the review history.</p><p id="editorError" class="bounty-error" role="alert"></p><button id="saveBounty" class="bounty-btn" type="submit">SAVE BOUNTY</button></form></dialog>
+<dialog id="disputeDialog" class="bounty-dialog" aria-labelledby="disputeTitle"><button id="closeDispute" class="bounty-close" aria-label="Close review request">×</button><h2 id="disputeTitle">REQUEST A REVIEW</h2><form id="disputeForm"><input id="disputeClaimId" type="hidden"><label class="bounty-field">What should the team reconsider?<textarea id="disputeMessage" maxlength="600" rows="4" required></textarea></label><p id="disputeError" role="alert"></p><button id="submitDispute" class="bounty-btn" type="submit">SEND REQUEST</button></form></dialog>
+<dialog id="removeDialog" class="bounty-dialog" aria-labelledby="removeTitle"><h2 id="removeTitle">REMOVE BOUNTY?</h2><p id="removeDescription"></p><p class="bounty-help">It will leave the board and My Claims, and stop accepting submissions. Admins can still view saved evidence and decisions in removed bounty history.</p><p id="removeError" class="bounty-error" role="alert"></p><div class="bounty-review-actions"><button id="confirmRemove" class="bounty-btn">REMOVE BOUNTY</button><button id="cancelRemove" class="bounty-btn secondary">CANCEL</button></div></dialog>
+<div id="bountyToast" class="bounty-toast" role="status" hidden></div>
+<script type="module" src="bounties.js?v=workspace-1"></script><script type="module" src="admin-workspace.js?v=1"></script><script type="module" src="admin-content.js?v=1"></script>
+<script type="module" src="site-enhancements.js?v=1"></script>
+</body>
+</html>

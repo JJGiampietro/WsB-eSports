@@ -1,0 +1,109 @@
+{
+  "events": [
+    {
+      "id": "big-announcement",
+      "title": "Something's Coming.",
+      "label": "BIG ANNOUNCEMENT",
+      "body": "We've got a major announcement dropping on this date - details are still under wraps, but it's a big one. Keep an eye on the Announcements page for the full reveal.",
+      "status": "published",
+      "order": 0,
+      "startsAt": "2026-10-07T00:00:00-07:00",
+      "endsAt": null,
+      "eventState": "upcoming",
+      "result": "",
+      "participants": "",
+      "mode": "",
+      "reward": "",
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "id": "wsb-xcx-scrimmage",
+      "title": "WsB Esports vs XCX.",
+      "label": "FORTNITE CLAN SCRIMMAGE",
+      "body": "September 26-27, 2026\n\nEVENT ENDED - XCX WON.\n\nWsB fought hard in the two-day 4v4 Comp and Non-Comp scrimmage, but XCX took the win.",
+      "status": "published",
+      "order": 10,
+      "startsAt": null,
+      "endsAt": null,
+      "eventState": "ended",
+      "result": "",
+      "participants": "",
+      "mode": "",
+      "reward": "",
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "id": "reload-custom-solo",
+      "title": "ᵂˢᴮ iinsanity ᵗᵗ WON.",
+      "label": "RELOAD CUSTOM - SOLO",
+      "body": "Winner of the WsB Reload Custom Solo tournament.",
+      "status": "published",
+      "order": 20,
+      "startsAt": null,
+      "endsAt": null,
+      "eventState": "ended",
+      "result": "",
+      "participants": "",
+      "mode": "",
+      "reward": "",
+      "link": "events/reload-custom-solo/",
+      "linkLabel": "VIEW EVENT RESULTS"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "something-big",
+      "title": "Something Big Is Coming.",
+      "label": "SAVE THE DATE",
+      "body": "We've got a major announcement landing soon. Full details will be posted right here - and on the Events page - the moment it's live.",
+      "status": "published",
+      "order": 0,
+      "featured": true,
+      "publishedAt": "2026-09-27T12:00:00-07:00",
+      "countdownAt": "2026-10-07T00:00:00-07:00",
+      "link": "events.html",
+      "linkLabel": "VIEW ALL EVENTS"
+    },
+    {
+      "id": "update-1-8",
+      "title": "Update 1.8.",
+      "label": "TEAM NEWS",
+      "body": "Big one this time. The whole site got a visual overhaul - new font, a reworked color treatment, and a cleaner nav menu that tucks all the tabs away into a slide-out panel instead of cluttering the top of the page. Should feel a lot sharper across the board.\n\nRoster news: we've brought on some new players this update, and - sadly - said goodbye to a few others who've moved on. Wishing them the best wherever they land. On the management side, we're excited to officially welcome Bee, Mysterious, and Dmo as new Managers. Congrats to all three - well earned.\n\nAlso new: a Mini Games tab up top. Blackjack and Roulette, virtual chips only, purely for fun - go lose some pretend money.\n\nAnd last but not least - we ran a skirmish against XCX recently. Fought hard, played clean, and honestly put up a great fight, but XCX came out on top this time. Massive thanks and respect to every single one of our members who played - you all showed up and kicked ass out there. And a big thank you to XCX for having us and bringing it - good games all around. We'll be back for a rematch.",
+      "status": "published",
+      "order": 10,
+      "featured": false,
+      "publishedAt": "2026-09-27T12:00:00-07:00",
+      "countdownAt": null,
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "id": "remembrance",
+      "title": "A Moment to Remember.",
+      "label": "TEAM NEWS",
+      "body": "Before anything else today - we want to take a moment to remember and honor everyone affected by the events of September 11th, 2001. Our thoughts are with the families, the first responders, and everyone who carries that day with them. However you're spending today, we hope it's a peaceful one. Take a moment to reflect, and hold the people you care about a little closer.",
+      "status": "published",
+      "order": 20,
+      "featured": false,
+      "publishedAt": "2026-09-11T12:00:00-07:00",
+      "countdownAt": null,
+      "link": "",
+      "linkLabel": ""
+    },
+    {
+      "id": "new-site-updates",
+      "title": "New Site Updates Just Dropped!",
+      "label": "TEAM NEWS",
+      "body": "Big day for the site - we just rolled out a bunch of new stuff. The Members page now pulls live stats straight from the API for most of the roster, so K/D, wins, kills, and matches stay current on their own instead of needing manual updates every time. We also launched the new Leaderboards page, which automatically tracks weekly and lifetime rankings across the whole team - that one updates itself every Monday behind the scenes, no copy-pasting screenshots required.\n\nOn top of that: a full Halloween theme you can toggle on and off from the \"🎃 Spooky Surprise\" button up top, a few new faces added to the roster, and a very well-hidden little surprise somewhere on the Members page for anyone who likes clicking around.\n\nExcited to keep building this out and even more excited to see everyone enjoying their time repping WsB. More to come soon - including a pretty big announcement we're sitting on. Countdown's below. 👀\n\nAnd if you're new here - welcome! We're genuinely glad to have you. WsB is built to be a place where you can compete, improve, and just have a good time doing it. If you've got any questions at all, about the team, the roster, events, anything - don't hesitate to reach out to any of us. No question is too small, and someone will always get back to you.",
+      "status": "published",
+      "order": 30,
+      "featured": false,
+      "publishedAt": "2026-09-11T12:00:00-07:00",
+      "countdownAt": null,
+      "link": "",
+      "linkLabel": ""
+    }
+  ]
+}

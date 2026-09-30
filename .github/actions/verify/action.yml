@@ -1,0 +1,31 @@
+name: Verify WsB before publishing
+description: Isolated rules, member/admin workflows, recovery and navigation tests
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '21'
+    - name: Install test dependencies
+      shell: bash
+      run: npm ci --prefix .tests/bounties
+    - name: Install test browser
+      shell: bash
+      run: .tests/bounties/node_modules/.bin/playwright install --with-deps chromium
+    - name: Verify generated pages and navigation
+      shell: bash
+      run: node scripts/build-shared-pages.cjs --check && node .tests/bounties/static.test.cjs
+    - name: Start local read-only web preview
+      shell: bash
+      run: python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/wsb-web.log 2>&1 &
+    - name: Test security, recovery and workflows
+      shell: bash
+      working-directory: .tests/bounties
+      run: ./node_modules/.bin/firebase emulators:exec --config ../../.bounty-emulator.json --project demo-wsb-bounties --only firestore,auth "node rules.test.cjs && node operations.test.cjs && node browser.test.cjs && node workspace-browser.test.cjs && node content.test.cjs"
+    - name: Test redirects and nested routes
+      shell: bash
+      run: node .tests/migration/verify.cjs

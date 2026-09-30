@@ -1,0 +1,32 @@
+<section id="admin-panel-{{kind}}" data-admin-panel="{{kind}}" role="tabpanel" aria-labelledby="admin-tab-{{kind}}" hidden>
+  <h2>{{heading}}.</h2>
+  <p>Only admins can create or edit content. Drafts stay private; Published items appear on the website immediately. Lower display-order numbers appear first.</p>
+  <p id="{{kind}}SourceStatus" class="content-source-note"></p>
+  <div class="content-admin-layout">
+    <div class="content-picker">
+      <label>Find {{noun}}s<input id="{{kind}}Search" type="search" placeholder="Search titles"></label>
+      <label>Existing {{noun}}s<select id="{{kind}}Picker"><option value="">Create new {{noun}}</option></select></label>
+      <button id="{{kind}}New" class="bounty-btn secondary" type="button">NEW {{actionNoun}}</button>
+      <a class="arrow-link" href="{{kind}}.html" target="_blank" rel="noopener">VIEW PUBLIC PAGE ↗</a>
+    </div>
+    <form id="{{kind}}Form" class="content-editor">
+      <h3 id="{{kind}}EditorHeading">New {{noun}}</h3>
+      <label>Title<input id="{{kind}}Title" maxlength="120" required></label>
+      <div class="content-field-grid">
+        <label>Category / label<input id="{{kind}}Label" maxlength="80" placeholder="WsB TEAM NEWS"></label>
+        <label>Visibility<select id="{{kind}}Status"><option value="draft">Draft (admins only)</option><option value="published">Published (public)</option><option value="archived">Archived (hidden)</option></select></label>
+        <label>Display order<input id="{{kind}}Order" type="number" min="-10000" max="10000" step="1" value="0" required></label>
+      </div>
+      <label>Details<textarea id="{{kind}}Body" maxlength="10000" rows="8" required placeholder="Write the details. Use blank lines between paragraphs; HTML is shown as text."></textarea></label>
+      {{fields}}
+      <div class="content-field-grid">
+        <label>Optional details link<input id="{{kind}}Link" maxlength="1000" placeholder="https://… or events.html"></label>
+        <label>Link button text<input id="{{kind}}LinkLabel" maxlength="80" placeholder="VIEW DETAILS"></label>
+      </div>
+      <p class="content-timezone">Dates use your browser's time zone and are saved as an exact instant. Public dates are labeled Pacific Time.</p>
+      <div class="content-editor-actions"><button id="{{kind}}Save" class="bounty-btn" type="submit">SAVE {{actionNoun}}</button><button id="{{kind}}Cancel" class="bounty-btn secondary" type="button">DISCARD CHANGES</button></div>
+      <p id="{{kind}}SaveStatus" role="status" aria-live="polite"></p>
+      <section class="content-preview" aria-label="Public card preview"><h3>Public card preview</h3><p>Draft previews are visible only here, not on the public page.</p><div id="{{kind}}Preview"></div></section>
+    </form>
+  </div>
+</section>

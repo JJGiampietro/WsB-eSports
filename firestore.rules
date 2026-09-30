@@ -6,12 +6,17 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      let grant = signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ? get(/databases/$(database)/documents/admins/$(request.auth.uid)).data : null;
+      return signedIn() && grant != null && grant.get('enabled', true) == true
+        && (!('memberId' in grant) || (get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.ownerUid == request.auth.uid
+          && get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.role == 'admin'
+          && get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.status == 'active'));
     }
 
     function ownsMember(memberId) {
       return signedIn()
-        && get(/databases/$(database)/documents/memberAccess/$(memberId)).data.ownerUid == request.auth.uid;
+        && get(/databases/$(database)/documents/memberAccess/$(memberId)).data.ownerUid == request.auth.uid
+        && get(/databases/$(database)/documents/memberAccess/$(memberId)).data.status == 'active';
     }
 
     function validMemberUpdate() {
@@ -43,20 +48,31 @@ service cloud.firestore {
     match /memberAccess/{memberId} {
       allow get: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow list: if isAdmin() || (signedIn() && (
-        resource.data.ownerUid == request.auth.uid || resource.data.invitedEmail == request.auth.token.email
+        resource.data.ownerUid == request.auth.uid || (request.auth.token.get('email_verified', false) == true
+          && resource.data.invitedEmail == request.auth.token.email)
       ));
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || (signedIn()
+      allow create: if isAdmin() && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin'];
+      allow delete: if isAdmin() && resource.data.ownerUid != request.auth.uid;
+      allow update: if (isAdmin()
+          && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin']
+          && (resource.data.ownerUid != request.auth.uid || resource.data.get('role', '') != 'admin'
+            || (request.resource.data.role == 'admin' && request.resource.data.status == 'active' && request.resource.data.ownerUid == request.auth.uid)))
+        || (signedIn()
         && resource.data.ownerUid == null
+        && resource.data.status == 'invited'
+        && request.auth.token.get('email_verified', false) == true
         && resource.data.invitedEmail == request.auth.token.email
         && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.status == "active"
+        && request.resource.data.status == "active" && request.resource.data.claimedAt == request.time
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerUid', 'status', 'claimedAt']));
     }
 
     function validBounty(data) {
       return data.keys().hasAll(['targetName', 'amount', 'mode', 'instructions', 'image', 'status', 'winningClaimId', 'createdBy', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['targetName', 'amount', 'mode', 'instructions', 'image', 'status', 'winningClaimId', 'createdBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['targetName', 'amount', 'mode', 'instructions', 'image', 'status', 'winningClaimId', 'createdBy', 'createdAt', 'updatedAt', 'expiresAt', 'eligibility', 'disputePolicy'])
+        && (!('expiresAt' in data) || data.expiresAt == null || data.expiresAt is timestamp)
+        && (!('eligibility' in data) || (data.eligibility is string && data.eligibility.size() <= 1000))
+        && (!('disputePolicy' in data) || (data.disputePolicy is string && data.disputePolicy.size() <= 1000))
         && data.targetName is string && data.targetName.size() > 0 && data.targetName.size() <= 80
         && data.amount is int && data.amount >= 5 && data.amount <= 20
         && data.mode in ['Any mode', 'Battle Royale', 'Zero Build', 'Reload']
@@ -129,6 +145,7 @@ service cloud.firestore {
         && data.ownerUid == request.auth.uid
         && claimId == data.bountyId + '_' + request.auth.uid
         && bounty.status == 'open' && bounty.winningClaimId == ''
+        && (bounty.get('expiresAt', null) == null || bounty.expiresAt > request.time)
         && data.targetName == bounty.targetName && data.amount == bounty.amount && data.mode == bounty.mode
         && data.status == 'pending' && data.reviewedAt == null && data.reviewerUid == '' && data.reason == '';
     }
@@ -163,7 +180,130 @@ service cloud.firestore {
 
     match /admins/{userId} {
       allow get: if signedIn() && userId == request.auth.uid;
-      allow list, create, update, delete: if isAdmin();
+      allow list: if isAdmin();
+      allow create, update: if (isAdmin() || (signedIn() && userId == request.auth.uid))
+        && request.resource.data.keys().hasOnly(['memberId', 'enabled'])
+        && request.resource.data.enabled == true && request.resource.data.memberId is string
+        && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.ownerUid == userId
+        && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.role == 'admin'
+        && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.status == 'active';
+      allow delete: if isAdmin() && userId != request.auth.uid;
+    }
+
+    match /adminActivity/{eventId} {
+      allow read: if isAdmin();
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['actorUid', 'actorEmail', 'action', 'targetType', 'targetId', 'detail', 'createdAt'])
+        && request.resource.data.actorUid == request.auth.uid && request.resource.data.actorEmail == request.auth.token.get('email', '')
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.action is string && request.resource.data.action.size() <= 80
+        && request.resource.data.targetType is string && request.resource.data.targetType.size() <= 80
+        && request.resource.data.targetId is string && request.resource.data.targetId.size() <= 200
+        && request.resource.data.detail is string && request.resource.data.detail.size() <= 300
+        && (isAdmin() || (request.resource.data.action == 'account-linked' && request.resource.data.targetType == 'memberAccess'
+          && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.targetId)).data.ownerUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.targetId)).data.claimedAt == request.time));
+      allow update, delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['ownerUid', 'type', 'targetId', 'message', 'read', 'createdAt'])
+        && request.resource.data.ownerUid is string && request.resource.data.targetId is string
+        && request.resource.data.type in ['account-linked', 'claim-approved', 'claim-denied', 'reward-delivered', 'dispute-resolved']
+        && request.resource.data.message is string && request.resource.data.message.size() <= 600
+        && request.resource.data.read == false && request.resource.data.createdAt == request.time
+        && (isAdmin() || (request.resource.data.type == 'account-linked' && request.resource.data.ownerUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.targetId)).data.ownerUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.targetId)).data.claimedAt == request.time));
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']) && request.resource.data.read is bool;
+      allow delete: if false;
+    }
+
+    match /bountyRewards/{claimId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['ownerUid', 'claimId', 'status', 'note', 'updatedAt', 'updatedBy'])
+        && request.resource.data.claimId == claimId && request.resource.data.ownerUid == get(/databases/$(database)/documents/bountyClaims/$(claimId)).data.ownerUid
+        && get(/databases/$(database)/documents/bountyClaims/$(claimId)).data.status == 'approved'
+        && request.resource.data.status in ['pending', 'delivered']
+        && request.resource.data.note is string && request.resource.data.note.size() <= 300
+        && request.resource.data.updatedBy == request.auth.uid && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    function validContent(data) {
+      return data.keys().hasAll(['title', 'label', 'body', 'status', 'order', 'link', 'linkLabel', 'revision', 'createdAt', 'updatedAt'])
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 120
+        && data.label is string && data.label.size() <= 80
+        && data.body is string && data.body.size() > 0 && data.body.size() <= 10000
+        && data.status in ['draft', 'published', 'archived']
+        && data.order is int && data.order >= -10000 && data.order <= 10000
+        && data.link is string && data.link.size() <= 1000
+        && (data.link == '' || data.link.matches('^https://[^ ]+$')
+          || data.link.matches('^([A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+[.]html(#[A-Za-z0-9_-]+)?$')
+          || data.link.matches('^events/[A-Za-z0-9_-]+/$'))
+        && data.linkLabel is string && data.linkLabel.size() <= 80
+        && data.revision is int && data.revision > 0
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+    function validEvent(data) {
+      return validContent(data)
+        && data.keys().hasOnly(['title', 'label', 'body', 'status', 'order', 'link', 'linkLabel', 'revision', 'createdAt', 'updatedAt', 'startsAt', 'endsAt', 'eventState', 'result', 'participants', 'mode', 'reward'])
+        && (data.startsAt == null || data.startsAt is timestamp) && (data.endsAt == null || data.endsAt is timestamp)
+        && (data.startsAt == null || data.endsAt == null || data.endsAt >= data.startsAt)
+        && data.eventState in ['upcoming', 'ended', 'cancelled']
+        && data.result is string && data.result.size() <= 200
+        && data.participants is string && data.participants.size() <= 4000
+        && data.mode is string && data.mode.size() <= 120 && data.reward is string && data.reward.size() <= 120;
+    }
+    function validAnnouncement(data) {
+      return validContent(data)
+        && data.keys().hasOnly(['title', 'label', 'body', 'status', 'order', 'link', 'linkLabel', 'revision', 'createdAt', 'updatedAt', 'publishedAt', 'countdownAt', 'featured'])
+        && (data.publishedAt == null || data.publishedAt is timestamp)
+        && (data.countdownAt == null || data.countdownAt is timestamp) && data.featured is bool;
+    }
+    function validContentRevision() {
+      return request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.revision == resource.data.revision + 1;
+    }
+    match /siteEvents/{eventId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && validEvent(request.resource.data) && request.resource.data.revision == 1 && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && validEvent(request.resource.data) && validContentRevision();
+      allow delete: if false;
+    }
+    match /siteAnnouncements/{announcementId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create: if isAdmin() && validAnnouncement(request.resource.data) && request.resource.data.revision == 1 && request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && validAnnouncement(request.resource.data) && validContentRevision();
+      allow delete: if false;
+    }
+    match /siteContentState/{stateId} {
+      allow read: if true;
+      allow create, update: if stateId == 'settings' && isAdmin()
+        && request.resource.data.keys().hasOnly(['eventsManaged', 'announcementsManaged', 'updatedAt'])
+        && request.resource.data.eventsManaged is bool && request.resource.data.announcementsManaged is bool
+        && request.resource.data.updatedAt == request.time
+        && (!exists(/databases/$(database)/documents/siteContentState/$(stateId))
+          || ((!resource.data.eventsManaged || request.resource.data.eventsManaged)
+            && (!resource.data.announcementsManaged || request.resource.data.announcementsManaged)));
+      allow delete: if false;
+    }
+
+    match /claimDisputes/{claimId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.keys().hasOnly(['ownerUid', 'claimId', 'message', 'status', 'resolution', 'createdAt', 'updatedAt'])
+        && request.resource.data.ownerUid == request.auth.uid && request.resource.data.claimId == claimId
+        && get(/databases/$(database)/documents/bountyClaims/$(claimId)).data.ownerUid == request.auth.uid
+        && get(/databases/$(database)/documents/bountyClaims/$(claimId)).data.status == 'denied'
+        && request.resource.data.message is string && request.resource.data.message.size() > 0 && request.resource.data.message.size() <= 600
+        && request.resource.data.status == 'open' && request.resource.data.resolution == ''
+        && request.resource.data.createdAt == request.time && request.resource.data.updatedAt == request.time;
+      allow update: if isAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolution', 'updatedAt'])
+        && request.resource.data.status == 'resolved' && request.resource.data.resolution is string
+        && request.resource.data.resolution.size() > 0 && request.resource.data.resolution.size() <= 600 && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
     }
   }
 }

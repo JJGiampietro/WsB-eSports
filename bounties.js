@@ -1,7 +1,8 @@
-import { auth, db, provider } from './firebase-member.js?v=20260929-stats-nav-root-account';
+import { auth, db, provider } from './firebase-member.js?v=workspace-1';
 import { safeProfileImage, makeProfileIcon } from './profile-image.js?v=1';
+import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
 import { onAuthStateChanged, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
-import { collection, doc, getDoc, onSnapshot, query, where, runTransaction, serverTimestamp, setDoc } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { collection, doc, getDoc, onSnapshot, query, where, runTransaction, serverTimestamp, setDoc, writeBatch, Timestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -13,6 +14,8 @@ let view = 'board', activeTarget = '', editingId = '', removingId = '', toastTim
 let epoch = 0, roleKnown = false, subscriptions = [], claimsUnsubscribe = null, claimsGeneration = 0, editorVersion = null;
 let submitting = false, saving = false, removing = false, reviewing = false;
 let editorImage = 'wsb-logo.png', imageProcessing = false, imageGeneration = 0;
+let rewards = [], disputes = [], supportSubscriptions = [];
+const expired = bounty => Boolean(bounty?.expiresAt && bounty.expiresAt.toMillis() <= Date.now());
 
 function readableError(error) {
   if (error.code === 'permission-denied') return 'Access denied. Your role may have changed, or bounty permissions are not available yet. Refresh and try again.';
@@ -45,7 +48,7 @@ function setView(next, focus = false) {
 
 function renderBoard() {
   const active = bounties.filter(t => t.status !== 'archived');
-  $('openCount').textContent = active.filter(t => t.status === 'open').length;
+  $('openCount').textContent = active.filter(t => t.status === 'open' && !expired(t)).length;
   if (!user) {
     $('bountyGrid').innerHTML = empty('Sign in to see the board.', 'Use your Google account linked to WsB to claim a bounty.');
     $('resultCount').textContent = 'Sign in to see current bounties.'; return;
@@ -56,10 +59,10 @@ function renderBoard() {
   $('resultCount').textContent = visible.length + ' ' + (visible.length === 1 ? 'bounty' : 'bounties') + ' · Rewards subject to admin approval';
   $('bountyGrid').innerHTML = visible.map(t => {
     const c = ownClaim(t.id), pending = c?.status === 'pending', approved = c?.status === 'approved';
-    const claimable = canSubmit() && t.status === 'open' && !pending;
+    const claimable = canSubmit() && t.status === 'open' && !expired(t) && !pending;
     const action = pending || approved ? 'claim' : claimable ? 'target' : '';
     const label = pending || approved ? 'VIEW YOUR CLAIM' : claimable ? (c?.status === 'denied' ? 'RESUBMIT CLAIM' : 'VIEW BOUNTY') : t.status === 'open' ? 'MEMBER ACCESS REQUIRED' : t.status.toUpperCase();
-    return '<article class="bounty-card"><img class="bounty-card-image" src="' + imageFor(t.image) + '" alt="" width="447" height="308"><div class="bounty-card-content"><div class="bounty-card-meta"><span class="bounty-status ' + (t.status === 'claimed' ? 'approved' : '') + '">' + esc(t.status) + '</span></div><h3>' + esc(t.targetName) + '</h3><p class="bounty-card-mode">' + esc(t.mode) + '</p><div class="bounty-card-reward"><strong>$' + t.amount + '</strong><span>V-BUCKS REWARD<br>USD VALUE</span></div><button class="bounty-btn ' + (action === 'claim' ? 'secondary' : '') + '" ' + (action ? 'data-' + action + '="' + esc(t.id) + '"' : 'disabled') + '>' + label + ' <span aria-hidden="true">↗</span></button></div></article>';
+    return '<article class="bounty-card"><img class="bounty-card-image" src="' + imageFor(t.image) + '" alt="" width="447" height="308"><div class="bounty-card-content"><div class="bounty-card-meta"><span class="bounty-status ' + (t.status === 'claimed' ? 'approved' : '') + '">' + esc(expired(t) && t.status === 'open' ? 'expired' : t.status) + '</span></div><h3>' + esc(t.targetName) + '</h3><p class="bounty-card-mode">' + esc(t.mode) + '</p><p class="bounty-help">' + (t.expiresAt ? 'Deadline: ' + esc(date(t.expiresAt)) : 'No deadline set') + '</p><div class="bounty-card-reward"><strong>$' + t.amount + '</strong><span>V-BUCKS REWARD<br>USD VALUE</span></div><button class="bounty-btn ' + (action === 'claim' ? 'secondary' : '') + '" ' + (action ? 'data-' + action + '="' + esc(t.id) + '"' : 'disabled') + '>' + (expired(t) && !action ? 'EXPIRED' : label) + ' <span aria-hidden="true">↗</span></button></div></article>';
   }).join('') || empty(active.length ? 'No matching bounties.' : 'The board is clear.', active.length ? 'Try another name or status filter.' : admin ? 'Open Manage bounties to add the first target.' : 'Check back for the next bounty.');
 }
 
@@ -67,11 +70,14 @@ function claimMarkup(c, review) {
   const bounty = bounties.find(b => b.id === c.bountyId);
   const closed = !bounty || bounty.status !== 'open';
   const removed = !bounty || bounty.status === 'archived';
+  const reward = rewards.find(r => r.id === c.id);
+  const dispute = disputes.find(d => d.id === c.id);
   const clip = clipPattern.test(c.clipUrl) ? '<a class="bounty-btn secondary" href="' + esc(c.clipUrl) + '" target="_blank" rel="noopener noreferrer">OPEN CLIP ↗</a>' : '<p class="bounty-error">The saved clip link is invalid.</p>';
   return '<article class="bounty-claim"><div class="bounty-claim-head"><div><h3>' + esc(c.targetName) + ' / $' + c.amount + '</h3><p>' + esc(c.claimantName) + ' · ' + esc(date(c.updatedAt)) + '</p></div><span class="bounty-status ' + esc(c.status) + '">' + (c.status === 'pending' ? 'Pending review' : esc(c.status)) + '</span></div><p>' + esc(c.mode) + '. Reward and target details shown are from the submitted claim.</p>' + clip
     + (c.notes ? '<p><strong>Member notes:</strong> ' + esc(c.notes) + '</p>' : '')
     + (c.reason ? '<p><strong>Admin feedback:</strong> ' + esc(c.reason) + '</p>' : '')
-    + (c.status === 'approved' ? '<p>Winning claim approved. The WsB team will arrange your reward separately.</p>' : '')
+    + (c.status === 'approved' ? '<p><strong>Reward: ' + (reward?.status === 'delivered' ? 'Delivered' : 'Awaiting delivery') + '</strong>' + (reward?.note ? ' · ' + esc(reward.note) : '') + '</p>' : '')
+    + (dispute ? '<p><strong>Dispute: ' + esc(dispute.status) + '</strong> · ' + esc(dispute.message) + (dispute.resolution ? '<br>Resolution: ' + esc(dispute.resolution) : '') + '</p>' : !review && c.status === 'denied' ? '<button class="bounty-btn secondary" data-dispute="' + esc(c.id) + '">REQUEST A REVIEW</button>' : '')
     + (removed ? '<p><strong>Removed bounty — retained for admin history only.</strong></p>' : closed && c.status === 'pending' ? '<p>This bounty is no longer open. It cannot award another claim.</p>' : '')
     + (!review && c.status === 'denied' && !closed && canSubmit() ? '<button class="bounty-btn secondary" data-target="' + esc(c.bountyId) + '">RESUBMIT CLAIM</button>' : '')
     + (review && !removed && c.status === 'pending' ? '<label>Review notes (required when denying)<textarea class="bounty-review-note" id="reason-' + esc(c.id) + '" maxlength="600" rows="2" placeholder="Explain the decision to the member"></textarea></label><p id="review-error-' + esc(c.id) + '" class="bounty-error" role="alert"></p><div class="bounty-review-actions"><button class="bounty-btn" data-decision="approved" data-review="' + esc(c.id) + '" ' + (closed ? 'disabled' : '') + '>APPROVE CLAIM</button><button class="bounty-btn secondary" data-decision="denied" data-review="' + esc(c.id) + '">DENY CLAIM</button></div>' : '') + '</article>';
@@ -102,6 +108,7 @@ function updateAccess() {
 }
 function subscribeClaims(version) {
   if (claimsUnsubscribe) claimsUnsubscribe();
+  supportSubscriptions.forEach(stop => stop()); supportSubscriptions = []; rewards = []; disputes = [];
   const generation = ++claimsGeneration;
   claims = []; claimsReady = false;
   const source = admin ? collection(db, 'bountyClaims') : query(collection(db, 'bountyClaims'), where('ownerUid', '==', user.uid));
@@ -110,32 +117,32 @@ function subscribeClaims(version) {
     claims = snapshot.docs.map(d => ({ ...d.data(), id: d.id })).sort((a,b) => (b.updatedAt?.toMillis?.() || 0) - (a.updatedAt?.toMillis?.() || 0));
     claimsReady = true; renderBoard(); renderClaims();
   }, error => { if (version === epoch && generation === claimsGeneration) { claims = []; claimsReady = true; renderClaims(); showError(error); } });
+  ['bountyRewards', 'claimDisputes'].forEach(name => supportSubscriptions.push(onSnapshot(admin ? collection(db, name) : query(collection(db, name), where('ownerUid', '==', user.uid)), snapshot => {
+    if (version !== epoch || generation !== claimsGeneration) return;
+    const values = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    if (name === 'bountyRewards') rewards = values; else disputes = values;
+    renderClaims();
+  }, error => { if (version === epoch && generation === claimsGeneration) { if (name === 'bountyRewards') rewards = []; else disputes = []; renderClaims(); showError(error); } })));
 }
 onAuthStateChanged(auth, nextUser => {
   const version = ++epoch;
   subscriptions.forEach(unsubscribe => unsubscribe()); subscriptions = [];
   if (claimsUnsubscribe) { claimsUnsubscribe(); claimsUnsubscribe = null; }
+  supportSubscriptions.forEach(stop => stop()); supportSubscriptions = [];
   ++claimsGeneration;
-  ['claimDialog', 'editorDialog', 'removeDialog'].forEach(id => { if ($(id).open) $(id).close(); });
+  ['claimDialog', 'editorDialog', 'removeDialog', 'disputeDialog'].forEach(id => { if ($(id)?.open) $(id).close(); });
   user = nextUser; admin = false; roleKnown = false; memberReady = false; memberId = ''; memberName = '';
   $('showRemovedClaims').checked = false;
-  bounties = []; claims = []; boardReady = false; claimsReady = false;
+  bounties = []; claims = []; rewards = []; disputes = []; boardReady = false; claimsReady = false;
   $('bountyError').hidden = true; updateAccess();
   if (!user) return;
-  subscriptions.push(onSnapshot(doc(db, 'admins', user.uid), snapshot => {
+  subscriptions.push(watchAdmin(db, user, allowed => {
     if (version !== epoch) return;
-    const changed = admin !== snapshot.exists() || !roleKnown;
-    admin = snapshot.exists(); roleKnown = true;
+    const changed = admin !== allowed || !roleKnown;
+    admin = allowed; roleKnown = true;
     if (!admin) ['editorDialog', 'removeDialog'].forEach(id => { if ($(id).open) $(id).close(); });
     if (changed) subscribeClaims(version);
     updateAccess();
-  }, error => {
-    if (version !== epoch) return;
-    admin = false; roleKnown = true; ++claimsGeneration;
-    if (claimsUnsubscribe) claimsUnsubscribe();
-    claims = [];
-    ['editorDialog','removeDialog','claimDialog'].forEach(id => { if ($(id).open) $(id).close(); });
-    updateAccess(); showError(error);
   }));
   subscriptions.push(onSnapshot(query(collection(db, 'memberAccess'), where('ownerUid', '==', user.uid)), async snapshot => {
     if (version !== epoch) return;
@@ -148,7 +155,9 @@ onAuthStateChanged(auth, nextUser => {
       try {
         const profile = await getDoc(doc(db, 'members', memberId));
         if (version !== epoch || memberId !== selectedId) return;
-        memberName = profile.data()?.fortniteUsername || profile.data()?.displayName || ''; updateAccess();
+        memberName = profile.data()?.fortniteUsername || profile.data()?.displayName || '';
+        if ($('claimDialog').open && !$('claimName').value.trim()) $('claimName').value = memberName;
+        updateAccess();
       } catch (error) { if (version === epoch) showError(error); }
     }
   }, error => { if (version === epoch) { memberReady = false; memberId = ''; updateAccess(); showError(error); } }));
@@ -166,13 +175,13 @@ $('bountySignIn').addEventListener('click', async () => {
 
 function openTarget(id) {
   const target = bounties.find(t => t.id === id);
-  if (!canSubmit() || !target || target.status !== 'open') return;
+  if (!canSubmit() || !target || target.status !== 'open' || expired(target)) return;
   const previous = ownClaim(id);
   if (previous && previous.status !== 'denied') { setView('claims', true); return; }
   activeTarget = id; $('claimForm').reset(); $('claimError').textContent = '';
   $('dialogTitle').textContent = target.targetName; $('dialogImage').src = imageFor(target.image);
   $('dialogReward').textContent = '$' + target.amount + ' V-Bucks reward value';
-  $('dialogRules').textContent = target.mode + ': ' + target.instructions;
+  $('dialogRules').textContent = target.mode + ': ' + target.instructions + '\nEligibility: ' + (target.eligibility || 'Active WsB members. Your own legitimate gameplay only; no staged eliminations or cheating.') + '\nDeadline: ' + (target.expiresAt ? date(target.expiresAt) : 'No deadline set') + '\nDisputes: ' + (target.disputePolicy || 'Use Request a review on a denied claim. An admin reviews the evidence and replies on the site.');
   $('claimName').value = previous?.claimantName || memberName || user.displayName || '';
   $('claimClipUrl').value = previous?.clipUrl || ''; $('claimNotes').value = previous?.notes || '';
   $('claimDialog').showModal();
@@ -184,7 +193,7 @@ $('claimForm').addEventListener('submit', async e => {
   const version = epoch, target = bounties.find(t => t.id === activeTarget);
   const name = $('claimName').value.trim(), clipUrl = $('claimClipUrl').value.trim();
   if (!name || !clipPattern.test(clipUrl)) { $('claimError').textContent = 'Enter your Fortnite name and a valid HTTPS YouTube, Streamable, or Twitch Clips link.'; return; }
-  if (!target || target.status !== 'open') { $('claimError').textContent = 'This bounty is no longer open. Refresh the board.'; return; }
+  if (!target || target.status !== 'open' || expired(target)) { $('claimError').textContent = 'This bounty is closed or its deadline has passed. Refresh the board.'; return; }
   const previous = ownClaim(target.id);
   if (previous && previous.status !== 'denied') { $('claimError').textContent = 'You already have a claim for this bounty.'; return; }
   submitting = true; $('submitClaim').disabled = true; $('submitClaim').textContent = 'SAVING CLAIM…'; $('claimError').textContent = '';
@@ -252,6 +261,12 @@ function openEditor(id = '') {
   setEditorImage(target?.image || 'wsb-logo.png'); updateImageControls();
   $('editInstructions').value = target?.instructions || "Show your in-game name, the target's exact name, and the elimination clearly in your clip.";
   $('editStatus').value = target?.status || 'open'; $('editorDialog').showModal();
+  if ($('editExpiry')) {
+    const deadline = target?.expiresAt?.toDate();
+    $('editExpiry').value = deadline ? new Date(deadline.getTime() - deadline.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '';
+    $('editEligibility').value = target?.eligibility || 'Active WsB members. Your own gameplay only. No staged eliminations, teaming, or cheating.';
+    $('editDisputePolicy').value = target?.disputePolicy || 'Use Request a review on a denied claim. Admins respond on the site; keep your clip available until resolved.';
+  }
 }
 $('addBounty').addEventListener('click', () => openEditor());
 $('closeEditor').addEventListener('click', () => { if (!saving) $('editorDialog').close(); });
@@ -260,6 +275,12 @@ $('bountyEditor').addEventListener('submit', async e => {
   e.preventDefault(); if (!admin || saving || imageProcessing) return;
   const version = epoch;
   const changes = { targetName: $('editTarget').value.trim(), amount: Number($('editAmount').value), mode: $('editMode').value, instructions: $('editInstructions').value.trim(), image: editorImage, status: $('editStatus').value, updatedAt: serverTimestamp() };
+  if ($('editExpiry')) {
+    const expiry = $('editExpiry').value ? new Date($('editExpiry').value) : null;
+    if (expiry && (!Number.isFinite(expiry.getTime()) || expiry.getTime() <= Date.now())) { $('editorError').textContent = 'Choose a future deadline or leave it blank.'; return; }
+    changes.expiresAt = expiry ? Timestamp.fromDate(expiry) : null;
+    changes.eligibility = $('editEligibility').value.trim(); changes.disputePolicy = $('editDisputePolicy').value.trim();
+  }
   if (!changes.targetName || !changes.instructions || !Number.isInteger(changes.amount) || changes.amount < 5 || changes.amount > 20) { $('editorError').textContent = 'Enter a target, requirements, and a whole-dollar reward from $5 to $20.'; return; }
   saving = true; $('saveBounty').disabled = true; $('editorError').textContent = '';
   updateImageControls();
@@ -271,9 +292,13 @@ $('bountyEditor').addEventListener('submit', async e => {
         if (!current.exists() || !['open', 'paused'].includes(current.data().status)) throw new Error('This bounty has closed. Refresh the board.');
         if (!current.data().updatedAt?.isEqual(editorVersion)) throw new Error('Another admin changed this bounty. Close the editor and reopen it to load the latest details.');
         transaction.update(reference, changes);
+        logActivity(db, transaction, user, 'bounty-edited', 'bounties', editingId, changes.targetName);
       });
     } else {
-      await setDoc(doc(collection(db, 'bounties')), { ...changes, winningClaimId: '', createdAt: serverTimestamp(), createdBy: user.uid });
+      const reference = doc(collection(db, 'bounties')), batch = writeBatch(db);
+      batch.set(reference, { ...changes, winningClaimId: '', createdAt: serverTimestamp(), createdBy: user.uid });
+      logActivity(db, batch, user, 'bounty-created', 'bounties', reference.id, changes.targetName);
+      await batch.commit();
     }
     if (version !== epoch) return;
     $('editorDialog').close(); toast('Bounty saved.');
@@ -298,6 +323,8 @@ async function reviewClaim(id, decision, button) {
         transaction.update(bountyRef, { status: 'claimed', winningClaimId: id, updatedAt: serverTimestamp() });
       }
       transaction.update(claimRef, { status: decision, reason, reviewedAt: serverTimestamp(), reviewerUid, updatedAt: serverTimestamp() });
+      logActivity(db, transaction, user, 'claim-' + decision, 'bountyClaims', id, reason);
+      notifyMember(db, transaction, current.data().ownerUid, 'claim-' + decision, id, 'Your claim for ' + current.data().targetName + ' was ' + decision + (reason ? ': ' + reason : '. Reward delivery is tracked separately.'));
     });
     if (version === epoch) toast(decision === 'approved' ? 'Claim approved. The bounty is now closed; arrange the reward separately.' : 'Claim denied. Your feedback is visible to the member.');
   } catch (error) {
@@ -315,6 +342,7 @@ $('confirmRemove').addEventListener('click', async () => {
       const reference = doc(db, 'bounties', removingId), current = await transaction.get(reference);
       if (!current.exists()) throw new Error('This bounty no longer exists.');
       transaction.update(reference, { status: 'archived', updatedAt: serverTimestamp() });
+      logActivity(db, transaction, user, 'bounty-removed', 'bounties', removingId, current.data().targetName);
     });
     if (version === epoch) { $('removeDialog').close(); toast('Bounty removed from the board. Claim history is preserved.'); }
   } catch (error) { if (version === epoch) $('removeError').textContent = readableError(error); }
@@ -344,4 +372,19 @@ $('board').addEventListener('click', e => {
     $('removeError').textContent = ''; $('removeDialog').showModal();
   }
   if (button.dataset.review) reviewClaim(button.dataset.review, button.dataset.decision, button);
+  if (button.dataset.dispute) {
+    $('disputeClaimId').value = button.dataset.dispute; $('disputeMessage').value = ''; $('disputeError').textContent = '';
+    $('disputeDialog').showModal();
+  }
 });
+
+$('disputeForm')?.addEventListener('submit', async event => {
+  event.preventDefault(); if (!user) return;
+  const id = $('disputeClaimId').value, message = $('disputeMessage').value.trim();
+  if (!message) return;
+  const button = $('submitDispute'); button.disabled = true;
+  try { await setDoc(doc(db, 'claimDisputes', id), { claimId: id, ownerUid: user.uid, message, status: 'open', resolution: '', createdAt: serverTimestamp(), updatedAt: serverTimestamp() }); $('disputeDialog').close(); toast('Review requested. An admin will respond here.'); }
+  catch (error) { $('disputeError').textContent = readableError(error); } finally { button.disabled = false; }
+});
+$('closeDispute')?.addEventListener('click', () => $('disputeDialog').close());
+setInterval(() => { if (boardReady) renderBoard(); }, 30000);

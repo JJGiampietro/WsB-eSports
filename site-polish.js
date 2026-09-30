@@ -120,7 +120,7 @@
   const search = document.getElementById('memberSearch'), filter = document.getElementById('memberFilter');
   const managementIds = new Set(['jen','lizzie','taz','kato','lazy','elusion','dmo','bee','mysterious','skrewwww','barrelroll','ingraham']);
   const normalize = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  let roster = [], players = null, lastSuccess = null;
+  let roster = [], players = null, latestSnapshot = null, lastSuccess = null;
   const formatTime = value => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/Los_Angeles',timeZoneName:'short'}).format(new Date(value));
   let historyPromise;
   function loadHistory() {
@@ -137,8 +137,9 @@
     cards.forEach(card=>{
       const member=roster.find(m=>m.id===card.dataset.memberId||m.username===card.dataset.fnUser);
       const id=member?.id||(!card.dataset.fnUser?'ingraham':'');
-      const synced=players && id && !!players[id];
-      const issue=players && member && !synced;
+      const sync=window.WsbSync.status(latestSnapshot,id);
+      const synced=players && id && sync.state==='synced';
+      const issue=players && member && sync.state!=='synced';
       const rank=card.querySelector('.member-meta b');
       if(rank&&!rank.dataset.rankLabeled&&rank.textContent.trim()!=='SYNCED') { rank.dataset.rankLabeled='true';rank.textContent += /^Dirt/.test(rank.textContent)?' · For fun':' · Team-set'; }
       if(issue){
@@ -146,12 +147,14 @@
         let label=card.querySelector('.member-sync-status');
         if(!label){label=document.createElement('span');label.className='member-sync-status';card.append(label);}
         label.removeAttribute('role');label.removeAttribute('aria-label');
-        const text='Stats unavailable'+(lastSuccess?' · '+historyText(id):'');
+        const text=window.WsbSync.describe(latestSnapshot,id);
         if(label.textContent!==text)label.textContent=text;
-        label.title='The latest refresh did not return stats. This does not mean zero stats.';
+        label.title='Missing or outdated data does not mean zero stats.';
       } else if(synced) {
         card.classList.remove('sync-issue');
-        card.querySelector('.member-sync-status')?.remove();
+        let label=card.querySelector('.member-sync-status');
+        if(!label){label=document.createElement('span');label.className='member-sync-status';card.append(label);}
+        const text=window.WsbSync.describe(latestSnapshot,id); if(label.textContent!==text)label.textContent=text;
       }
       const matchesName=!term||normalize((card.querySelector('.member-name')?.textContent||'')+' '+card.dataset.fnUser+' '+id).includes(term);
       const matchesFilter=category==='all'||category==='management'&&managementIds.has(id)||category==='synced'&&synced||category==='issue'&&issue;
@@ -165,14 +168,14 @@
     document.querySelectorAll('.stats-player-issue').forEach(card=>{
       const id=decodeURIComponent(new URL(card.href).pathname.split('/').filter(Boolean).pop());
       const note=card.querySelector('.stats-issue-copy');
-      if(note&&lastSuccess)note.textContent='Stats unavailable in the latest refresh. '+historyText(id);
+      if(note&&lastSuccess&&!latestSnapshot?.sync?.[id])note.textContent='Waiting for a successful refresh. '+historyText(id);
     });
     const detail=document.getElementById('playerDetail');
     if(detail&&document.body.dataset.memberId&&detail.querySelector('.profile-panel-wide')&&lastSuccess){const panel=detail.querySelector('.profile-panel-wide');if(!panel.querySelector('.last-success')){const note=document.createElement('p');note.className='last-success';note.textContent=historyText(document.body.dataset.memberId);panel.append(note);}}
   }
   if(grid||document.getElementById('statsDirectory')||document.getElementById('playerDetail')) {
     Promise.all([fetch(root+'data/roster.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]),fetch(root+'data/latest.json',{cache:'no-store'}).then(r=>r.ok?r.json():null)]).then(async([members,snapshot])=>{
-      roster=Array.isArray(members)?members:[];players=snapshot?.players||null;updateMembers();
+      roster=Array.isArray(members)?members:[];latestSnapshot=snapshot;players=snapshot?.players||null;updateMembers();
       if(players&&roster.some(m=>!players[m.id])){await loadHistory();updateMembers();annotateStats();}
     }).catch(()=>{updateMembers();});
     const target=grid||document.getElementById('statsDirectory')||document.getElementById('playerDetail');

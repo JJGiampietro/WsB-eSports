@@ -14,12 +14,12 @@ async function pageFor(role){
  const context=await browser.newContext({viewport:{width:1440,height:1000}});
  const page=await context.newPage();
  const sdk='https://www.gstatic.com/firebasejs/12.19.0/';
- await page.route('**/firebase-member.js*',route=>route.fulfill({contentType:'text/javascript',body:`
+ await page.route('**/firebase-client.js',route=>route.fulfill({contentType:'text/javascript',body:`
  import {initializeApp} from '${sdk}firebase-app.js';
  import {getAuth,connectAuthEmulator,signInWithEmailAndPassword,GoogleAuthProvider} from '${sdk}firebase-auth.js';
  import {getFirestore,connectFirestoreEmulator} from '${sdk}firebase-firestore.js';
- const app=initializeApp({apiKey:'demo-key',projectId:'demo-wsb-bounties',authDomain:'localhost'});
- export const auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();
+ export const app=initializeApp({apiKey:'demo-key',projectId:'demo-wsb-bounties',authDomain:'localhost'});
+ export const auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider(),localTest=true,authReady=Promise.resolve();
  connectAuthEmulator(auth,'http://127.0.0.1:9198',{disableWarnings:true});connectFirestoreEmulator(db,'127.0.0.1',8185);
  ${role?`await signInWithEmailAndPassword(auth,${JSON.stringify(credentials[role].email)},${JSON.stringify(credentials[role].password)});`:''}
  `}));
@@ -36,7 +36,7 @@ async function pageFor(role){
   const db=ctx.firestore();await setDoc(doc(db,'admins',credentials.admin.uid),{enabled:true});
   for(const role of ['member','other']){await setDoc(doc(db,'memberAccess',role),{ownerUid:credentials[role].uid,status:'active'});await setDoc(doc(db,'members',role),{displayName:role,bio:'',socials:{},profileImage:''});}
  });
- browser=await chromium.launch({channel:'msedge',headless:true});
+ browser=await chromium.launch({...(process.platform==='win32'?{channel:'msedge'}:{}),headless:true});
  const anon=await pageFor();assert.equal(await anon.locator('#tab-review').isVisible(),false);assert.equal(await anon.locator('#tab-manage').isVisible(),false);assert.equal(await anon.locator('#bountySignIn').isVisible(),true);
  const admin=await pageFor('admin');await admin.locator('#tab-manage').waitFor({state:'visible'});await admin.locator('#tab-manage').click();await admin.locator('#addBounty').click();
  fs.mkdirSync('artifacts',{recursive:true});
@@ -54,12 +54,12 @@ async function pageFor(role){
  await admin.locator('[data-target]').click();await admin.locator('#claimName').fill('Admin player');await admin.locator('#claimClipUrl').fill('https://youtu.be/adminclip');await admin.locator('#claimConfirm').check();await admin.locator('#submitClaim').click();await admin.locator('#claimDialog').waitFor({state:'hidden'});await admin.locator('#claimList .bounty-claim').waitFor();assert.equal(await admin.locator('#claimCount').textContent(),'1');
  await admin.locator('#tab-review').click();await admin.locator('#reviewList textarea').fill('Test own claim feedback');await admin.locator('[data-decision="denied"]').click();await admin.locator('#reviewList .denied').waitFor();
  const member=await pageFor('member');await member.locator('[data-target]').waitFor();assert.equal(await member.locator('#tab-manage').isVisible(),false);assert.equal(await member.locator('#tab-review').isVisible(),false);
- await member.locator('[data-target]').click();await member.locator('#claimClipUrl').fill('https://example.com/not-allowed');await member.locator('#claimConfirm').check();await member.locator('#submitClaim').click();assert.match(await member.locator('#claimError').textContent(),/valid HTTPS/);
+ await member.locator('[data-target]').click();await member.locator('#claimName').fill('member');await member.locator('#claimClipUrl').fill('https://example.com/not-allowed');await member.locator('#claimConfirm').check();await member.locator('#submitClaim').click();assert.match(await member.locator('#claimError').textContent(),/valid HTTPS/);
  await member.locator('#claimClipUrl').fill('https://youtu.be/abcdefghijk');await member.locator('#claimNotes').fill('Elimination at 0:15.');await member.locator('#submitClaim').click();await member.locator('#claimDialog').waitFor({state:'hidden'});await member.locator('#claimList .bounty-claim').waitFor();
  await member.reload();await member.locator('#tab-claims').click();await member.locator('#claimList .bounty-claim').waitFor();assert.match(await member.locator('#claimList').textContent(),/Pending review/);
  const other=await pageFor('other');await other.locator('#tab-claims').click();await other.getByRole('heading',{name:'Your first claim starts here.'}).waitFor();assert.equal(await other.locator('#claimList .bounty-claim').count(),0);
  await admin.locator('#tab-review').click();await admin.locator('[data-decision="denied"]').click();assert.match(await admin.locator('#reviewList .bounty-error').textContent(),/Add a reason/);await admin.locator('#reviewList textarea').fill('Please show the target name clearly.');await admin.locator('[data-decision="denied"]').click();await member.getByRole('button',{name:'RESUBMIT CLAIM'}).click();await member.locator('#claimClipUrl').fill('https://streamable.com/abc123');await member.locator('#claimConfirm').check();await member.locator('#submitClaim').click();await member.locator('#claimDialog').waitFor({state:'hidden'});
- await admin.locator('[data-decision="approved"]').click();await member.locator('#claimList .bounty-status.approved').waitFor();assert.match(await member.locator('#claimList').textContent(),/Winning claim approved/);
+ await admin.locator('[data-decision="approved"]').click();await member.locator('#claimList .bounty-status.approved').waitFor();assert.match(await member.locator('#claimList').textContent(),/Awaiting delivery/);
  fs.mkdirSync('artifacts',{recursive:true});await admin.screenshot({path:'artifacts/admin-review.png',fullPage:true});
  await admin.locator('#tab-manage').click();await admin.locator('[data-remove]').click();await admin.locator('#confirmRemove').click();await admin.locator('#removeDialog').waitFor({state:'hidden'});await member.locator('#tab-board').click();await member.getByRole('heading',{name:'The board is clear.'}).waitFor();
  await member.locator('#tab-claims').click();await member.getByRole('heading',{name:'Your first claim starts here.'}).waitFor();assert.equal(await member.locator('#claimCount').textContent(),'0');assert.equal(await member.locator('#claimList a').count(),0);

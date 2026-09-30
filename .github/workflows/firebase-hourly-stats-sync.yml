@@ -40,6 +40,10 @@ jobs:
           token_format: access_token
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
 
+      - name: Verify before publishing
+        if: steps.stats.outputs.changed == 'true'
+        uses: ./.github/actions/verify
+
       - name: Deploy refreshed stats to Firebase
         if: steps.stats.outputs.changed == 'true'
         run: node .github/scripts/deploy-firebase-preview.mjs

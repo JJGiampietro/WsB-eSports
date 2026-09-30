@@ -413,7 +413,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     rows.slice(0,5).forEach(function(row,i){
       html+='<div class="lb-row"><div class="lb-rank">'+medalRank(i)+"</div>"
         +(row.id?'<a class="lb-name" href="stats/'+encodeURIComponent(row.id)+'/" aria-label="Open '+escapeHtml(row.name)+' stats">'+escapeHtml(row.name)+'</a>':'<div class="lb-name">'+escapeHtml(row.name)+'</div>')
-        +'<div class="lb-value">'+valueFmt(row.value)+"</div></div>";
+        +'<div class="lb-value">'+valueFmt(row.value)+(row.stale?' <small title="Last successful stats retained; latest refresh failed">Outdated</small>':'')+"</div></div>";
     });
     return html+="</div>";
   }
@@ -422,7 +422,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     return entries.filter(function(e){return typeof e[key]==="number"&&!isNaN(e[key]);})
       .sort(function(a,b){return b[key]-a[key];})
       .slice(0,n||5)
-      .map(function(e){return {id:e.id,name:e.displayName,value:e[key]};});
+      .map(function(e){return {id:e.id,name:e.displayName,value:e[key],stale:Boolean(e.stale)};});
   }
 
   function formatPacific(value){
@@ -442,7 +442,8 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
       const cur=latest.players[id];
       const prev=baseline.players[id];
       if(!prev)return;
-      if(prev.username&&cur.username&&prev.username!==cur.username)return;
+      if(cur.stale || prev.stale || window.WsbSync.status(latest,id).state !== 'synced')return;
+      if(prev.accountId&&cur.accountId&&prev.accountId!==cur.accountId)return;
       const deltaKills=cur.kills-prev.kills;
       const deltaWins=cur.wins-prev.wins;
       const deltaMatches=cur.matches-prev.matches;
@@ -485,7 +486,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
       lifetimeRefreshNote.textContent="Last updated "+formatPacific(latest.fetchedAt)+". Refreshes hourly on the hour.";
     }
 
-    const lifetimeEntries=Object.entries(activeLatest.players).map(function(entry){return Object.assign({id:entry[0]},entry[1]);});
+    const lifetimeEntries=Object.entries(activeLatest.players).map(function(entry){return Object.assign({id:entry[0]},entry[1],{stale:window.WsbSync.status(latest,entry[0]).state!=='synced'});});
     let lifetimeHtml="";
     lifetimeHtml+=buildCategory("Best K/D",topBy(lifetimeEntries,"kd"),function(v){return v.toFixed(2);});
     lifetimeHtml+=buildCategory("Most Kills (Lifetime)",topBy(lifetimeEntries,"kills"),fmtInt);
@@ -500,11 +501,8 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
 
 // Live countdown timers (Announcements + Events pages)
 (function(){
-  const widgets = document.querySelectorAll("[data-countdown-target]");
-  if(!widgets.length) return;
-
   function update(){
-    widgets.forEach(function(widget){
+    document.querySelectorAll("[data-countdown-target]").forEach(function(widget){
       const target = new Date(widget.getAttribute("data-countdown-target")).getTime();
       const now = Date.now();
       let diff = target - now;
@@ -606,7 +604,8 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
       refreshNote.textContent="Last updated "+formatPacific(snapshot.fetchedAt)+". Refreshes hourly on the hour.";
     }
     if(directoryNote){
-      directoryNote.textContent=synced.length+" of "+roster.length+" linked profiles synced.";
+      const fresh=entries.filter(entry=>window.WsbSync.status(snapshot,entry.member.id).state==='synced').length;
+      directoryNote.textContent=fresh+" of "+roster.length+" profiles up to date. "+synced.length+" have saved stats.";
     }
 
     const total=function(key){return synced.reduce(function(sum,entry){return sum+(Number(entry.stats[key])||0);},0);};
@@ -647,10 +646,11 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
         : '<div class="stats-avatar stats-avatar-initial">'+initials(member.displayName)+'</div>';
       const badge=leaderIds.get(member.id)?'<span class="stats-badge">'+leaderIds.get(member.id)+'</span>':"";
       if(!stats){
-        return '<a class="stats-player stats-player-issue" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(member.username)+'</p></div><span class="stats-sync-state"><i></i>Needs attention</span></div><p class="stats-issue-copy">This linked profile did not return data in the latest refresh. Check the Fortnite name and profile privacy.</p></a>';
+        return '<a class="stats-player stats-player-issue" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(member.username)+'</p></div><span class="stats-sync-state"><i></i>Waiting for first sync</span></div><p class="stats-issue-copy">'+escapeHtml(window.WsbSync.describe(snapshot,member.id))+'</p></a>';
       }
       const killsPerMatch=stats.matches?stats.kills/stats.matches:0;
-      return '<a class="stats-player" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(stats.username||member.username)+'</p></div><span class="stats-sync-state stats-sync-ok"><i></i>Synced</span></div>'+badge+'<div class="stats-metrics">'
+      const sync=window.WsbSync.status(snapshot,member.id);
+      return '<a class="stats-player" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(stats.username||member.username)+'</p></div><span class="stats-sync-state '+(sync.state==='synced'?'stats-sync-ok':'stats-sync-stale')+'"><i></i>'+escapeHtml(sync.label)+'</span></div><p class="sync-detail">'+escapeHtml(window.WsbSync.describe(snapshot,member.id))+'</p>'+badge+'<div class="stats-metrics">'
         +'<div><span>K/D</span><b>'+fmtDecimal(stats.kd)+'</b></div>'
         +'<div><span>WIN RATE</span><b>'+fmtPercent(stats.winrate)+'</b></div>'
         +'<div><span>WINS</span><b>'+fmtInt(stats.wins)+'</b></div>'
@@ -788,7 +788,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
   function activity(latest,baseline,id,label,emptyText){
     const previous=baseline&&baseline.players?baseline.players[id]:null;
     const current=latest.players[id];
-    if(!previous||!current)return '<section class="profile-panel"><p class="label">'+label+'</p><p class="profile-empty">'+emptyText+"</p></section>";
+    if(!previous||!current||current.stale||previous.stale||window.WsbSync.status(latest,id).state==='stale')return '<section class="profile-panel"><p class="label">'+label+'</p><p class="profile-empty">'+(current && window.WsbSync.status(latest,id).state==='stale'?'Activity comparison is paused while stats are outdated.':emptyText)+"</p></section>";
     const kills=current.kills-previous.kills;
     const wins=current.wins-previous.wins;
     const matches=current.matches-previous.matches;
@@ -809,13 +809,15 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     const stats=latest&&latest.players?latest.players[member.id]:null;
     const asset=member.profileImage;
     const avatar=asset?'<div class="profile-avatar" style="background-image:url('+escapeHtml(root+asset)+')"></div>':'<div class="profile-avatar profile-avatar-initial">'+escapeHtml(member.displayName.replace(/[^A-Za-z0-9]/g,"").slice(0,2).toUpperCase()||"W")+'</div>';
-    const status=stats?'<span class="stats-sync-state stats-sync-ok"><i></i>Synced</span>':'<span class="stats-sync-state"><i></i>Needs attention</span>';
+    const sync=window.WsbSync.status(latest,member.id);
+    const status='<span class="stats-sync-state '+(sync.state==='synced'?'stats-sync-ok':sync.state==='stale'?'stats-sync-stale':'')+'"><i></i>'+escapeHtml(sync.label)+'</span><p class="sync-detail">'+escapeHtml(window.WsbSync.describe(latest,member.id))+'</p>';
     const stream=streamProfiles[member.id];
     const streamLink=stream?'<a class="profile-stream-link" href="'+escapeHtml(stream.url)+'" target="_blank" rel="noopener"><i></i>'+escapeHtml(stream.platform).toUpperCase()+' STREAMER<span>VIEW PROFILE ↗</span></a>':'';
     let html='<a class="profile-back" href="'+root+'stats.html">← BACK TO ALL STATS</a><section class="profile-hero-card">'+avatar+'<div><p class="label">FORTNITE MEMBER PROFILE</p><h1>'+escapeHtml(member.displayName)+'</h1><p class="profile-username">'+escapeHtml((stats&&stats.username)||member.username)+'</p>'+status+streamLink+'</div></section>';
     if(!stats){
       detail.innerHTML=html+'<section class="profile-panel profile-panel-wide"><p class="label">PROFILE STATUS</p><h2>STATS NEED ATTENTION</h2><p class="profile-empty">The latest refresh did not return stats for this account. Missing data does not mean zero stats. Check Public Game Stats in Fortnite, or ask an admin to check the linked account.</p></section>';
       requestAnimationFrame(fitProfileName);
+      document.dispatchEvent(new Event('wsb:profile-render'));
       return;
     }
     const rosterById=new Map(roster.map(function(entry){return [entry.id,entry];}));
@@ -846,9 +848,10 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     html+='<div class="profile-activity-grid">'
       +activity(latest,findBaseline(snapshots,latestTime-DAY_MS),member.id,"PAST 24 HOURS","24-hour stats will be ready tomorrow.")
       +activity(latest,findBaseline(snapshots,latestTime-WEEK_MS),member.id,"PAST 7 DAYS","Weekly stats will be ready next week.")
-      +'</div><p class="profile-data-note">Last updated '+formatPacific(latest.fetchedAt)+'. Refreshes hourly on the hour.</p>';
+      +'</div><p class="profile-data-note">'+escapeHtml(window.WsbSync.describe(latest,member.id))+'. Refresh attempts hourly on the hour.</p>';
     detail.innerHTML=html;
     setupComparison(synced,member,stats);
+    document.dispatchEvent(new Event('wsb:profile-render'));
     requestAnimationFrame(fitProfileName);
   });
 })();

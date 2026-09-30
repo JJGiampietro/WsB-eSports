@@ -7,7 +7,7 @@ const yaml = require('../bounties/node_modules/js-yaml');
 const { chromium } = require('../bounties/node_modules/playwright');
 const root = process.cwd();
 const tracked = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).trim().split(/\r?\n/);
-const pages = tracked.filter(name => name.endsWith('.html'));
+const pages = tracked.filter(name => name.endsWith('.html') && !name.startsWith('templates/'));
 const payload = JSON.parse(execFileSync(process.execPath, ['.github/scripts/deploy-firebase-preview.mjs', '--dry-run'], { encoding: 'utf8' }));
 assert(payload.files.includes('/deployment.json'));
 assert(payload.config.headers.some(rule => rule.glob === '/' && rule.headers['Cache-Control'] === 'no-cache'));
@@ -36,10 +36,10 @@ for (const name of ['firebase-hosting-production', 'firebase-hourly-stats-sync',
   assert(job.if.includes("github.repository == 'adetrick7/WsB-eSports'"));
   assert.equal(job.steps[0].with.ref, 'main');
 }
-assert(fs.readFileSync('firebase-admin.js', 'utf8').includes('const profileUrl = "https://wsb-esports.web.app/member-account.html"'));
+assert(fs.readFileSync('firebase-admin.js', 'utf8').includes("'https://wsb-esports.web.app/member-account.html'"));
 
 (async () => {
-  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const browser = await chromium.launch({ ...(process.platform === 'win32' ? { channel: 'msedge' } : {}), headless: true });
   try {
     const context = await browser.newContext();
     const page = await context.newPage();

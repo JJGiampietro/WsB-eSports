@@ -1,23 +1,8 @@
-import { safeProfileImage, makeProfileIcon } from './profile-image.js?v=1';
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { GoogleAuthProvider, browserLocalPersistence, getAuth, onAuthStateChanged, setPersistence, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, getFirestore, query, serverTimestamp, updateDoc, where } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDUWKr1e9ZIcW0iCr08ykhTvmCqEcr2qGI",
-  authDomain: "wsb-esports.firebaseapp.com",
-  projectId: "wsb-esports",
-  storageBucket: "wsb-esports.firebasestorage.app",
-  messagingSenderId: "999242676867",
-  appId: "1:999242676867:web:64488c17d1109c5d03f9b6",
-  measurementId: "G-HMPPEWJ4NM"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-const authReady = setPersistence(auth, browserLocalPersistence);
+import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
+import { auth, db, provider, authReady } from './firebase-client.js';
+import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
+import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const signedOut = document.getElementById("accountSignedOut");
 const loading = document.getElementById("accountLoading");
@@ -26,7 +11,7 @@ const adminOnly = document.getElementById("accountAdminOnly");
 const form = document.getElementById("memberProfileForm");
 const error = document.getElementById("accountError");
 const signInButton = document.getElementById("googleSignIn");
-const signOutButtons = [document.getElementById("signOut"), document.getElementById("signOutForm"), document.getElementById("signOutAdmin")];
+const signOutButtons = [document.getElementById("signOut"), document.getElementById("signOutForm"), document.getElementById("signOutAdmin"), document.getElementById('signOutError')];
 const uidOutput = document.getElementById("accountUid");
 const copyUidButton = document.getElementById("copyAccountUid");
 const emailOutput = document.getElementById("accountEmail");
@@ -47,6 +32,7 @@ let linkedMemberId = null;
 let profileImageData = "";
 let publicProfiles = null;
 let publicRoster = null;
+let publicProfileLoad = null;
 
 function hideAll() {
   signedOut.hidden = true;
@@ -55,6 +41,7 @@ function hideAll() {
   adminOnly.hidden = true;
   form.hidden = true;
   error.hidden = true;
+  const exit = document.getElementById('signOutError'); if (exit) exit.hidden = true;
 }
 
 function showError(message) {
@@ -86,17 +73,11 @@ function setSaving(message, isProblem) {
   saveStatus.classList.toggle("is-problem", Boolean(isProblem));
 }
 
-async function loadLinkedProfile(user) {
+let accountEpoch = 0, stopAccount = () => {}, accountAdmin = false;
+async function loadLinkedProfile(user, version = accountEpoch) {
   hideAll();
   loading.hidden = false;
   try {
-    const adminSnapshot = await getDoc(doc(db, "admins", user.uid));
-    if (adminSnapshot.exists()) {
-      if (adminEmailOutput) adminEmailOutput.textContent = user.email || "Your Google account";
-      hideAll();
-      adminOnly.hidden = false;
-      return;
-    }
     const accessQuery = query(collection(db, "memberAccess"), where("ownerUid", "==", user.uid));
     const accessSnapshot = await getDocs(accessQuery);
     if (accessSnapshot.empty) {
@@ -104,14 +85,25 @@ async function loadLinkedProfile(user) {
       const inviteSnapshot = await getDocs(inviteQuery);
       if (inviteSnapshot.size === 1) {
         const inviteRef = inviteSnapshot.docs[0].ref;
-        await updateDoc(inviteRef, {
+        const invitation = inviteSnapshot.docs[0].data();
+        if (invitation.status !== 'invited' || invitation.ownerUid) throw new Error('This invitation is not available. Please contact a WsB admin.');
+        const batch = writeBatch(db);
+        batch.update(inviteRef, {
           ownerUid: user.uid,
           status: "active",
           claimedAt: serverTimestamp()
         });
+        if (invitation.role === 'admin') batch.set(doc(db, 'admins', user.uid), { enabled: true, memberId: inviteRef.id });
+        logActivity(db, batch, user, 'account-linked', 'memberAccess', inviteRef.id);
+        notifyMember(db, batch, user.uid, 'account-linked', inviteRef.id, 'Your WsB member profile is linked. You can now edit your public profile.');
+        await batch.commit();
+        if (invitation.role === 'admin') accountAdmin = true;
+        if (version !== accountEpoch) return;
         return loadLinkedProfile(user);
       }
+      if (version !== accountEpoch) return;
       hideAll();
+      if (accountAdmin) { adminEmailOutput.textContent = user.email; adminOnly.hidden = false; return; }
       uidOutput.textContent = user.uid;
       if (unlinkedEmailOutput) unlinkedEmailOutput.textContent = user.email || "your Google account";
       notLinked.hidden = false;
@@ -119,10 +111,13 @@ async function loadLinkedProfile(user) {
     }
     if (accessSnapshot.size !== 1) throw new Error("More than one member profile is linked to this account. Please contact a WsB admin.");
 
+    if (version !== accountEpoch) return;
+    if (accessSnapshot.docs[0].data().status !== 'active') throw new Error('Your member editing access is inactive. Please contact a WsB admin.');
     linkedMemberId = accessSnapshot.docs[0].id;
     const profileSnapshot = await getDoc(doc(db, "members", linkedMemberId));
     if (!profileSnapshot.exists()) throw new Error("Your member profile record is not ready yet. Please contact a WsB admin.");
     const profile = profileSnapshot.data();
+    if (version !== accountEpoch) return;
     const socials = profile.socials || {};
     displayName.value = safeText(profile.displayName) || user.displayName || "";
     bio.value = safeText(profile.bio);
@@ -135,10 +130,14 @@ async function loadLinkedProfile(user) {
     updateBioCount();
     hideAll();
     form.hidden = false;
+    const adminLink = document.getElementById('profileAdminLink'); if (adminLink) adminLink.hidden = !accountAdmin;
+    document.dispatchEvent(new Event('wsb:profile-loaded'));
   } catch (loadError) {
+    if (version !== accountEpoch) return;
     hideAll();
-    signedOut.hidden = false;
+    signedOut.hidden = Boolean(auth.currentUser);
     showError(loadError.message || "We could not load your member profile. Please try again.");
+    const exit = document.getElementById('signOutError'); if (exit) exit.hidden = !auth.currentUser;
   }
 }
 
@@ -175,10 +174,12 @@ bio.addEventListener("input", updateBioCount);
 profileImageInput.addEventListener("change", async function () {
   const file = profileImageInput.files && profileImageInput.files[0];
   if (!file) return;
+  const imageEpoch = accountEpoch;
   profileImageInput.disabled = true;
   setSaving("Preparing your profile icon...");
   try {
-    setProfileImage(await makeProfileIcon(file), file.name);
+    const image = await cropProfileIcon(file); if (imageEpoch !== accountEpoch) return; if (!image) { setSaving('Image selection cancelled.'); return; }
+    setProfileImage(image, file.name);
     setSaving("Icon ready. Save your profile to publish it.");
   } catch (imageError) {
     profileImageInput.value = "";
@@ -220,6 +221,7 @@ form.addEventListener("submit", async function (event) {
       updatedAt: serverTimestamp()
     });
     setSaving("Profile saved.");
+    document.dispatchEvent(new Event('wsb:profile-saved'));
   } catch (_) {
     setSaving("Your profile could not be saved. Please try again.", true);
   } finally {
@@ -228,13 +230,18 @@ form.addEventListener("submit", async function (event) {
 });
 
 onAuthStateChanged(auth, function (user) {
+  const version = ++accountEpoch; stopAccount();
   linkedMemberId = null;
   if (!user) {
     hideAll();
     signedOut.hidden = false;
     return;
   }
-  loadLinkedProfile(user);
+  stopAccount = watchAdmin(db, user, isAdmin => {
+    if (version !== accountEpoch) return;
+    accountAdmin = isAdmin;
+    loadLinkedProfile(user, version);
+  });
 });
 }
 
@@ -322,7 +329,7 @@ function addNewRosterCards(roster, profiles) {
     name.textContent = displayName;
     const meta = document.createElement("div");
     meta.className = "member-meta";
-    meta.innerHTML = "<b>SYNCED</b>";
+    meta.innerHTML = "<b>MEMBER PROFILE</b>";
     info.append(name, meta);
     card.append(emblem, info);
     const openProfile = function () { window.location.href = "stats/" + encodeURIComponent(member.id) + "/"; };
@@ -337,11 +344,11 @@ async function applyPublicMemberProfiles() {
   if (!needsProfileData) return;
   try {
     if (!publicProfiles || !publicRoster) {
-      const [snapshot, roster] = await Promise.all([
-        getDocs(collection(db, "members")),
+      const detailId = document.body.dataset.memberId;
+      const [snapshot, roster] = await (publicProfileLoad ||= Promise.all([
+        detailId ? getDoc(doc(db, 'members', detailId)).then(entry => ({ empty: !entry.exists(), docs: entry.exists() ? [entry] : [] })) : getDocs(collection(db, "members")),
         fetch((document.body.dataset.siteRoot || "") + "data/roster.json", { cache: "no-store" }).then(function (response) { return response.ok ? response.json() : []; })
-      ]);
-      if (snapshot.empty) return;
+      ]));
       publicProfiles = new Map(snapshot.docs.map(function (entry) { return [entry.id, entry.data()]; }));
       publicRoster = roster;
     }
@@ -393,8 +400,8 @@ async function applyPublicMemberProfiles() {
         card.style.setProperty("--tier-photo", 'url("' + profileImage + '")');
       }
     });
-    const pathMatch = location.pathname.match(/\/stats\/([^/]+)\/?$/);
-    if (pathMatch) appendPublicProfile(pathMatch[1], profiles.get(decodeURIComponent(pathMatch[1])));
+    const detailId = document.body.dataset.memberId;
+    if (detailId) appendPublicProfile(detailId, profiles.get(detailId));
   } catch (_) {
     // The public site remains usable if Firebase is unavailable.
   }
@@ -437,5 +444,6 @@ function schedulePublicProfilePasses() {
 if (document.readyState === "complete") schedulePublicProfilePasses();
 else window.addEventListener("load", schedulePublicProfilePasses);
 document.addEventListener("wsb:directory-render", applyPublicMemberProfiles);
+document.addEventListener('wsb:profile-render', applyPublicMemberProfiles);
 
 export { auth, db, provider };

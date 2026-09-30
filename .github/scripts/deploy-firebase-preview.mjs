@@ -13,7 +13,7 @@ if (!token && !dryRun) {
   throw new Error("A short-lived Firebase Hosting credential was not supplied.");
 }
 
-const ignoredNames = new Set([".git", ".github", ".firebase", "node_modules", "scripts"]);
+const ignoredNames = new Set([".git", ".github", ".firebase", "node_modules", "scripts", "templates"]);
 const ignoredFiles = new Set(["firebase.json", ".firebaserc", "firestore.rules", "FIREBASE-MEMBER-SETUP.md"]);
 
 async function listFiles(directory, relative = "") {
@@ -37,7 +37,7 @@ async function listFiles(directory, relative = "") {
       !entry.name.startsWith("gha-creds-") &&
       !ignoredFiles.has(entryRelative) &&
       !entryRelative.endsWith(".md") &&
-      /\.(?:html|css|js|json|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp4|webm|txt)$/i.test(entry.name)
+      /\.(?:html|css|js|json|xml|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp4|webm|txt)$/i.test(entry.name)
     ) {
       files.push({ absolute: entryAbsolute, relative: entryRelative });
     }

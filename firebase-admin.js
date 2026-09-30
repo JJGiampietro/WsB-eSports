@@ -1,6 +1,8 @@
-import { auth, db, provider } from "./firebase-member.js?v=20260927-account-indicator";
+import { auth, db, provider } from "./firebase-member.js?v=workspace-1";
+import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
+import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { collection, doc, getDocs, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const signedOut = document.getElementById("adminSignedOut");
 const authPanel = document.getElementById("adminAuthPanel");
@@ -78,11 +80,6 @@ function makeMemberId(fortniteName) {
   return base + "-" + suffix;
 }
 
-function safeProfileImage(value) {
-  const image = emptyValue(value);
-  return image.length <= 200000 && /^data:image\/(?:webp|jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(image) ? image : "";
-}
-
 function setProfileImage(value, label) {
   profileImageData = safeProfileImage(value);
   profileImagePreview.style.backgroundImage = profileImageData ? 'url("' + profileImageData + '")' : "";
@@ -91,49 +88,8 @@ function setProfileImage(value, label) {
   profileImageRemove.hidden = !profileImageData;
 }
 
-function fileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("The image could not be read."));
-    reader.readAsDataURL(file);
-  });
-}
-
-function canvasAsBlob(canvas, quality) {
-  return new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
-}
-
-async function makeProfileIcon(file) {
-  if (!file || !/^image\/(png|jpeg|webp)$/.test(file.type)) throw new Error("Choose a PNG, JPG, or WebP image.");
-  if (file.size > 5 * 1024 * 1024) throw new Error("Choose an image smaller than 5 MB.");
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const image = await new Promise((resolve, reject) => {
-      const source = new Image();
-      source.onload = () => resolve(source);
-      source.onerror = () => reject(new Error("The image could not be opened."));
-      source.src = objectUrl;
-    });
-    const crop = Math.min(image.naturalWidth, image.naturalHeight);
-    const startX = Math.max(0, (image.naturalWidth - crop) / 2);
-    const startY = Math.max(0, (image.naturalHeight - crop) / 2);
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    canvas.getContext("2d").drawImage(image, startX, startY, crop, crop, 0, 0, 256, 256);
-    for (const quality of [0.82, 0.7, 0.58]) {
-      const blob = await canvasAsBlob(canvas, quality);
-      if (blob && blob.size <= 145000) return fileAsDataUrl(blob);
-    }
-    throw new Error("That image could not be made small enough. Try another image.");
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
-
 function buildInviteMessage(invite) {
-  const profileUrl = "https://wsb-esports.web.app/member-account.html";
+  const profileUrl = ['localhost', '127.0.0.1'].includes(location.hostname) ? location.origin + '/member-account.html' : 'https://wsb-esports.web.app/member-account.html';
   return `Hi ${invite.displayName},\n\nYour WsB member profile is ready to claim. Open this link and select Continue with Google:\n${profileUrl}\n\nPlease sign in with this exact Gmail address: ${invite.email}\n\nAfter you claim it, you can update your public display name, bio, and social links.\n\n- WsB eSports`;
 }
 
@@ -170,7 +126,7 @@ function showEditor(record) {
   const socials = record.socials || {};
   profileTikTok.value = emptyValue(socials.tiktok);
   profileTwitch.value = emptyValue(socials.twitch);
-  role.value = ["member", "creator", "management", "owner"].includes(record.role) ? record.role : "member";
+  role.value = ["member", "creator", "management", "owner", "admin"].includes(record.role) ? record.role : "member";
   status.value = ["invited", "active", "inactive"].includes(record.status) ? record.status : "invited";
   setProfileImage(record.profileImage, record.profileImage ? "Current profile icon" : "");
   resetAccess.checked = false;
@@ -183,6 +139,7 @@ function showEditor(record) {
   if (readyInvite.email) showInviteMessage(readyInvite);
   inviteActions.hidden = !readyInvite.email;
   updateStatus("");
+  document.dispatchEvent(new Event('wsb:admin-profile-loaded'));
 }
 
 function renderMemberPicker() {
@@ -226,38 +183,45 @@ async function loadRecords() {
       socials: profile.socials || {},
       fortniteUsername: memberAccess.fortniteUsername || member.username,
       ...memberAccess,
+      displayName: profile.displayName || memberAccess.displayName || member.displayName,
       hasAccess: access.has(member.id),
-      hasProfile: profiles.has(member.id)
+      hasProfile: profiles.has(member.id), accessVersion: memberAccess.updatedAt || null, profileVersion: profile.updatedAt || null
     }];
   }));
   access.forEach((memberAccess, id) => {
     if (records.has(id)) return;
     const profile = profiles.get(id) || {};
-    records.set(id, { id, ...profile, ...memberAccess, hasAccess: true, hasProfile: profiles.has(id) });
+    records.set(id, { id, ...profile, ...memberAccess, displayName: profile.displayName || memberAccess.displayName, hasAccess: true, hasProfile: profiles.has(id), accessVersion: memberAccess.updatedAt || null, profileVersion: profile.updatedAt || null });
   });
   renderMemberPicker();
 }
 
-async function verifyAdmin(user) {
+let stopAdmin = () => {}, authEpoch = 0;
+async function verifyAdmin(user, version) {
   authPanel.hidden = false;
   hideAuthPanels();
   loading.hidden = false;
   try {
-    const adminDoc = await getDoc(doc(db, "admins", user.uid));
-    if (!adminDoc.exists()) {
+    stopAdmin = watchAdmin(db, user, async allowed => {
+    if (version !== authEpoch) return;
+    if (!allowed) {
       isAdmin = false;
       hideAuthPanels();
       authPanel.hidden = false;
       denied.hidden = false;
       dashboard.hidden = true;
+      records.clear(); memberPicker.textContent = ''; form.reset();
       return;
     }
+    if (isAdmin) return;
     isAdmin = true;
     hideAuthPanels();
     authPanel.hidden = true;
     dashboard.hidden = false;
     resetForm();
     await loadRecords();
+    document.dispatchEvent(new Event('wsb:admin-ready'));
+    });
   } catch (loadError) {
     hideAuthPanels();
     authPanel.hidden = false;
@@ -290,10 +254,12 @@ memberPicker.addEventListener("change", () => {
 profileImageInput.addEventListener("change", async () => {
   const file = profileImageInput.files && profileImageInput.files[0];
   if (!file) return;
+  const imageEpoch = authEpoch, imageMember = editingId;
   profileImageInput.disabled = true;
   updateStatus("Preparing the profile icon...");
   try {
-    setProfileImage(await makeProfileIcon(file), file.name);
+    const image = await cropProfileIcon(file); if (imageEpoch !== authEpoch || imageMember !== editingId || !isAdmin) return; if (!image) { updateStatus('Image selection cancelled.'); return; }
+    setProfileImage(image, file.name);
     updateStatus("Icon ready. Save member to publish it.");
   } catch (imageError) {
     profileImageInput.value = "";
@@ -325,6 +291,9 @@ form.addEventListener("submit", async (event) => {
   updateStatus("Saving member access...");
   try {
     const existing = records.get(id);
+    if (existing?.ownerUid === auth.currentUser.uid && existing.role === 'admin'
+      && (role.value !== 'admin' || status.value !== 'active' || resetAccess.checked)) throw new Error('You cannot remove your own admin access. Ask another admin to manage this account.');
+    if (existing?.ownerUid && email !== existing.invitedEmail && !resetAccess.checked) throw new Error('To change the linked Gmail, select Reset profile access. The old account will lose access.');
     const shouldReset = !existing || !existing.hasAccess || resetAccess.checked;
     const existingSocials = existing && existing.socials ? existing.socials : {};
     const access = {
@@ -345,9 +314,16 @@ form.addEventListener("submit", async (event) => {
       access.ownerUid = null;
       access.claimedAt = null;
     }
-    await Promise.all([
-      setDoc(doc(db, "memberAccess", id), access, { merge: true }),
-      setDoc(doc(db, "members", id), {
+    await runTransaction(db, async batch => {
+    const currentAccess = await batch.get(doc(db, 'memberAccess', id)), currentProfile = await batch.get(doc(db, 'members', id));
+    const sameTime = (a, b) => (!a && !b) || Boolean(a?.isEqual?.(b));
+    if (existing?.hasAccess && (!currentAccess.exists() || !sameTime(existing.accessVersion, currentAccess.data().updatedAt)
+      || existing.ownerUid !== currentAccess.data().ownerUid || existing.status !== currentAccess.data().status || existing.role !== currentAccess.data().role))
+      throw new Error('This member’s access changed while you were editing. Select the member again after refreshing to load the latest record.');
+    if (existing?.hasProfile && (!currentProfile.exists() || !sameTime(existing.profileVersion, currentProfile.data().updatedAt)))
+      throw new Error('The public profile changed while you were editing. Refresh and select the member again to avoid overwriting their changes.');
+    batch.set(doc(db, 'memberAccess', id), access, { merge: true });
+    batch.set(doc(db, "members", id), {
         displayName: name,
         bio: profileBio.value.trim(),
         socials: {
@@ -358,8 +334,16 @@ form.addEventListener("submit", async (event) => {
         profileImage: profileImageData,
         ...(!existing || !existing.hasProfile ? { createdAt: serverTimestamp() } : {}),
         updatedAt: serverTimestamp()
-      }, { merge: true })
-    ]);
+      }, { merge: true });
+    if (existing?.ownerUid) {
+      if (!shouldReset && role.value === 'admin' && access.status === 'active') batch.set(doc(db, 'admins', existing.ownerUid), { enabled: true, memberId: id });
+      else if (existing.role === 'admin') batch.delete(doc(db, 'admins', existing.ownerUid));
+      if (existing.role !== role.value || shouldReset || existing.status !== access.status)
+        logActivity(db, batch, auth.currentUser, 'member-access-changed', 'memberAccess', id, 'Role: ' + role.value + '; status: ' + access.status + (shouldReset ? '; account link reset' : ''));
+    }
+    logActivity(db, batch, auth.currentUser, existing ? 'member-edited' : 'member-invited', 'memberAccess', id, 'Role: ' + role.value);
+    });
+    document.dispatchEvent(new Event('wsb:admin-profile-saved'));
     readyInvite = { id, email, displayName: name };
     showInviteMessage(readyInvite);
     inviteActions.hidden = false;
@@ -388,6 +372,7 @@ prepareInvite.addEventListener("click", () => {
 });
 
 onAuthStateChanged(auth, (user) => {
+  stopAdmin(); const version = ++authEpoch;
   isAdmin = false;
   dashboard.hidden = true;
   if (!user) {
@@ -396,5 +381,5 @@ onAuthStateChanged(auth, (user) => {
     signedOut.hidden = false;
     return;
   }
-  verifyAdmin(user);
+  verifyAdmin(user, version);
 });

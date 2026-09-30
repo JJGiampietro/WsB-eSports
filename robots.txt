@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin.html
+Disallow: /admin-members.html
+Disallow: /member-account.html
+Disallow: /bounties.html
+Disallow: /templates/
+Sitemap: https://wsb-esports.web.app/sitemap.xml

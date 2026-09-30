@@ -11,13 +11,14 @@
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const { preserveResult, recoverPrevious } = require('./stats-resilience.cjs');
 
 const DATA_DIR = path.join(__dirname, "..", "data");
 const ROSTER_PATH = path.join(DATA_DIR, "roster.json");
 const LATEST_PATH = path.join(DATA_DIR, "latest.json");
 const HISTORY_PATH = path.join(DATA_DIR, "history.json");
 const STATS_DIR = path.join(__dirname, "..", "stats");
-const STATS_TEMPLATE_PATH = path.join(STATS_DIR, "barrelroll", "index.html");
+const STATS_TEMPLATE_PATH = path.join(__dirname, '..', 'templates', 'player.html');
 const HISTORY_RETENTION_MS = 8 * 24 * 60 * 60 * 1000;
 
 const API_KEY = process.env.FORTNITE_API_KEY;
@@ -35,13 +36,12 @@ function pickStats(json) {
   try {
     const overall = json.data.stats.all.overall;
     if (!overall) return null;
-    const winRateRaw = parseFloat(overall.winRate);
+    const counts = ['wins', 'kills', 'matches', 'kd'].map(key => Number(overall[key]));
+    if (counts.some(value => !Number.isFinite(value) || value < 0)) return null;
     return {
-      kd: parseFloat(overall.kd) || 0,
-      winrate: winRateRaw <= 1 ? winRateRaw * 100 : winRateRaw,
-      wins: parseFloat(overall.wins) || 0,
-      kills: parseFloat(overall.kills) || 0,
-      matches: parseFloat(overall.matches) || 0
+      kd: Number(overall.kd),
+      winrate: Number(overall.matches) ? Number(overall.wins) / Number(overall.matches) * 100 : 0,
+      wins: Number(overall.wins), kills: Number(overall.kills), matches: Number(overall.matches)
     };
   } catch (e) {
     return null;
@@ -96,10 +96,14 @@ async function loadPendingRosterMembers() {
   }
   const token = await firebaseAccessToken(serviceAccount);
   const endpoint = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(serviceAccount.project_id) + "/databases/(default)/documents/memberAccess?pageSize=500";
-  const response = await fetch(endpoint, { headers: { Authorization: "Bearer " + token } });
-  if (!response.ok) throw new Error("Could not read the Firebase member queue (HTTP " + response.status + ").");
-  const payload = await response.json();
-  const pending = (payload.documents || []).map((document) => {
+  const documents = [];
+  let pageToken = '';
+  do {
+    const response = await fetch(endpoint + (pageToken ? '&pageToken=' + encodeURIComponent(pageToken) : ''), { headers: { Authorization: 'Bearer ' + token }, signal: AbortSignal.timeout(20000) });
+    if (!response.ok) throw new Error('Could not read the Firebase member queue (HTTP ' + response.status + ').');
+    const payload = await response.json(); documents.push(...(payload.documents || [])); pageToken = payload.nextPageToken || '';
+  } while (pageToken);
+  const pending = documents.map((document) => {
     const fields = document.fields || {};
     return {
       id: document.name.split("/").pop(),
@@ -129,7 +133,7 @@ function createStatsProfilePage(memberId) {
   const profilePath = path.join(profileDir, "index.html");
   if (fs.existsSync(profilePath)) return;
   const template = fs.readFileSync(STATS_TEMPLATE_PATH, "utf8");
-  const page = template
+  const page = template.replaceAll('{{memberId}}', memberId)
     .replace(/<title>[\s\S]*?<\/title>/, "<title>WsB | Player Stats</title>")
     .replace(/https:\/\/wsb-esports\.web\.app\/stats\/barrelroll\//g, "https://wsb-esports.web.app/stats/" + memberId + "/")
     .replace(/(<meta property="og:title" content=")[^"]*"/, '$1WsB | Player Stats"')
@@ -157,20 +161,25 @@ async function fetchPlayerStats(player) {
       encodeURIComponent(player.platform);
   const lookup = usesAccountId ? "account ID" : 'name "' + player.username + '"';
 
-  try {
-    const res = await fetch(url, { headers: { Authorization: API_KEY } });
+  player._syncIssue = '';
+  for (let attempt = 0; attempt < 3; attempt++) try {
+    const res = await fetch(url, { headers: { Authorization: API_KEY }, signal: AbortSignal.timeout(20000) });
     if (!res.ok) {
       console.warn(`  -> HTTP ${res.status} for ${lookup}`);
+      player._syncIssue = res.status === 403 ? 'Stats are private or access was denied. Enable Public Game Stats in Fortnite.' : res.status === 404 ? 'Epic account not found. An admin should verify the exact Fortnite username.' : res.status === 429 ? 'The stats service is rate limited. It will retry next hour.' : 'The stats service is temporarily unavailable. It will retry next hour.';
+      if ((res.status === 429 || res.status >= 500) && attempt < 2) { await sleep(2000 * (attempt + 1)); continue; }
       return null;
     }
     const json = await res.json();
     const stats = pickStats(json);
-    if (!stats) return null;
+    if (!stats) { player._syncIssue = 'The service returned incomplete stats. Last successful stats were preserved.'; return null; }
     return { stats, ...accountDetails(json) };
   } catch (e) {
     console.warn(`  -> fetch failed for ${lookup}: ${e.message}`);
-    return null;
+    player._syncIssue = 'The stats service timed out or could not be reached. It will retry next hour.';
+    if (attempt < 2) await sleep(2000 * (attempt + 1));
   }
+  return null;
 }
 
 async function main() {
@@ -192,7 +201,10 @@ async function main() {
     console.log("Added pending member " + member.displayName + " to the roster.");
   }
 
-  const results = {};
+  const previous = recoverPrevious(fs.existsSync(LATEST_PATH) ? JSON.parse(fs.readFileSync(LATEST_PATH, 'utf8')) : null,
+    fs.existsSync(HISTORY_PATH) ? JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf8')) : null);
+  const results = {}, sync = {};
+  const timestamp = new Date().toISOString();
   let rosterChanged = newRosterIds.size > 0;
   for (const player of roster) {
     const lookup = player.accountId ? "saved account ID" : 'name "' + player.username + '"';
@@ -204,16 +216,15 @@ async function main() {
         rosterChanged = true;
         console.log("  -> saved stable Epic account ID");
       }
-      results[player.id] = {
-        displayName: player.displayName,
-        username: fetched.username || player.username,
-        ...fetched.stats
-      };
       if (pendingRosterIds.has(player.id)) await queue.markSynced(player.id);
       console.log("  -> OK");
     } else {
-      console.log("  -> skipped (fetch failed, will not appear today)");
+      console.log('  -> preserving last successful stats; marking sync issue');
     }
+    const result = preserveResult(player, fetched, previous, timestamp, player._syncIssue);
+    if (result.stats) results[player.id] = result.stats;
+    sync[player.id] = result.sync;
+    delete player._syncIssue;
     // Stay well under the rate limit between requests.
     await sleep(1300);
   }
@@ -223,8 +234,8 @@ async function main() {
     console.log("Saved newly discovered Epic account IDs to data/roster.json.");
   }
   const snapshot = {
-    fetchedAt: new Date().toISOString(),
-    players: results
+    schemaVersion: 2, fetchedAt: timestamp,
+    players: results, sync
   };
 
   const existingHistory = fs.existsSync(HISTORY_PATH)
