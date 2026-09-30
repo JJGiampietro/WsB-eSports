@@ -283,23 +283,6 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     return new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZone:"America/Los_Angeles",timeZoneName:"short"}).format(new Date(timestamp));
   }
 
-  function setSyncIssue(card,hasIssue){
-    const existing=card.querySelector(".member-sync-status");
-    if(!hasIssue){
-      if(existing)existing.remove();
-      card.classList.remove("sync-issue");
-      return;
-    }
-    card.classList.add("sync-issue");
-    if(existing)return;
-    const indicator=document.createElement("span");
-    indicator.className="member-sync-status";
-    indicator.textContent="Stats unavailable";
-    indicator.setAttribute("aria-label","Stats unavailable in the latest refresh");
-    indicator.title="Stats sync needs attention";
-    card.appendChild(indicator);
-  }
-
   function setProfileImage(card,member){
     if(!member||!member.profileImage)return;
     const emblem=card.querySelector(".member-emblem");
@@ -357,7 +340,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     cards.forEach(function(card){
       const member=rosterByUsername.get(card.getAttribute("data-fn-user"));
       const stats=(member&&snapshot.players[member.id])||byUsername.get(card.getAttribute("data-fn-user"));
-      setSyncIssue(card,!stats);
+      if(member)window.WsbSync.renderCardStatus(card,snapshot,member.id);
       if(stats)applyStats(card,stats);
     });
   }).catch(function(){

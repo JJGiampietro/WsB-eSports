@@ -142,20 +142,7 @@
       const issue=players && member && sync.state!=='synced';
       const rank=card.querySelector('.member-meta b');
       if(rank&&!rank.dataset.rankLabeled&&rank.textContent.trim()!=='SYNCED') { rank.dataset.rankLabeled='true';rank.textContent += /^Dirt/.test(rank.textContent)?' · For fun':' · Team-set'; }
-      if(issue){
-        card.classList.add('sync-issue');
-        let label=card.querySelector('.member-sync-status');
-        if(!label){label=document.createElement('span');label.className='member-sync-status';card.append(label);}
-        label.removeAttribute('role');label.removeAttribute('aria-label');
-        const text=window.WsbSync.describe(latestSnapshot,id);
-        if(label.textContent!==text)label.textContent=text;
-        label.title='Missing or outdated data does not mean zero stats.';
-      } else if(synced) {
-        card.classList.remove('sync-issue');
-        let label=card.querySelector('.member-sync-status');
-        if(!label){label=document.createElement('span');label.className='member-sync-status';card.append(label);}
-        const text=window.WsbSync.describe(latestSnapshot,id); if(label.textContent!==text)label.textContent=text;
-      }
+      if (issue || synced) window.WsbSync.renderCardStatus(card, latestSnapshot, id);
       const matchesName=!term||normalize((card.querySelector('.member-name')?.textContent||'')+' '+card.dataset.fnUser+' '+id).includes(term);
       const matchesFilter=category==='all'||category==='management'&&managementIds.has(id)||category==='synced'&&synced||category==='issue'&&issue;
       const wrapper=card.closest('.member-card-wrap')||card;

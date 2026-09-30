@@ -13,6 +13,7 @@ function write(file, text) {
 const navigation = fs.readFileSync(path.join(templates, 'navigation.html'), 'utf8').trim();
 function decorate(html, prefix) {
   html = html.replace(/<header class="nav">[\s\S]*?<\/header>/, navigation.replaceAll('{{root}}', prefix));
+  html = html.replace(/polish\.css\?v=[^"']+/g, 'polish.css?v=member-sync-20260930-1');
   html = html.replace(/firebase-member\.js\?v=[^"']+/g, 'firebase-member.js?v=workspace-1');
   html = html.replace(/firebase-admin\.js\?v=[^"']+/g, 'firebase-admin.js?v=workspace-1');
   if (!html.includes('workspace.css')) html = html.replace('</head>', '<link rel="stylesheet" href="' + prefix + 'workspace.css?v=1">\n</head>');
