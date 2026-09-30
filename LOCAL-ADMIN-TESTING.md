@@ -1,6 +1,6 @@
 # Local admin workspace and reliability update
 
-Status: local branch only (`feature/admin-workspace-local`). Nothing is pushed or deployed. No billing upgrade is enabled.
+This document covers the isolated local test site and release safeguards for the admin workspace. The reviewed update is approved for production; no billing upgrade or App Check enforcement is enabled.
 
 ## Test here
 
@@ -61,10 +61,10 @@ node_modules/.bin/firebase emulators:exec --config ../../.bounty-emulator.json -
 
 The automated tests use separate demo ports 8185/9198; they cannot reset the interactive local preview. With the local demo running, `node .tests/bounties/local-preview.test.cjs` checks the actual local SDK and desktop/tablet/phone pages. `node .tests/migration/verify.cjs` checks old-link redirects and deployment packaging without deploying anything.
 
-## Before eventual production approval
+## Production release procedure
 
 - Back up production data privately, review grants and test a representative Admin/member flow in a separate environment.
 - Deploy and verify the updated Firestore rules **before** the new browser UI. The hosting service account has Hosting permissions only; this branch does not add IAM privileges or deploy rules automatically.
-- Merge only after local review. Stats jobs then generate new profiles/sitemap from shared templates and retain stale data automatically. The local branch currently includes no live data mutations.
+- Merge only after local review. Stats jobs then generate new profiles/sitemap from shared templates and retain stale data automatically. Local fixtures are never copied to production. Existing events and announcements are imported safely when an administrator first saves that content type.
 - Do not enable App Check enforcement until registering a reCAPTCHA provider, configuring the allowed domains, testing real Google sign-in, and monitoring legitimate request metrics. The public site key belongs in `security-config.js`; never publish a debug token. Review provider quotas/pricing before activation. Guidance: https://firebase.google.com/docs/app-check/web/recaptcha-enterprise-provider
 - CSP remains report-only while testing Firebase sign-in, hosted clips and other external resources. Review browser warnings and tighten the allowlist before considering enforcement. Do not add COOP `same-origin`, which can interfere with popup sign-in.
