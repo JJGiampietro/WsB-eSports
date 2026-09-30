@@ -9,7 +9,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,700;0,800;0,900;1,800;1,900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=circular-logo-20260927">
-  <link rel="stylesheet" href="redesign.css?v=20260929-stats-profile-banner">
+  <link rel="stylesheet" href="redesign.css?v=20260929-local-polish">
+  <link rel="stylesheet" href="polish.css?v=20260929-local-polish">
+  <link rel="canonical" href="https://wsb-esports.web.app/questions.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WsB eSports">
+  <meta property="og:title" content="WsB | Questions">
+  <meta property="og:description" content="WsB - frequently asked questions about the team, joining, and the site.">
+  <meta property="og:image" content="https://wsb-esports.web.app/wsb-logo.png">
+  <meta property="og:image:alt" content="WsB eSports crest">
+  <meta property="og:url" content="https://wsb-esports.web.app/questions.html">
+  <meta name="twitter:card" content="summary">
 </head>
 <body>
 <div class="site-glow"></div>
@@ -18,7 +28,7 @@
   <span class="spooky-web left" aria-hidden="true">🕸️</span>
   <span class="spooky-web right" aria-hidden="true">🕸️</span>
   <a class="mini-brand" href="index.html#home">
-    <img src="wsb-logo.png" alt="WsB logo">
+    <img src="wsb-logo-128.webp" alt="WsB logo">
     <span>WsB</span>
   </a>
   <nav id="navlinks">
@@ -36,6 +46,7 @@
       <div class="nav-menu">
         <a href="index.html#about">ABOUT</a>
         <a href="events.html">EVENTS</a>
+        <a href="bounties.html">BOUNTIES</a>
         <a href="announcements.html">ANNOUNCEMENTS</a>
         <a href="questions.html">QUESTIONS</a>
         <a href="games.html">MINI GAMES</a>
@@ -52,24 +63,27 @@
     <div class="faq-masthead">
       <div class="faq-masthead-copy">
         <p class="label">HELP CENTER</p>
-        <h2>QUESTIONS.</h2>
+        <h1 class="section-title">QUESTIONS.</h1>
         <p>Quick answers about WsB, the site, joining the team, and keeping your profile updated.</p>
       </div>
       <div class="faq-masthead-mark" aria-hidden="true">
-        <img src="wsb-logo.png" alt="">
+        <img src="wsb-logo.webp" alt="">
       </div>
     </div>
 
     <!-- Dev note: each .faq-item is one question. Copy a block to add more.
          Click the question to expand/collapse the answer. -->
     <div class="faq-list" id="faqList">
+<div class="faq-item"><button type="button" class="faq-question"><span>How do I sign in and manage my profile?</span><span class="faq-icon" aria-hidden="true">+</span></button><div class="faq-answer"><p>Ask an admin to link your Gmail to your existing member profile. Then open <a href="member-account.html">My Profile</a> and sign in with that exact Google account. The invitation message helps you get started; signing in with a different Gmail will not give access to the profile.</p></div></div>
+<div class="faq-item"><button type="button" class="faq-question"><span>What can I change on my profile?</span><span class="faq-icon" aria-hidden="true">+</span></button><div class="faq-answer"><p>You can update your public display name, bio, profile icon, and supported social links without admin approval. Admins manage membership, roles, and the Fortnite account linked to your stats. Never share your password or Google verification codes.</p></div></div>
+<div class="faq-item"><button type="button" class="faq-question"><span>Why are my stats unavailable?</span><span class="faq-icon" aria-hidden="true">+</span></button><div class="faq-answer"><p>A refresh can fail because of profile privacy, an account lookup issue, or a temporary service problem. Enable Public Game Stats in Fortnite and ask an admin to check your linked account. If an earlier successful snapshot is available, its date is shown. Missing data does not mean zero stats.</p></div></div>
       <div class="faq-item">
         <button type="button" class="faq-question">
           <span>How do I join WsB?</span>
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-answer">
-          <p>Hit the "JOIN WsB" button up top, or the tryout button at the bottom of the homepage - both link straight to our TikTok, where you can DM us directly. We're always scouting for players who bring pressure, chemistry, and clutch plays.</p>
+          <p>Use JOIN WsB to find the team contact options, or message <a href="https://www.tiktok.com/@wsb.esports0" target="_blank" rel="noopener">@wsb.esports0 on TikTok</a> about joining. We're always scouting for players who bring pressure, chemistry, and clutch plays.</p>
         </div>
       </div>
 
@@ -79,7 +93,7 @@
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-answer">
-          <p>Send a screenshot of your Fortnite Tracker overview page (or your Tracker profile link) to our TikTok - <a href="https://www.tiktok.com/@wsb.esports0" target="_blank" rel="noopener">@wsb.esports0</a> - and we'll get your stats added.</p>
+          <p>Contact a WsB admin with your exact Fortnite username. They can add you to the roster, and the next successful hourly refresh will create your stats profile and save your Fortnite account ID. If you also want to edit your profile, give the admin the Gmail you will use to sign in.</p>
         </div>
       </div>
 
@@ -89,7 +103,7 @@
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-answer">
-          <p>Any of us! Reach out to anyone on the Roster page - no question is too small, and someone will always get back to you. You can also message the team TikTok directly.</p>
+          <p>Any of us! Reach out to the team on the <a href="management.html">Management page</a> - no question is too small, and someone will always get back to you. You can also message the team TikTok directly.</p>
         </div>
       </div>
 
@@ -109,7 +123,7 @@
           <span class="faq-icon">+</span>
         </button>
         <div class="faq-answer">
-          <p>Most Members page stats pull live from your account each time the page loads. The Leaderboards page updates automatically every Monday, tracking real week-over-week progress across the roster.</p>
+          <p>Stats refreshes are scheduled hourly, around the top of the hour. Processing can take a few minutes; use the Last updated time to see the latest completed snapshot. Leaderboards show lifetime totals and changes over the past 24 hours and 7 days.</p>
         </div>
       </div>
     </div>
@@ -125,13 +139,14 @@
 
 <footer>
   <span class="spooky-spider" aria-hidden="true">🕷️</span>
-  <div class="footer-brand"><img src="wsb-logo.png" alt="WsB"><span>WE SHOOT BODIES</span></div>
+  <div class="footer-brand"><img src="wsb-logo-128.webp" alt="WsB"><span>WE SHOOT BODIES</span></div>
   <div class="socials">
-    <a href="#">X / TWITTER</a><a href="#">YOUTUBE</a><a href="#">TWITCH</a><a href="#">DISCORD</a>
+    <a href="https://www.tiktok.com/@wsb.esports0" target="_blank" rel="noopener">TIKTOK ↗</a><a href="questions.html">HELP &amp; CONTACT</a>
   </div>
   <small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small>
 </footer>
-<script src="script.js?v=circular-logo-20260927"></script>
-<script type="module" src="firebase-member.js?v=20260929-stats-nav-root-account"></script>
+<script src="script.js?v=20260929-local-polish"></script>
+<script type="module" src="firebase-member.js?v=20260929-local-polish"></script>
+<script src="site-polish.js?v=20260929-local-polish"></script>
 </body>
 </html>

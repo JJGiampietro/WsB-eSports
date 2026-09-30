@@ -124,7 +124,7 @@ main { overflow: clip; }
   position: absolute;
   inset: 0 0 0 38%;
   z-index: -2;
-  background: linear-gradient(90deg, #0c0a12 0%, rgba(12,10,18,.82) 17%, rgba(12,10,18,.12) 64%), url("wsb-hero-arena-v2.png") center right / cover no-repeat;
+  background: linear-gradient(90deg, #0c0a12 0%, rgba(12,10,18,.82) 17%, rgba(12,10,18,.12) 64%), url("wsb-hero-arena-v2.webp") center right / cover no-repeat;
 }
 .hero::after {
   content: "";
@@ -285,7 +285,7 @@ footer { border-top-color: var(--wsb-line); background: #0c0a11; color: var(--ws
   #navlinks a { padding: .8rem 1rem; font-size: .78rem; }
   .menu { border-radius: 9px; }
   .hero { display: block; min-height: calc(100dvh - 62px); padding: 5.25rem 1.3rem 2.25rem; }
-  .hero::before { inset: 40% 0 0; background: linear-gradient(180deg, #0c0a12 0%, rgba(12,10,18,.14) 45%, rgba(12,10,18,.78) 100%), url("wsb-hero-arena-v2.png") 62% center / cover no-repeat; }
+  .hero::before { inset: 40% 0 0; background: linear-gradient(180deg, #0c0a12 0%, rgba(12,10,18,.14) 45%, rgba(12,10,18,.78) 100%), url("wsb-hero-arena-v2.webp") 62% center / cover no-repeat; }
   .hero h1 { font-size: clamp(4.1rem, 20vw, 6.8rem); }
   .hero-logo-wrap { width: min(68vw, 270px); margin: 2.1rem 0 0 auto; }
   .hero-buttons { gap: .6rem; }

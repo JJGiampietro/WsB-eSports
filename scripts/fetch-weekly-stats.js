@@ -131,6 +131,8 @@ function createStatsProfilePage(memberId) {
   const template = fs.readFileSync(STATS_TEMPLATE_PATH, "utf8");
   const page = template
     .replace(/<title>[\s\S]*?<\/title>/, "<title>WsB | Player Stats</title>")
+    .replace(/https:\/\/wsb-esports\.web\.app\/stats\/barrelroll\//g, "https://wsb-esports.web.app/stats/" + memberId + "/")
+    .replace(/(<meta property="og:title" content=")[^"]*"/, '$1WsB | Player Stats"')
     .replace('data-member-id="barrelroll"', 'data-member-id="' + memberId + '"');
   fs.mkdirSync(profileDir, { recursive: true });
   fs.writeFileSync(profilePath, page);

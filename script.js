@@ -94,28 +94,20 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
   const prevBtn=carousel.querySelector(".clip-prev");
   const nextBtn=carousel.querySelector(".clip-next");
   let index=0;
-  let timer=null;
-  const DELAY=7000;
 
   function show(i){
     index=(i+slides.length)%slides.length;
-    slides.forEach((s,n)=>s.classList.toggle("active",n===index));
-    dots.forEach((d,n)=>d.classList.toggle("active",n===index));
+    slides.forEach((s,n)=>{s.classList.toggle("active",n===index);s.inert=n!==index;s.setAttribute("aria-hidden",String(n!==index));});
+    dots.forEach((d,n)=>{d.classList.toggle("active",n===index);d.setAttribute("aria-pressed",String(n===index));});
   }
   function next(){show(index+1);}
   function prev(){show(index-1);}
-  function start(){timer=setInterval(next,DELAY);}
-  function stop(){clearInterval(timer);}
-  function restart(){stop();start();}
-
-  nextBtn.addEventListener("click",()=>{next();restart();});
-  prevBtn.addEventListener("click",()=>{prev();restart();});
-  dots.forEach((d,n)=>d.addEventListener("click",()=>{show(n);restart();}));
-  carousel.addEventListener("mouseenter",stop);
-  carousel.addEventListener("mouseleave",start);
+  // Manual navigation prevents rotation while someone watches a clip.
+  nextBtn.addEventListener("click",next);
+  prevBtn.addEventListener("click",prev);
+  dots.forEach((d,n)=>d.addEventListener("click",()=>show(n)));
 
   show(0);
-  start();
 })();
 
 
@@ -302,8 +294,8 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     if(existing)return;
     const indicator=document.createElement("span");
     indicator.className="member-sync-status";
-    indicator.setAttribute("role","img");
-    indicator.setAttribute("aria-label","Stats sync needs attention");
+    indicator.textContent="Stats unavailable";
+    indicator.setAttribute("aria-label","Stats unavailable in the latest refresh");
     indicator.title="Stats sync needs attention";
     card.appendChild(indicator);
   }
@@ -318,6 +310,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
   function setProfileLink(card,member){
     if(!member||card.dataset.profileLinkReady)return;
     card.dataset.profileLinkReady="true";
+    card.dataset.memberId=member.id;
     card.classList.add("member-card-link");
     card.setAttribute("role","link");
     card.setAttribute("tabindex","0");
@@ -362,7 +355,8 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     }
     const byUsername=new Map(Object.values(snapshot.players).map(function(player){return [player.username,player];}));
     cards.forEach(function(card){
-      const stats=byUsername.get(card.getAttribute("data-fn-user"));
+      const member=rosterByUsername.get(card.getAttribute("data-fn-user"));
+      const stats=(member&&snapshot.players[member.id])||byUsername.get(card.getAttribute("data-fn-user"));
       setSyncIssue(card,!stats);
       if(stats)applyStats(card,stats);
     });
@@ -666,11 +660,18 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
         +'</div></a>';
     }
 
+    let currentPage=1;
+    const pageSize=8;
+    const pagination=document.createElement("div");
+    pagination.className="stats-pagination";
+    pagination.setAttribute("aria-label","Player directory pages");
+    directory.after(pagination);
     function renderDirectory(){
-      const search=(searchInput&&searchInput.value||"").trim().toLocaleLowerCase();
+      const normalizeSearch=value=>String(value||"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase();
+      const search=normalizeSearch(searchInput&&searchInput.value||"").trim();
       const sort=sortInput?sortInput.value:"roster";
       const filtered=entries.filter(function(entry){
-        const searchable=(entry.member.displayName+" "+entry.member.username).toLocaleLowerCase();
+        const searchable=normalizeSearch(entry.member.displayName+" "+entry.member.username+" "+entry.member.id+" "+(entry.stats?.username||""));
         return !search||searchable.includes(search);
       });
       if(sort==="name"){
@@ -686,12 +687,19 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
           return bValue-aValue||a.member.displayName.localeCompare(b.member.displayName);
         });
       }
-      if(directoryNote)directoryNote.textContent=filtered.length+" of "+roster.length+" profiles shown.";
-      directory.innerHTML=filtered.map(playerCard).join("")||'<p class="lb-empty">No players match your search.</p>';
+      const pages=Math.max(1,Math.ceil(filtered.length/pageSize));
+      currentPage=Math.min(currentPage,pages);
+      const start=(currentPage-1)*pageSize, visible=filtered.slice(start,start+pageSize);
+      if(directoryNote)directoryNote.textContent=filtered.length?("Showing "+(start+1)+"-"+(start+visible.length)+" of "+filtered.length+" matching profiles."):"No matching profiles.";
+      directory.innerHTML=visible.map(playerCard).join("")||'<p class="lb-empty">No players match your search.</p>';
+      directory.querySelectorAll(".stats-player").forEach(function(card){card.classList.add("compact-stats");const more=document.createElement("span");more.className="stats-player-more";more.textContent="View full stats →";card.append(more);});
+      pagination.innerHTML=pages>1?'<button type="button" class="outline-btn" data-page="prev" '+(currentPage===1?'disabled':'')+'>Previous</button><span role="status">Page '+currentPage+' of '+pages+'</span><button type="button" class="outline-btn" data-page="next" '+(currentPage===pages?'disabled':'')+'>Next</button>':'';
+      pagination.querySelectorAll("button").forEach(function(button){button.addEventListener("click",function(){currentPage+=button.dataset.page==="next"?1:-1;renderDirectory();const target=document.querySelector(".stats-directory-heading");target.tabIndex=-1;target.focus({preventScroll:true});target.scrollIntoView({block:"start",behavior:"instant"});});});
+      document.dispatchEvent(new Event("wsb:directory-render"));
     }
 
-    if(searchInput)searchInput.addEventListener("input",renderDirectory);
-    if(sortInput)sortInput.addEventListener("change",renderDirectory);
+    if(searchInput)searchInput.addEventListener("input",function(){currentPage=1;renderDirectory();});
+    if(sortInput)sortInput.addEventListener("change",function(){currentPage=1;renderDirectory();});
     renderDirectory();
   });
 })();
@@ -797,7 +805,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     const latest=results[1];
     const history=results[2];
     const member=roster.find(function(item){return item.id===memberId;});
-    if(!member){detail.innerHTML='<p class="lb-empty">This player profile could not be found.</p>';return;}
+    if(!member){detail.innerHTML='<section class="unavailable-profile"><p class="label">PLAYER PROFILE</p><h1>PROFILE UNAVAILABLE.</h1><p>This link may belong to a former member, or the roster could not be loaded. Find a current player in the member directory, or try again shortly.</p><a class="outline-btn" href="'+root+'members.html">BROWSE MEMBERS →</a><a class="outline-btn" href="'+root+'stats.html">ALL STATS →</a></section>';return;}
     const stats=latest&&latest.players?latest.players[member.id]:null;
     const asset=member.profileImage;
     const avatar=asset?'<div class="profile-avatar" style="background-image:url('+escapeHtml(root+asset)+')"></div>':'<div class="profile-avatar profile-avatar-initial">'+escapeHtml(member.displayName.replace(/[^A-Za-z0-9]/g,"").slice(0,2).toUpperCase()||"W")+'</div>';
@@ -806,7 +814,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     const streamLink=stream?'<a class="profile-stream-link" href="'+escapeHtml(stream.url)+'" target="_blank" rel="noopener"><i></i>'+escapeHtml(stream.platform).toUpperCase()+' STREAMER<span>VIEW PROFILE ↗</span></a>':'';
     let html='<a class="profile-back" href="'+root+'stats.html">← BACK TO ALL STATS</a><section class="profile-hero-card">'+avatar+'<div><p class="label">FORTNITE MEMBER PROFILE</p><h1>'+escapeHtml(member.displayName)+'</h1><p class="profile-username">'+escapeHtml((stats&&stats.username)||member.username)+'</p>'+status+streamLink+'</div></section>';
     if(!stats){
-      detail.innerHTML=html+'<section class="profile-panel profile-panel-wide"><p class="label">PROFILE STATUS</p><h2>STATS NEED ATTENTION</h2><p class="profile-empty">This linked Fortnite profile did not return data in the latest refresh. Check the player name and make sure Public Game Stats are enabled.</p></section>';
+      detail.innerHTML=html+'<section class="profile-panel profile-panel-wide"><p class="label">PROFILE STATUS</p><h2>STATS NEED ATTENTION</h2><p class="profile-empty">The latest refresh did not return stats for this account. Missing data does not mean zero stats. Check Public Game Stats in Fortnite, or ask an admin to check the linked account.</p></section>';
       requestAnimationFrame(fitProfileName);
       return;
     }

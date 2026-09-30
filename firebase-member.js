@@ -481,5 +481,6 @@ function schedulePublicProfilePasses() {
 
 if (document.readyState === "complete") schedulePublicProfilePasses();
 else window.addEventListener("load", schedulePublicProfilePasses);
+document.addEventListener("wsb:directory-render", applyPublicMemberProfiles);
 
 export { auth, db, provider };
