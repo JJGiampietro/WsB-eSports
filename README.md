@@ -2,7 +2,9 @@
 
 Website for the WsB Fortnite clan and esports community.
 
-This repository is a static website built with HTML, CSS, and JavaScript. It also contains a GitHub Actions workflow that creates weekly Fortnite stat snapshots for the leaderboard.
+The primary website is [wsb-esports.web.app](https://wsb-esports.web.app/). This repository holds the HTML, CSS, and JavaScript source and the hourly Fortnite stats automation. Canonical `main` changes and successful stats refreshes automatically publish to Firebase. Existing GitHub Pages links forward to Firebase.
+
+See [Firebase migration and operations](FIREBASE-MIGRATION.md) for publishing, accounts, stats freshness, and rollback.
 
 ## Pages
 
@@ -15,7 +17,7 @@ This repository is a static website built with HTML, CSS, and JavaScript. It als
 - `script.js` — shared browser-side JavaScript
 - `data/` — roster and leaderboard snapshot data
 - `scripts/` — server-side maintenance scripts used by GitHub Actions
-- `.github/workflows/weekly-stats.yml` — weekly Fortnite stats automation
+- `.github/workflows/weekly-stats.yml` — hourly Fortnite stats automation
 
 ## Local development in VS Code
 
@@ -132,14 +134,15 @@ Check all affected pages on desktop and a narrow/mobile browser width. Verify na
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full branch and review rules.
 
-## Weekly leaderboard automation
+## Hourly leaderboard automation
 
-`.github/workflows/weekly-stats.yml` runs every Monday at 08:00 UTC and can also be started manually from GitHub Actions. It executes `scripts/fetch-weekly-stats.js`, which rotates the previous snapshot and writes a new `data/latest.json` snapshot.
+`.github/workflows/weekly-stats.yml` runs hourly and can also be started manually from GitHub Actions in the canonical repository. It executes `scripts/fetch-weekly-stats.js`, updating `data/latest.json`, `data/history.json`, the roster queue, and new player pages. A successful run triggers Firebase Hosting Production. A separate recovery check catches missed publications.
 
-The workflow expects a repository Actions secret named:
+The workflow uses the existing private repository Actions secrets:
 
 ```text
 FORTNITE_API_KEY
+FIREBASE_SERVICE_ACCOUNT
 ```
 
 Do not commit API keys or other secrets to the repository.

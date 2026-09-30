@@ -5,25 +5,35 @@ on:
     branches:
       - main
   workflow_dispatch:
+  workflow_run:
+    workflows: [Fortnite Stats Refresh]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: firebase-production
+  cancel-in-progress: false
+
 jobs:
   deploy-production:
+    if: github.repository == 'adetrick7/WsB-eSports' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Check out site
         uses: actions/checkout@v7
+        with:
+          ref: main
 
-      - name: Pull current canonical player data
-        run: |
-          git remote add canonical https://github.com/adetrick7/WsB-eSports.git
-          git fetch canonical main --depth=1
-          git checkout FETCH_HEAD -- data stats
+      - name: Check current Firebase release
+        id: release
+        run: node .github/scripts/check-firebase-current.mjs
 
       - name: Authenticate with Firebase
+        if: steps.release.outputs.changed == 'true'
         id: auth
         uses: google-github-actions/auth@v3
         with:
@@ -34,6 +44,7 @@ jobs:
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
 
       - name: Deploy Firebase production site
+        if: steps.release.outputs.changed == 'true'
         run: node .github/scripts/deploy-firebase-preview.mjs
         env:
           FIREBASE_HOSTING_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}

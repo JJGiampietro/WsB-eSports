@@ -2,6 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // Preserve old GitHub Pages links while Firebase is the primary website.
+    if (location.hostname === "adetrick7.github.io" && /^\/WsB-eSports(?:\/|$)/.test(location.pathname)) {
+      const destinationPath = location.pathname.slice("/WsB-eSports".length) || "/";
+      location.replace("https://wsb-esports.web.app" + destinationPath + location.search + location.hash);
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WsB | Member Admin</title>
   <meta name="description" content="WsB member profile administration.">
@@ -110,7 +117,7 @@
 
 <footer><span class="spooky-spider" aria-hidden="true">🕷️</span><div class="footer-brand"><img src="wsb-logo-128.webp" alt="WsB"><span>WE SHOOT BODIES</span></div><div class="socials"><a href="https://www.tiktok.com/@wsb.esports0" target="_blank" rel="noopener">TIKTOK ↗</a><a href="questions.html">HELP &amp; CONTACT</a></div><small>© 2026 WsB - WE SHOOT BODIES. NOT AFFILIATED WITH OR ENDORSED BY EPIC GAMES.</small></footer>
 <script src="script.js?v=20260927-profile-image-text"></script>
-<script type="module" src="firebase-admin.js?v=20260929-profile-socials"></script>
+<script type="module" src="firebase-admin.js?v=20260930-firebase-primary"></script>
 <script src="site-polish.js?v=20260929-local-polish"></script>
 </body>
 </html>

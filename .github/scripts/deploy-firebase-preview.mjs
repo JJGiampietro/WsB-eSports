@@ -2,16 +2,18 @@ import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
+import { execFileSync } from "node:child_process";
 
 const siteId = "wsb-esports";
 const channelId = process.env.FIREBASE_HOSTING_CHANNEL ?? "firebase-preview";
 const token = process.env.FIREBASE_HOSTING_ACCESS_TOKEN;
 
-if (!token) {
+const dryRun = process.argv.includes("--dry-run");
+if (!token && !dryRun) {
   throw new Error("A short-lived Firebase Hosting credential was not supplied.");
 }
 
-const ignoredNames = new Set([".git", ".github", ".firebase", "node_modules"]);
+const ignoredNames = new Set([".git", ".github", ".firebase", "node_modules", "scripts"]);
 const ignoredFiles = new Set(["firebase.json", ".firebaserc", "firestore.rules", "FIREBASE-MEMBER-SETUP.md"]);
 
 async function listFiles(directory, relative = "") {
@@ -34,7 +36,8 @@ async function listFiles(directory, relative = "") {
       !entry.name.startsWith(".") &&
       !entry.name.startsWith("gha-creds-") &&
       !ignoredFiles.has(entryRelative) &&
-      !entryRelative.endsWith(".md")
+      !entryRelative.endsWith(".md") &&
+      /\.(?:html|css|js|json|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp4|webm|txt)$/i.test(entry.name)
     ) {
       files.push({ absolute: entryAbsolute, relative: entryRelative });
     }
@@ -85,22 +88,27 @@ async function ensureChannel() {
   });
 }
 
-function hostingConfig() {
+async function hostingConfig() {
+  const config = JSON.parse(await readFile("firebase.json", "utf8"));
   return {
-    headers: [
-      { glob: "**/*.html", headers: { "Cache-Control": "no-cache" } },
-      { glob: "/stats/**", headers: { "Cache-Control": "no-cache, no-store" } },
-      { glob: "data/**", headers: { "Cache-Control": "public, max-age=300, must-revalidate" } },
-    ],
+    headers: config.hosting.headers.map(({ source, headers }) => ({
+      glob: source, headers: Object.fromEntries(headers.map(({ key, value }) => [key, value])),
+    })),
   };
 }
 
-if (channelId !== "live") {
+if (channelId !== "live" && !dryRun) {
   await ensureChannel();
 }
 
 const root = process.cwd();
 const assets = await listFiles(root);
+const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const latest = JSON.parse(await readFile("data/latest.json", "utf8"));
+const manifest = {
+  sourceRepository: "adetrick7/WsB-eSports", sourceCommit,
+  statsFetchedAt: latest.fetchedAt, publishedAt: new Date().toISOString(),
+};
 const contentByHash = new Map();
 const files = {};
 
@@ -111,10 +119,19 @@ for (const asset of assets) {
   contentByHash.set(hash, compressed);
 }
 
+const manifestContent = gzipSync(JSON.stringify(manifest));
+const manifestHash = createHash("sha256").update(manifestContent).digest("hex");
+files["/deployment.json"] = manifestHash;
+contentByHash.set(manifestHash, manifestContent);
+if (dryRun) {
+  console.log(JSON.stringify({ manifest, config: await hostingConfig(), files: Object.keys(files) }, null, 2));
+  process.exit(0);
+}
+
 const version = await request(`https://firebasehosting.googleapis.com/v1beta1/sites/${siteId}/versions`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ config: hostingConfig() }),
+  body: JSON.stringify({ config: await hostingConfig() }),
 });
 
 const populated = await request(`https://firebasehosting.googleapis.com/v1beta1/${version.name}:populateFiles`, {
@@ -149,8 +166,24 @@ const release = await request(
   {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: `GitHub preview ${process.env.GITHUB_SHA ?? "manual"}` }),
+    body: JSON.stringify({ message: `Firebase ${channelId} from canonical main ${sourceCommit}` }),
   },
 );
 
-console.log(`Firebase preview refreshed: ${release.version.name}`);
+console.log(`Firebase ${channelId} published: ${release.version.name}`);
+if (channelId === "live") {
+  let verified = false;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      const response = await fetch(`https://${siteId}.web.app/deployment.json?release=${Date.now()}`, {
+        cache: "no-store", signal: AbortSignal.timeout(20000),
+      });
+      const live = response.ok ? await response.json() : null;
+      verified = live?.sourceCommit === sourceCommit && live?.statsFetchedAt === latest.fetchedAt;
+      if (verified) break;
+    } catch { /* CDN propagation may take a moment. */ }
+    await new Promise(resolve => setTimeout(resolve, 3000));
+  }
+  if (!verified) throw new Error("Release created, but public code/stats verification failed. Check Firebase before considering this deployment complete.");
+  console.log(`Verified live code ${sourceCommit} and stats ${latest.fetchedAt}.`);
+}

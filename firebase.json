@@ -11,9 +11,19 @@
       "FIREBASE-MEMBER-SETUP.md",
       "**/.*",
       "**/node_modules/**",
+      "scripts/**",
+      "**/gha-creds-*.json",
       "**/*.md"
     ],
     "headers": [
+      {
+        "source": "**/*.js",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      },
+      {
+        "source": "/deployment.json",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store" }]
+      },
       {
         "source": "**/*.html",
         "headers": [

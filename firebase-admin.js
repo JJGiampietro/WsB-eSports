@@ -133,7 +133,7 @@ async function makeProfileIcon(file) {
 }
 
 function buildInviteMessage(invite) {
-  const profileUrl = new URL("member-account.html", window.location.href).href;
+  const profileUrl = "https://wsb-esports.web.app/member-account.html";
   return `Hi ${invite.displayName},\n\nYour WsB member profile is ready to claim. Open this link and select Continue with Google:\n${profileUrl}\n\nPlease sign in with this exact Gmail address: ${invite.email}\n\nAfter you claim it, you can update your public display name, bio, and social links.\n\n- WsB eSports`;
 }
 

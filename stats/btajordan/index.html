@@ -2,6 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <script>
+    // Preserve old GitHub Pages links while Firebase is the primary website.
+    if (location.hostname === "adetrick7.github.io" && /^\/WsB-eSports(?:\/|$)/.test(location.pathname)) {
+      const destinationPath = location.pathname.slice("/WsB-eSports".length) || "/";
+      location.replace("https://wsb-esports.web.app" + destinationPath + location.search + location.hash);
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WsB | TT BTAJORDAN Stats</title>
   <meta name="description" content="Detailed WsB Fortnite member statistics.">
