@@ -1,23 +1,23 @@
 {
-  "fetchedAt": "2026-09-30T03:06:37.186Z",
+  "fetchedAt": "2026-09-30T04:07:05.573Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
       "username": "ᵂˢᴮℒizzíeᵀᵀʚїɞ",
       "kd": 3.345,
-      "winrate": 22.33,
-      "wins": 4850,
-      "kills": 56433,
-      "matches": 21720
+      "winrate": 22.332,
+      "wins": 4851,
+      "kills": 56440,
+      "matches": 21722
     },
     "jen": {
       "displayName": "ᵂˢᴮJenClipsMenᵀᵀ",
       "username": "ᵂˢᴮJenClipsMenᵀᵀ",
-      "kd": 3.124,
-      "winrate": 12.053,
-      "wins": 708,
-      "kills": 16137,
-      "matches": 5874
+      "kd": 3.125,
+      "winrate": 12.062,
+      "wins": 709,
+      "kills": 16155,
+      "matches": 5878
     },
     "barrelroll": {
       "displayName": "ᵂˢᴮ Barrelroll77",
@@ -52,8 +52,8 @@
       "kd": 3.645,
       "winrate": 12.425,
       "wins": 2292,
-      "kills": 58885,
-      "matches": 18446
+      "kills": 58888,
+      "matches": 18447
     },
     "shloozyyy": {
       "displayName": "Shloozyyy ᵀᵀ",
@@ -86,10 +86,10 @@
       "displayName": "ᵂˢᴮ Mysterious",
       "username": "ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ",
       "kd": 4.317,
-      "winrate": 13.015,
-      "wins": 2355,
-      "kills": 67942,
-      "matches": 18095
+      "winrate": 13.017,
+      "wins": 2356,
+      "kills": 67970,
+      "matches": 18099
     },
     "dmo": {
       "displayName": "ᵂˢᴮ Dmo",
@@ -139,20 +139,20 @@
     "glosznfv": {
       "displayName": "ᵂˢᴮGloSznFvᵀᵀ",
       "username": "ᵂˢᴮGloSznFvᵀᵀ",
-      "kd": 4.11,
-      "winrate": 14.582,
+      "kd": 4.109,
+      "winrate": 14.575,
       "wins": 1477,
-      "kills": 35563,
-      "matches": 10129
+      "kills": 35569,
+      "matches": 10134
     },
     "burrtio": {
       "displayName": "ᵂˢᴮBurrtio",
       "username": "Runito_",
       "kd": 2.163,
-      "winrate": 13.725,
-      "wins": 6848,
-      "kills": 93114,
-      "matches": 49893
+      "winrate": 13.727,
+      "wins": 6849,
+      "kills": 93119,
+      "matches": 49895
     },
     "skrewwww": {
       "displayName": "ᵂˢᴮ Skrewwww",
