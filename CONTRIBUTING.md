@@ -91,18 +91,20 @@ Small PRs are easier to test, review, and roll back.
 
 ## Generated and automated data
 
-The weekly GitHub Action updates:
+The hourly GitHub Action updates:
 
 ```text
 data/latest.json
-data/previous.json
+data/history.json
+data/roster.json
+stats/<member>/index.html (for newly added members)
 ```
 
 Do not manually overwrite automated snapshot data unless you are intentionally repairing or testing the stats pipeline.
 
 ## Secrets
 
-The weekly stats workflow expects `FORTNITE_API_KEY` to be stored in GitHub Actions secrets.
+The hourly stats workflow uses the existing `FORTNITE_API_KEY` and `FIREBASE_SERVICE_ACCOUNT` GitHub Actions secrets. Hosting deployment uses short-lived workload identity instead of a stored Hosting key. See `FIREBASE-MIGRATION.md` for the canonical publishing process.
 
 Never place secret values in:
 

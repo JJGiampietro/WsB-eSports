@@ -134,14 +134,15 @@ Check all affected pages on desktop and a narrow/mobile browser width. Verify na
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full branch and review rules.
 
-## Weekly leaderboard automation
+## Hourly leaderboard automation
 
-`.github/workflows/weekly-stats.yml` runs every Monday at 08:00 UTC and can also be started manually from GitHub Actions. It executes `scripts/fetch-weekly-stats.js`, which rotates the previous snapshot and writes a new `data/latest.json` snapshot.
+`.github/workflows/weekly-stats.yml` runs hourly and can also be started manually from GitHub Actions in the canonical repository. It executes `scripts/fetch-weekly-stats.js`, updating `data/latest.json`, `data/history.json`, the roster queue, and new player pages. A successful run triggers Firebase Hosting Production. A separate recovery check catches missed publications.
 
-The workflow expects a repository Actions secret named:
+The workflow uses the existing private repository Actions secrets:
 
 ```text
 FORTNITE_API_KEY
+FIREBASE_SERVICE_ACCOUNT
 ```
 
 Do not commit API keys or other secrets to the repository.
