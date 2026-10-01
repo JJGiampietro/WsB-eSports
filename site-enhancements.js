@@ -8,11 +8,22 @@ const root = document.body.dataset.siteRoot || '', safeLink = value => { try { c
 let unsubscribe = () => {}, stopAdmin = () => {}, version = 0;
 const inbox = document.createElement('details'); inbox.className = 'site-inbox'; inbox.hidden = true;
 inbox.innerHTML = '<summary>Notifications <span id="notificationCount">0</span></summary><div class="site-inbox-panel" aria-live="polite"><h2>Your updates</h2><div id="notificationItems"></div></div>';
-document.querySelector('header.nav')?.insertAdjacentElement('afterend', inbox);
+const homeInboxSlot = document.getElementById('homeNotificationSlot');
+if (homeInboxSlot) {
+  inbox.classList.add('home-inbox');
+  homeInboxSlot.append(inbox);
+  inbox.querySelector('summary').insertAdjacentHTML('beforeend', '<span class="home-inbox-chevron" aria-hidden="true">⌄</span>');
+  document.addEventListener('click', event => { if (inbox.open && !inbox.contains(event.target)) inbox.open = false; });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && inbox.open) { inbox.open = false; inbox.querySelector('summary').focus(); event.stopPropagation(); }
+  });
+} else document.querySelector('header.nav')?.insertAdjacentElement('afterend', inbox);
 onAuthStateChanged(auth, user => {
-  const current = ++version; unsubscribe(); stopAdmin(); inbox.hidden = !user;
+  const current = ++version; unsubscribe(); stopAdmin(); inbox.hidden = !user; inbox.open = false;
+  document.getElementById('notificationCount').textContent = '0';
   document.getElementById('notificationItems').textContent = ''; document.querySelectorAll('.admin-workspace-link').forEach(a => a.remove());
   if (!user) return;
+  document.getElementById('notificationItems').textContent = 'Loading your updates…';
   stopAdmin = watchAdmin(db, user, allowed => {
     if (current !== version) return;
     document.querySelectorAll('.admin-workspace-link').forEach(a => a.remove());
