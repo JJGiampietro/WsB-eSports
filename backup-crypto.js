@@ -1,5 +1,5 @@
 // Encrypt BEFORE download. No passphrase, plaintext, or file is sent anywhere.
-export const BACKUP_COLLECTIONS = ['members', 'memberAccess', 'admins', 'bounties', 'bountyClaims', 'bountyRewards', 'claimDisputes', 'adminActivity', 'notifications', 'siteEvents', 'siteAnnouncements', 'siteContentState'];
+export const BACKUP_COLLECTIONS = ['members', 'memberAccess', 'memberVisibility', 'admins', 'bounties', 'bountyClaims', 'bountyRewards', 'claimDisputes', 'adminActivity', 'notifications', 'siteEvents', 'siteAnnouncements', 'siteContentState'];
 const enc = new TextEncoder(), dec = new TextDecoder();
 const b64 = bytes => { let text = ''; for (let i = 0; i < bytes.length; i += 8192) text += String.fromCharCode(...bytes.subarray(i, i + 8192)); return btoa(text); };
 const unb64 = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));

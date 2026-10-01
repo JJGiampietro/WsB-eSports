@@ -1,5 +1,6 @@
 import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { auth, db, provider, authReady } from './firebase-client.js';
+import { visibility, managementMemberIds } from './member-visibility.js';
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -343,6 +344,8 @@ async function applyPublicMemberProfiles() {
   const needsProfileData = document.querySelector(".member-card[data-fn-user], a.stats-player[href*='stats/'], #playerDetail, #profileDetail, .management-card, .player-card[data-roster-id]");
   if (!needsProfileData) return;
   try {
+    await visibility.ready;
+    if (document.body.dataset.memberId && visibility.isHidden(document.body.dataset.memberId)) return;
     if (!publicProfiles || !publicRoster) {
       const detailId = document.body.dataset.memberId;
       const [snapshot, roster] = await (publicProfileLoad ||= Promise.all([
@@ -353,7 +356,7 @@ async function applyPublicMemberProfiles() {
       publicRoster = roster;
     }
     const profiles = publicProfiles;
-    const roster = publicRoster;
+    const roster = visibility.filterRoster(publicRoster);
     const rosterByUsername = new Map(roster.map(function (member) { return [member.username, member.id]; }));
     document.querySelectorAll(".member-card[data-fn-user]").forEach(function (card) {
       const memberId = rosterByUsername.get(card.dataset.fnUser);
@@ -382,13 +385,10 @@ async function applyPublicMemberProfiles() {
       const profileImage = profile && safeProfileImage(profile.profileImage);
       if (profileImage) card.style.setProperty("--player-photo", 'url("' + profileImage + '")');
     });
-    const managementMemberIds = new Map([
-      ["ᵂˢᴮJenClipsMenᵀᵀ", "jen"], ["ᵂˢᴮ Łìzzíeᵀᵀ ʚїɞ", "lizzie"], ["ᵂ˥Tazᵀᵀ", "taz"], ["ᵂˢᴮ katoᵀᵀ", "kato"],
-      ["ʷˢᵇLazy", "lazy"], ["ᵂˢᴮ Elusion keys", "elusion"], ["ᵂˢᴮ Dmo", "dmo"], ["ᵂˢᴮBee", "bee"],
-      ["ᵂˢᴮ ᴍʏꜱᴛᴇʀɪᴏᴜꜱǃ", "mysterious"], ["ᵂˢᴮ Skrewwww", "skrewwww"], ["ᵂˢᴮ Barrelroll77", "barrelroll"], ["ᵂˢᴮIngraham", "ingraham"]
-    ]);
     document.querySelectorAll(".management-card").forEach(function (card) {
       const name = card.querySelector(".tier-name");
+      const id = card.dataset.publicMemberId || managementMemberIds.get(name?.textContent.trim());
+      if (visibility.isHidden(id)) return;
       const profile = name && profiles.get(managementMemberIds.get(name.textContent.trim()));
       const profileImage = profile && safeProfileImage(profile.profileImage);
       const profileBio = profile && typeof profile.bio === "string" ? profile.bio.trim() : "";

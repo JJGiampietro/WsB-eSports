@@ -38,6 +38,15 @@ const profileImageRemove = document.getElementById("adminProfileImageRemove");
 const profileBio = document.getElementById("adminProfileBio");
 const profileTikTok = document.getElementById("adminProfileTikTok");
 const profileTwitch = document.getElementById("adminProfileTwitch");
+const visibilityPanel = document.getElementById('adminProfileVisibility');
+const visibilityState = document.getElementById('adminVisibilityState');
+const visibilityToggle = document.getElementById('adminToggleVisibility');
+
+function showVisibility(record) {
+  visibilityPanel.hidden = !record;
+  visibilityState.textContent = record?.profileHidden ? 'Hidden from the public website' : 'Visible on the website';
+  visibilityToggle.textContent = record?.profileHidden ? 'RESTORE PROFILE' : 'HIDE PROFILE';
+}
 
 let isAdmin = false;
 let editingId = null;
@@ -101,6 +110,7 @@ function showInviteMessage(invite) {
 
 function resetForm() {
   editingId = null;
+  showVisibility(null);
   readyInvite = null;
   form.reset();
   memberId.value = "";
@@ -117,6 +127,7 @@ function resetForm() {
 
 function showEditor(record) {
   editingId = record.id;
+  showVisibility(record);
   readyInvite = { id: record.id, email: emptyValue(record.invitedEmail), displayName: emptyValue(record.displayName) || record.id };
   memberId.value = record.id;
   displayName.value = emptyValue(record.displayName);
@@ -157,7 +168,7 @@ function renderMemberPicker() {
     const option = document.createElement("option");
     option.value = record.id;
     const username = emptyValue(record.fortniteUsername);
-    option.textContent = username ? `${record.displayName || record.id} (${username})` : (record.displayName || record.id);
+    option.textContent = (username ? `${record.displayName || record.id} (${username})` : (record.displayName || record.id)) + (record.profileHidden ? ' — Hidden profile' : '');
     memberPicker.append(option);
   });
   memberPicker.disabled = !items.length;
@@ -165,10 +176,11 @@ function renderMemberPicker() {
 }
 
 async function loadRecords() {
-  const [accessSnapshot, profileSnapshot, roster] = await Promise.all([
+  const [accessSnapshot, profileSnapshot, roster, visibilitySnapshot] = await Promise.all([
     getDocs(collection(db, "memberAccess")),
     getDocs(collection(db, "members")),
-    fetch("data/roster.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : [])
+    fetch("data/roster.json", { cache: "no-store" }).then((response) => response.ok ? response.json() : []),
+    getDocs(collection(db, 'memberVisibility'))
   ]);
   const profiles = new Map(profileSnapshot.docs.map((entry) => [entry.id, entry.data()]));
   const access = new Map(accessSnapshot.docs.map((entry) => [entry.id, entry.data()]));
@@ -193,6 +205,8 @@ async function loadRecords() {
     const profile = profiles.get(id) || {};
     records.set(id, { id, ...profile, ...memberAccess, displayName: profile.displayName || memberAccess.displayName, hasAccess: true, hasProfile: profiles.has(id), accessVersion: memberAccess.updatedAt || null, profileVersion: profile.updatedAt || null });
   });
+  const hiddenIds = new Set(visibilitySnapshot.docs.filter(entry => entry.data().hidden === true).map(entry => entry.id));
+  records.forEach(record => { record.profileHidden = hiddenIds.has(record.id); });
   renderMemberPicker();
 }
 
@@ -249,6 +263,32 @@ memberSearch.addEventListener("input", renderMemberPicker);
 memberPicker.addEventListener("change", () => {
   const record = records.get(memberPicker.value);
   if (record) showEditor(record);
+});
+
+visibilityToggle.addEventListener('click', async () => {
+  const record = records.get(editingId), user = auth.currentUser, version = authEpoch;
+  if (!isAdmin || !record || !user) return;
+  const hidden = !record.profileHidden;
+  if (!confirm((hidden ? 'Hide ' : 'Restore ') + record.displayName + '? ' + (hidden ? 'Their public profile and stats will no longer appear on the website.' : 'Their public profile and saved stats will appear again.') + ' No data is deleted, and account access stays unchanged. Other unsaved edits will not be saved.')) return;
+  visibilityToggle.disabled = true;
+  try {
+    await runTransaction(db, async transaction => {
+      const ref = doc(db, 'memberVisibility', record.id), current = await transaction.get(ref);
+      if (version !== authEpoch || !isAdmin) throw new Error('Admin access changed. Sign in again.');
+      if ((current.data()?.hidden === true) !== Boolean(record.profileHidden)) throw new Error('Visibility changed while you were editing. Refresh and select the member again.');
+      transaction.set(ref, { hidden, updatedAt: serverTimestamp() });
+      logActivity(db, transaction, user, hidden ? 'member-hidden' : 'member-restored', 'memberVisibility', record.id);
+    });
+    if (version !== authEpoch || !isAdmin) return;
+    record.profileHidden = hidden;
+    renderMemberPicker();
+    if (editingId === record.id) {
+      showVisibility(record);
+      updateStatus(hidden ? 'Profile hidden. Saved data and sign-in access are unchanged.' : 'Profile restored to the public website.');
+    }
+  } catch (visibilityError) {
+    if (version === authEpoch) updateStatus(visibilityError.message || 'Profile visibility could not be changed.', true);
+  } finally { visibilityToggle.disabled = false; }
 });
 
 profileImageInput.addEventListener("change", async () => {

@@ -89,6 +89,10 @@
       </div>
       <form id="adminMemberForm">
         <input id="adminMemberId" type="hidden">
+        <div id="adminProfileVisibility" class="admin-profile-visibility" hidden>
+          <div><p class="label">PUBLIC PROFILE</p><strong id="adminVisibilityState">Visible on the website</strong><p>Hide this member from public directories, management, stats and leaderboards without deleting their profile or history. This does not change their sign-in access. Changes here apply separately from Save member.</p></div>
+          <button id="adminToggleVisibility" class="member-auth-button member-auth-button-secondary" type="button">HIDE PROFILE</button>
+        </div>
         <div class="member-form-grid">
           <div class="member-avatar-editor member-form-full">
             <div class="member-avatar-preview member-avatar-preview-empty" id="adminProfileImagePreview" aria-hidden="true"><span>WsB</span></div>

@@ -133,7 +133,7 @@
   function updateMembers() {
     if (!grid) return;
     const term=normalize(search?.value), category=filter?.value||'all';let shown=0;
-    const cards=[...grid.querySelectorAll('.member-card')];
+    const cards=[...grid.querySelectorAll('.member-card')].filter(card => !card.classList.contains('profile-hidden'));
     cards.forEach(card=>{
       const member=roster.find(m=>m.id===card.dataset.memberId||m.username===card.dataset.fnUser);
       const id=member?.id||(!card.dataset.fnUser?'ingraham':'');
@@ -169,6 +169,7 @@
     let timer;
     const observer=new MutationObserver(()=>{clearTimeout(timer);timer=setTimeout(()=>{observer.disconnect();updateMembers();annotateStats();observe();},80);});
     function observe(){observer.observe(target,{childList:true,subtree:true,characterData:true});}observe();
-    search?.addEventListener('input',updateMembers);filter?.addEventListener('change',updateMembers);updateMembers();
+    search?.addEventListener('input',updateMembers);filter?.addEventListener('change',updateMembers);
+    document.addEventListener('wsb:visibility-applied',updateMembers);updateMembers();
   }
 })();

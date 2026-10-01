@@ -70,6 +70,62 @@ async function pageFor(role, route = 'admin.html') {
   await member.locator('#profileBio').fill('Member edited biography'); await member.locator('#profileSave').click(); await member.waitForFunction(() => document.getElementById('memberSaveStatus').textContent.includes('saved'));
   const detail = await pageFor('member', 'stats/barrelroll/'); await detail.locator('.profile-hero-bio').waitFor(); assert.match(await detail.locator('.profile-hero-bio').textContent(), /Member edited biography/);
   assert.equal(new URL(await detail.locator('.firebase-account-link').getAttribute('href'), detail.url()).pathname, '/member-account.html');
+  // Hide/restore is separate from required-Gmail editing and preserves all saved data.
+  await admin.locator('#adminMemberPicker').selectOption('elusion');
+  assert.equal(await admin.locator('#adminInviteEmail').inputValue(), '');
+  assert.equal(await admin.locator('#adminInviteEmail').getAttribute('required'), '');
+  await admin.locator('#adminToggleVisibility').click();
+  await admin.waitForFunction(() => document.getElementById('adminVisibilityState').textContent.includes('Hidden'));
+  await env.withSecurityRulesDisabled(async ctx => {
+    assert.equal((await getDoc(doc(ctx.firestore(), 'memberVisibility', 'elusion'))).data().hidden, true);
+    assert.equal((await getDoc(doc(ctx.firestore(), 'memberAccess', 'elusion'))).exists(), false);
+  });
+  await admin.locator('#adminToggleVisibility').click();
+  await admin.waitForFunction(() => document.getElementById('adminVisibilityState').textContent.includes('Visible'));
+  await admin.locator('#adminMemberPicker').selectOption('barrelroll');
+  await admin.locator('#adminProfileBio').fill('Unsaved draft must survive visibility changes');
+  let before;
+  await env.withSecurityRulesDisabled(async ctx => { before = {
+    access:(await getDoc(doc(ctx.firestore(),'memberAccess','barrelroll'))).data(),
+    profile:(await getDoc(doc(ctx.firestore(),'members','barrelroll'))).data()
+  }; });
+  await admin.locator('#adminToggleVisibility').click();
+  await admin.waitForFunction(() => document.getElementById('adminVisibilityState').textContent.includes('Hidden'));
+  assert.equal(await admin.locator('#adminProfileBio').inputValue(),'Unsaved draft must survive visibility changes');
+  await detail.locator('.unavailable-profile').waitFor({state:'visible'});
+  const publicMembers = await pageFor(null,'members.html');
+  await publicMembers.waitForFunction(() => !document.documentElement.classList.contains('profile-visibility-loading'));
+  const hiddenCard = publicMembers.locator('.member-card[data-public-member-id="barrelroll"]');
+  assert.equal(await hiddenCard.isVisible(),false);
+  await publicMembers.locator('#memberSearch').fill('barrelroll');
+  assert.equal(await hiddenCard.isVisible(),false);
+  await publicMembers.locator('#memberEmpty').waitFor({state:'visible'});
+  const management = await pageFor(null,'management.html');
+  await management.waitForFunction(() => !document.documentElement.classList.contains('profile-visibility-loading'));
+  assert.equal(await management.locator('[data-public-member-id="barrelroll"]').isVisible(),false);
+  const directory = await pageFor(null,'stats.html');
+  await directory.locator('.stats-player').first().waitFor();
+  assert.equal(await directory.locator('a.stats-player[href*="barrelroll"]').count(),0);
+  const otherDetail = await pageFor(null,'stats/lizzie/');
+  await otherDetail.locator('#profileCompareSelect').waitFor({state:'attached'});
+  assert.equal(await otherDetail.locator('#profileCompareSelect option[value="barrelroll"]').count(),0);
+  const leaders = await pageFor(null,'leaderboards.html');
+  await leaders.waitForFunction(() => !document.documentElement.classList.contains('profile-visibility-loading'));
+  assert.equal(await leaders.locator('a[href*="stats/barrelroll"]:visible').count(),0);
+  await env.withSecurityRulesDisabled(async ctx => {
+    assert.deepEqual((await getDoc(doc(ctx.firestore(),'memberAccess','barrelroll'))).data(),before.access);
+    assert.deepEqual((await getDoc(doc(ctx.firestore(),'members','barrelroll'))).data(),before.profile);
+    assert((await getDocs(collection(ctx.firestore(),'adminActivity'))).docs.some(entry => entry.data().action==='member-hidden' && entry.data().targetId==='barrelroll'));
+  });
+  // Their account still works, but editing cannot restore public visibility.
+  await member.reload(); await member.locator('#memberProfileForm').waitFor({state:'visible'});
+  await admin.locator('#adminToggleVisibility').click();
+  await admin.waitForFunction(() => document.getElementById('adminVisibilityState').textContent.includes('Visible'));
+  await detail.locator('.profile-hero-bio').waitFor({state:'visible'});
+  await publicMembers.waitForFunction(() => document.querySelector('.member-card[data-public-member-id="barrelroll"]')?.getBoundingClientRect().height > 0);
+  await management.waitForFunction(() => document.querySelector('.management-card[data-public-member-id="barrelroll"]')?.getBoundingClientRect().height > 0);
+  await admin.locator('#adminMemberPicker').selectOption('barrelroll');
+  for (const page of [publicMembers,management,directory,otherDetail,leaders]) await page.context().close();
   // Create an Admin invitation; verified Google-equivalent test email can claim it securely.
   await admin.locator('#adminStartNew').click(); await admin.locator('#adminDisplayName').fill('TEST INVITED ADMIN'); await admin.locator('#adminFortniteUsername').fill('InvitedTestPlayer'); await admin.locator('#adminInviteEmail').fill(credentials.invited.email); await admin.locator('#adminRole').selectOption('admin'); await admin.locator('#adminSave').click();
   await admin.waitForFunction(() => document.getElementById('adminInviteActions').hidden === false);
@@ -127,5 +183,5 @@ async function pageFor(role, route = 'admin.html') {
   await env.withSecurityRulesDisabled(ctx => deleteDoc(doc(ctx.firestore(), 'admins', credentials.admin.uid))); await admin.locator('#adminDashboard').waitFor({ state: 'hidden' }); assert.equal(await admin.locator('#adminRewards').textContent(), '');
   await require('./member-layout.cjs')(anon);
   assert.deepEqual(errors, []);
-  console.log('PASS: signed-out/Owner/admin gating, single workspace, cropped profile preview and persistence, member editing and stats bio, secure Admin invite/claim, bounty approval, reward delivery, inbox, encrypted backup download/verification/local restore, responsive layout, live privilege revocation.');
+  console.log('PASS: signed-out/Owner/admin gating, single workspace, cropped profile preview and persistence, member editing and stats bio, hide/restore without Gmail or data loss, public directory/management/stats/comparison filtering, secure Admin invite/claim, bounty approval, reward delivery, inbox, encrypted backup download/verification/local restore, responsive layout, live privilege revocation.');
 })().catch(error => { console.error(error); process.exitCode = 1; }).finally(async () => { if (browser) await browser.close(); if (env) await env.cleanup(); });

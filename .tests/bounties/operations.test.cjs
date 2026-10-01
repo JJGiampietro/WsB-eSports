@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict'), fs = require('node:fs');
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, writeBatch, serverTimestamp, Timestamp } = require('firebase/firestore');
+const { doc, setDoc, getDoc, getDocs, collection, query, where, updateDoc, deleteDoc, writeBatch, serverTimestamp, Timestamp } = require('firebase/firestore');
 const { preserveResult } = require('../../scripts/stats-resilience.cjs');
 const { status } = require('../../sync-status.js');
 const stats = { kd: 2, winrate: 20, wins: 10, kills: 100, matches: 50 };
@@ -20,6 +20,7 @@ assert.equal(status({}, 'member').state, 'waiting');
   const payload = { schemaVersion: 1, projectId: 'demo-wsb-bounties', createdAt: new Date().toISOString(), collections: {
     members: [{ id: 'member', data: { displayName: 'Member', bio: 'Backup bio', socials: {}, profileImage: 'data:image/png;base64,YQ==', updatedAt: { $timestamp: [1000, 123000] } } }],
     memberAccess: [{ id: 'member', data: { memberId: 'member', invitedEmail: 'member@wsb-test.invalid', ownerUid: 'member', role: 'member', status: 'active' } }],
+    memberVisibility: [{ id: 'member', data: { hidden: true, updatedAt: { $timestamp: [1000, 0] } } }],
     bounties: [{ id: 'target', data: { targetName: 'Backup target', amount: 10, status: 'archived' } }],
     bountyClaims: [{ id: 'target_member', data: { ownerUid: 'member', bountyId: 'target', clipUrl: 'https://youtu.be/test', status: 'approved' } }],
     adminActivity: [{ id: 'history', data: { actorUid: 'root', action: 'claim-approved' } }],
@@ -52,6 +53,18 @@ assert.equal(status({}, 'member').state, 'waiting');
     const owner = env.authenticatedContext('display-owner', { email: 'owner@wsb-test.invalid', email_verified: true }).firestore();
     const invited = env.authenticatedContext('new', { email: 'new@wsb-test.invalid', email_verified: true }).firestore();
     const root = env.authenticatedContext('root', { email: 'root@wsb-test.invalid' }).firestore();
+    const anonymous = env.unauthenticatedContext().firestore();
+    await assertSucceeds(getDocs(collection(anonymous, 'memberVisibility')));
+    for (const db of [anonymous, member, owner]) {
+      await assertFails(setDoc(doc(db, 'memberVisibility', 'other'), { hidden: true, updatedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(db, 'memberVisibility', 'member'), { hidden: false, updatedAt: serverTimestamp() }));
+      await assertFails(deleteDoc(doc(db, 'memberVisibility', 'member')));
+    }
+    await assertFails(setDoc(doc(root, 'memberVisibility', 'malformed'), { hidden: 'yes', updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(root, 'memberVisibility', 'private-data'), { hidden: true, invitedEmail: 'private@example.com', updatedAt: serverTimestamp() }));
+    await assertSucceeds(updateDoc(doc(root, 'memberVisibility', 'member'), { hidden: false, updatedAt: serverTimestamp() }));
+    await assertSucceeds(setDoc(doc(root, 'memberVisibility', 'other'), { hidden: true, updatedAt: serverTimestamp() }));
+    await assertSucceeds(deleteDoc(doc(root, 'memberVisibility', 'other')));
     await assertFails(setDoc(doc(member, 'admins', 'member'), { enabled: true, memberId: 'member' }));
     await assertFails(getDocs(collection(owner, 'memberAccess')));
     await assertFails(updateDoc(doc(member, 'memberAccess', 'member'), { role: 'admin' }));
@@ -94,6 +107,6 @@ assert.equal(status({}, 'member').state, 'waiting');
     await assertFails(getDoc(doc(owner, 'claimDisputes', 'denied_member')));
     await assertFails(updateDoc(doc(member, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Self-approved', updatedAt: serverTimestamp() }));
     await assertSucceeds(updateDoc(doc(root, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Reviewed by the team.', updatedAt: serverTimestamp() }));
-    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant full restore drill, Admin-only privileges, demotion, immutable audit, private notifications, reward separation.');
+    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant full restore drill including visibility, Admin-only hide/restore permissions, Admin privileges, demotion, immutable audit, private notifications, reward separation.');
   } finally { await env.cleanup(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

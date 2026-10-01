@@ -1,6 +1,14 @@
 /* Same WsB violet palette, with more readable operational controls. */
 :root { --workspace-muted:#c2b8d6; --workspace-border:#494056; }
 [hidden] { display:none !important; }
+.profile-hidden { display:none !important; }
+.profile-visibility-loading :is(.member-card,.management-card,.player-card[data-roster-id],.stats-player,.lb-row) { visibility:hidden; }
+.admin-profile-visibility { display:flex; align-items:center; gap:24px; padding:20px; margin-bottom:24px; border:1px solid var(--workspace-border); border-radius:12px; background:#191424; }
+.admin-profile-visibility > div { min-width:0; flex:1; }
+.admin-profile-visibility strong { color:#eee8ff; font-size:18px; }
+.admin-profile-visibility p:not(.label) { margin:8px 0 0; color:var(--workspace-muted); line-height:1.5; }
+.admin-profile-visibility button { flex-shrink:0; }
+@media(max-width:600px) { .admin-profile-visibility { align-items:stretch; flex-direction:column; } }
 header.nav #navlinks a, header.nav #navlinks summary { font-size:13px; letter-spacing:.065em; }
 .label, .bounty-eyebrow, .bounty-help, .member-sync-status, .stats-sync-state, .member-account-note { font-size:13px; }
 .member-sync-status, .profile-data-note, .stats-issue-copy { color:var(--workspace-muted); line-height:1.5; }

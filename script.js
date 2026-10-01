@@ -1,5 +1,15 @@
 const menu=document.querySelector(".menu");const nav=document.querySelector("#navlinks");if(menu&&nav){menu.addEventListener("click",()=>nav.classList.toggle("open"));nav.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>{nav.classList.remove("open");nav.querySelectorAll(".nav-group[open]").forEach(group=>group.removeAttribute("open"));}));nav.querySelectorAll(".nav-group").forEach(group=>group.addEventListener("toggle",()=>{if(group.open)nav.querySelectorAll(".nav-group").forEach(other=>{if(other!==group)other.removeAttribute("open");});}));document.addEventListener("click",event=>{if(!nav.contains(event.target))nav.querySelectorAll(".nav-group[open]").forEach(group=>group.removeAttribute("open"));});}
 
+// Resolve public visibility before rendering roster-backed pages, including nested stats URLs.
+document.documentElement.classList.add('profile-visibility-loading');
+window.wsbVisibilityReady = import(new URL('member-visibility.js', document.currentScript.src))
+  .then(async module => { await module.visibility.ready; return module.visibility; })
+  .catch(() => {
+    document.querySelectorAll('.member-card, .management-card, .player-card[data-roster-id], .lb-row').forEach(card => card.classList.add('profile-hidden'));
+    document.documentElement.classList.remove('profile-visibility-loading');
+    return { filterRoster: () => [], isHidden: () => true };
+  });
+
 // Keep roster-backed creator photos in sync with the central profileImage field.
 (function(){
   const creatorCards=document.querySelectorAll(".player-card[data-roster-id]");
@@ -453,15 +463,18 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     fetch("data/latest.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
     fetch("data/history.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
     fetch("data/roster.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];})
-  ]).then(function(results){
+  ]).then(async function(results){
     const latest=results[0];
     const history=results[1];
-    const roster=Array.isArray(results[2])?results[2]:[];
+    const roster=(await window.wsbVisibilityReady).filterRoster(results[2]);
     if(!latest||!latest.players||!Object.keys(latest.players).length)return;
     const activeIds=new Set(roster.map(function(member){return member.id;}));
     const activePlayers=Object.fromEntries(Object.entries(latest.players).filter(function(entry){return activeIds.has(entry[0]);}));
     const activeLatest=Object.assign({},latest,{players:activePlayers});
-    if(!Object.keys(activeLatest.players).length)return;
+    if(!Object.keys(activeLatest.players).length){
+      [lifetimeGrid,pastDayGrid,pastWeekGrid].forEach(grid=>{if(grid)grid.innerHTML='<p class="profile-empty">No public player stats are available.</p>';});
+      return;
+    }
     const latestTime=Date.parse(latest.fetchedAt);
     const snapshots=history&&Array.isArray(history.snapshots)?history.snapshots:[];
 
@@ -576,8 +589,8 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
   Promise.all([
     fetch("data/roster.json",{cache:"no-store"}).then(function(response){return response.ok?response.json():[];}).catch(function(){return [];}),
     fetch("data/latest.json",{cache:"no-store"}).then(function(response){return response.ok?response.json():null;}).catch(function(){return null;})
-  ]).then(function(results){
-    const roster=Array.isArray(results[0])?results[0]:[];
+  ]).then(async function(results){
+    const roster=(await window.wsbVisibilityReady).filterRoster(results[0]);
     const snapshot=results[1];
     const players=snapshot&&snapshot.players?snapshot.players:{};
     const entries=roster.map(function(member){return {member:member,stats:players[member.id]||null};});
@@ -783,8 +796,8 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
     fetch(root+"data/roster.json",{cache:"no-store"}).then(function(response){return response.ok?response.json():[];}).catch(function(){return [];}),
     fetch(root+"data/latest.json",{cache:"no-store"}).then(function(response){return response.ok?response.json():null;}).catch(function(){return null;}),
     fetch(root+"data/history.json",{cache:"no-store"}).then(function(response){return response.ok?response.json():null;}).catch(function(){return null;})
-  ]).then(function(results){
-    const roster=Array.isArray(results[0])?results[0]:[];
+  ]).then(async function(results){
+    const roster=(await window.wsbVisibilityReady).filterRoster(results[0]);
     const latest=results[1];
     const history=results[2];
     const member=roster.find(function(item){return item.id===memberId;});
@@ -804,7 +817,7 @@ const menu=document.querySelector(".menu");const nav=document.querySelector("#na
       return;
     }
     const rosterById=new Map(roster.map(function(entry){return [entry.id,entry];}));
-    const synced=Object.keys(latest.players).map(function(id){
+    const synced=Object.keys(latest.players).filter(id=>rosterById.has(id)).map(function(id){
       const syncedMember=rosterById.get(id)||{id:id,displayName:latest.players[id].displayName||id};
       return {id:id,member:syncedMember,stats:latest.players[id]};
     });

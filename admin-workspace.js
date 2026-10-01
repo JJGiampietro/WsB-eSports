@@ -137,7 +137,7 @@ $('backupRestore').addEventListener('click', async () => {
   if (!allowed || !localTest || !inspected || !$('backupConfirm').checked) { showStatus('backupStatus', 'Verify a backup and confirm the local merge first.'); return; }
   const button = $('backupRestore'); button.disabled = true;
   try {
-    const records = ['members', 'memberAccess'].flatMap(name => (inspected.collections[name] || []).map(d => ({ ...d, name })));
+    const records = ['members', 'memberAccess', 'memberVisibility'].flatMap(name => (inspected.collections[name] || []).map(d => ({ ...d, name })));
     for (let offset = 0; offset < records.length; offset += 200) {
       const batch = writeBatch(db);
       for (const row of records.slice(offset, offset + 200)) {
@@ -148,7 +148,7 @@ $('backupRestore').addEventListener('click', async () => {
       }
       logActivity(db, batch, auth.currentUser, 'backup-restored', 'backup', 'local-merge'); await batch.commit();
     }
-    showStatus('backupStatus', 'Local profiles and account links restored. Full history restoration is tested separately using the isolated emulator recovery test. No records were deleted.');
+    showStatus('backupStatus', 'Local profiles, account links and visibility restored. Full history restoration is tested separately using the isolated emulator recovery test. No records were deleted.');
   } catch (error) { showStatus('backupStatus', error.message); } finally { button.disabled = false; }
 });
 if (localTest) {
