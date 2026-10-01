@@ -84,6 +84,39 @@ async function pageFor(role, route = 'admin.html') {
   await admin.locator('#tab-review').click(); await admin.locator('[data-decision="approved"]').click(); await board.locator('#claimList .approved').waitFor(); assert.match(await board.locator('#claimList').innerText(), /Awaiting delivery/);
   await admin.locator('[data-admin-view="rewards"]').click(); await admin.locator('[data-deliver]').click(); await board.waitForFunction(() => document.getElementById('claimList').textContent.includes('Delivered'));
   await board.locator('.site-inbox summary').click(); await board.getByText(/was marked delivered/).waitFor();
+  // Home notifications belong with current activity, never between the nav and hero.
+  const home = await pageFor('member', 'index.html');
+  await home.locator('#homeNotificationSlot .site-inbox').waitFor({ state:'visible' });
+  await home.waitForFunction(() => Number(document.getElementById('notificationCount').textContent) > 0);
+  assert.equal(await home.locator('header.nav + .site-inbox').count(),0);
+  await home.locator('.site-inbox summary').focus(); await home.keyboard.press('Enter');
+  await home.getByText(/was marked delivered/).waitFor();
+  const unread = Number(await home.locator('#notificationCount').textContent());
+  await home.locator('#notificationItems button').first().click();
+  await home.waitForFunction(count => Number(document.getElementById('notificationCount').textContent) === count - 1,unread);
+  await home.keyboard.press('Escape'); assert.equal(await home.locator('.site-inbox').getAttribute('open'),null);
+  for (const theme of ['normal','halloween']) {
+    await home.evaluate(value => document.body.classList.toggle('halloween-theme',value === 'halloween'),theme);
+    for (const width of [1440,1040,768,600,390,320]) {
+      await home.setViewportSize({width,height:1000});
+      await home.locator('.site-inbox summary').click();
+      const layout = await home.locator('.site-inbox-panel').evaluate(panel => {
+        const box = panel.getBoundingClientRect();
+        return {inside:box.left >= 0 && box.right <= innerWidth,overflow:document.documentElement.scrollWidth > innerWidth,
+          position:getComputedStyle(panel).position};
+      });
+      assert.equal(layout.inside,true,theme+' inbox width '+width); assert.equal(layout.overflow,false,theme+' page width '+width);
+      assert.equal(layout.position,width<=600?'static':'absolute');
+      if (theme === 'normal' && [1440,390].includes(width)) {
+        fs.mkdirSync('artifacts',{recursive:true});
+        await home.locator('.current-activity').screenshot({path:'artifacts/home-inbox-'+width+'.png'});
+      }
+      await home.locator('#currentActivityTitle').click(); assert.equal(await home.locator('.site-inbox').getAttribute('open'),null);
+    }
+  }
+  await home.evaluate(async () => { const {getAuth,signOut} = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js');await signOut(getAuth()); });
+  await home.locator('.site-inbox').waitFor({state:'hidden'}); assert.equal(await home.locator('#notificationItems').textContent(),'');
+  const anonHome = await pageFor(null,'index.html'); assert.equal(await anonHome.locator('.site-inbox').isVisible(),false);
   await admin.locator('[data-admin-view="backups"]').click(); await admin.locator('#backupPassphrase').fill('Private browser recovery passphrase!'); const download = admin.waitForEvent('download'); await admin.locator('#backupExport').click(); const file = await download; const location = await file.path();
   assert(!fs.readFileSync(location, 'utf8').includes(credentials.member.email));
   await admin.locator('#backupFile').setInputFiles(location); await admin.locator('#backupInspect').click(); await admin.waitForFunction(() => document.getElementById('backupSummary').textContent.startsWith('Verified'));
