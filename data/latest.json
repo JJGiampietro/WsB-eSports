@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "fetchedAt": "2026-10-10T20:04:39.344Z",
+  "fetchedAt": "2026-10-10T21:05:00.351Z",
   "players": {
     "lizzie": {
       "displayName": "ᵂˢᴮŁìzzíeᵀᵀʚїɞ",
@@ -11,7 +11,7 @@
       "wins": 4893,
       "kills": 56979,
       "matches": 21915,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "jen": {
@@ -23,7 +23,7 @@
       "wins": 734,
       "kills": 16511,
       "matches": 6029,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "barrelroll": {
@@ -35,7 +35,7 @@
       "wins": 554,
       "kills": 14279,
       "matches": 3094,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "botlupitaa": {
@@ -47,7 +47,7 @@
       "wins": 2149,
       "kills": 44545,
       "matches": 12257,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "dubs": {
@@ -59,7 +59,7 @@
       "wins": 792,
       "kills": 23364,
       "matches": 8667,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "btajordan": {
@@ -71,7 +71,7 @@
       "wins": 2319,
       "kills": 59663,
       "matches": 18683,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "shloozyyy": {
@@ -83,7 +83,7 @@
       "wins": 2558,
       "kills": 38463,
       "matches": 11695,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "allieontt": {
@@ -91,11 +91,11 @@
       "username": "ᵂˢᴮ alliecat",
       "accountId": "71c2761b993241099c8d2b7150d11b7e",
       "kd": 1.764,
-      "winrate": 13.547568710359409,
+      "winrate": 13.544705136334814,
       "wins": 3204,
-      "kills": 36064,
-      "matches": 23650,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "kills": 36066,
+      "matches": 23655,
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "lazy": {
@@ -103,11 +103,11 @@
       "username": "ʷˢᵇLazy",
       "accountId": "f67e874f7b134c88b9b0f3fb658fa2af",
       "kd": 7.044,
-      "winrate": 24.842188796306317,
+      "winrate": 24.841292742749964,
       "wins": 6887,
-      "kills": 146768,
-      "matches": 27723,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "kills": 146769,
+      "matches": 27724,
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "elusion": {
@@ -142,7 +142,7 @@
       "wins": 6167,
       "kills": 105277,
       "matches": 35360,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "ohitskatie": {
@@ -154,7 +154,7 @@
       "wins": 1982,
       "kills": 34348,
       "matches": 12067,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "iinsanity": {
@@ -166,7 +166,7 @@
       "wins": 5478,
       "kills": 132412,
       "matches": 32614,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "rina": {
@@ -189,7 +189,7 @@
       "wins": 2565,
       "kills": 40529,
       "matches": 9440,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "mello": {
@@ -201,7 +201,7 @@
       "wins": 444,
       "kills": 30547,
       "matches": 13697,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "glosznfv": {
@@ -213,7 +213,7 @@
       "wins": 1517,
       "kills": 36041,
       "matches": 10313,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "burrtio": {
@@ -221,11 +221,11 @@
       "username": "Runito_",
       "accountId": "475d0fe8efe34d80a2c3f0107b14d252",
       "kd": 2.16,
-      "winrate": 13.723847703384589,
-      "wins": 6881,
-      "kills": 93446,
-      "matches": 50139,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "winrate": 13.724747222942385,
+      "wins": 6882,
+      "kills": 93456,
+      "matches": 50143,
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "skrewwww": {
@@ -237,7 +237,7 @@
       "wins": 881,
       "kills": 44506,
       "matches": 16169,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "gabett4": {
@@ -249,7 +249,7 @@
       "wins": 1604,
       "kills": 24234,
       "matches": 7647,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "yoshi": {
@@ -273,7 +273,7 @@
       "wins": 986,
       "kills": 38576,
       "matches": 23359,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     },
     "bri": {
@@ -285,197 +285,197 @@
       "wins": 51,
       "kills": 2263,
       "matches": 667,
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
       "stale": false
     }
   },
   "sync": {
     "lizzie": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "jen": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "barrelroll": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "botlupitaa": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "dubs": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "btajordan": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "shloozyyy": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "allieontt": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "lazy": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "elusion": {
       "state": "stale",
       "lastSuccessAt": "2026-09-23T02:05:57.313Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "Epic account not found. An admin should verify the exact Fortnite username.",
-      "failures": 210
+      "failures": 211
     },
     "mysterious": {
       "state": "stale",
       "lastSuccessAt": "2026-10-10T00:08:26.765Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "Stats are private or access was denied. Enable Public Game Stats in Fortnite.",
-      "failures": 20
+      "failures": 21
     },
     "dmo": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "ohitskatie": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "iinsanity": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "rina": {
       "state": "stale",
       "lastSuccessAt": "2026-09-24T00:06:49.123Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "Epic account not found. An admin should verify the exact Fortnite username.",
-      "failures": 210
+      "failures": 211
     },
     "bee": {
       "state": "waiting",
       "lastSuccessAt": null,
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "Epic account not found. An admin should verify the exact Fortnite username.",
-      "failures": 210
+      "failures": 211
     },
     "envious": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "mello": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "glosznfv": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "burrtio": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "skrewwww": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "pink420": {
       "state": "waiting",
       "lastSuccessAt": null,
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "Epic account not found. An admin should verify the exact Fortnite username.",
-      "failures": 210
+      "failures": 211
     },
     "gabett4": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "taz": {
       "state": "waiting",
       "lastSuccessAt": null,
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "Epic account not found. An admin should verify the exact Fortnite username.",
-      "failures": 210
+      "failures": 211
     },
     "yoshi": {
       "state": "stale",
       "lastSuccessAt": "2026-10-09T03:06:41.020Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "Stats are private or access was denied. Enable Public Game Stats in Fortnite.",
-      "failures": 41
+      "failures": 42
     },
     "kato": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     },
     "bri": {
       "state": "synced",
-      "lastSuccessAt": "2026-10-10T20:04:39.344Z",
-      "lastAttemptAt": "2026-10-10T20:04:39.344Z",
+      "lastSuccessAt": "2026-10-10T21:05:00.351Z",
+      "lastAttemptAt": "2026-10-10T21:05:00.351Z",
       "issue": "",
       "failures": 0
     }
