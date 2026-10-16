@@ -21,6 +21,8 @@ assert.equal(status({}, 'member').state, 'waiting');
     members: [{ id: 'member', data: { displayName: 'Member', bio: 'Backup bio', socials: {}, profileImage: 'data:image/png;base64,YQ==', updatedAt: { $timestamp: [1000, 123000] } } }],
     memberAccess: [{ id: 'member', data: { memberId: 'member', invitedEmail: 'member@wsb-test.invalid', ownerUid: 'member', role: 'member', status: 'active' } }],
     memberVisibility: [{ id: 'member', data: { hidden: true, updatedAt: { $timestamp: [1000, 0] } } }],
+    profileRoles: [{ id: 'bounty-hunter', data: { name: 'Bounty Hunter', tone: 'gold', createdAt: { $timestamp: [1000, 0] }, updatedAt: { $timestamp: [1000, 0] } } }],
+    memberRoles: [{ id: 'member', data: { roleIds: ['bounty-hunter'], updatedAt: { $timestamp: [1000, 0] } } }],
     bounties: [{ id: 'target', data: { targetName: 'Backup target', amount: 10, status: 'archived' } }],
     bountyClaims: [{ id: 'target_member', data: { ownerUid: 'member', bountyId: 'target', clipUrl: 'https://youtu.be/test', status: 'approved' } }],
     adminActivity: [{ id: 'history', data: { actorUid: 'root', action: 'claim-approved' } }],
@@ -54,6 +56,33 @@ assert.equal(status({}, 'member').state, 'waiting');
     const invited = env.authenticatedContext('new', { email: 'new@wsb-test.invalid', email_verified: true }).firestore();
     const root = env.authenticatedContext('root', { email: 'root@wsb-test.invalid' }).firestore();
     const anonymous = env.unauthenticatedContext().firestore();
+    // Display roles never create grants or expand a member's editing permissions.
+    const roleData = { name: 'Tournament MVP', tone: 'violet', createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+    const assignment = { roleIds: ['bounty-hunter'], updatedAt: serverTimestamp() };
+    await assertSucceeds(getDocs(collection(anonymous, 'profileRoles')));
+    await assertSucceeds(getDocs(collection(anonymous, 'memberRoles')));
+    for (const db of [anonymous, member, owner]) {
+      await assertFails(setDoc(doc(db, 'profileRoles', 'tournament-mvp'), roleData));
+      await assertFails(updateDoc(doc(db, 'profileRoles', 'bounty-hunter'), { name: 'Forged role', updatedAt: serverTimestamp() }));
+      await assertFails(deleteDoc(doc(db, 'profileRoles', 'bounty-hunter')));
+      await assertFails(setDoc(doc(db, 'memberRoles', 'other'), assignment));
+      await assertFails(updateDoc(doc(db, 'memberRoles', 'member'), { roleIds: [], updatedAt: serverTimestamp() }));
+      await assertFails(deleteDoc(doc(db, 'memberRoles', 'member')));
+    }
+    await assertFails(updateDoc(doc(member, 'members', 'member'), { roleIds: ['admin'], updatedAt: serverTimestamp() }));
+    await assertSucceeds(setDoc(doc(root, 'profileRoles', 'tournament-mvp'), roleData));
+    await assertFails(setDoc(doc(root, 'profileRoles', 'admin'), { ...roleData, name: 'Admin' }));
+    await assertFails(setDoc(doc(root, 'profileRoles', 'invalid-tone'), { ...roleData, tone: 'url(javascript:alert(1))' }));
+    await assertFails(setDoc(doc(root, 'profileRoles', 'oversized'), { ...roleData, name: 'x'.repeat(33) }));
+    await assertFails(setDoc(doc(root, 'memberRoles', 'member'), { roleIds: ['missing-role'], updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(root, 'memberRoles', 'member'), { roleIds: ['bounty-hunter', 'bounty-hunter'], updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(root, 'memberRoles', 'member'), { roleIds: Array(6).fill('bounty-hunter'), updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(root, 'memberRoles', 'member'), { ...assignment, admin: true }));
+    await assertSucceeds(setDoc(doc(root, 'memberRoles', 'member'), { roleIds: ['bounty-hunter', 'tournament-mvp'], updatedAt: serverTimestamp() }));
+    await assertFails(getDocs(collection(member, 'memberAccess')));
+    await assertSucceeds(updateDoc(doc(member, 'members', 'member'), { bio: 'Profile edits still work with assigned roles', updatedAt: serverTimestamp() }));
+    assert.deepEqual((await getDoc(doc(anonymous, 'memberRoles', 'member'))).data().roleIds, ['bounty-hunter', 'tournament-mvp']);
+    await assertSucceeds(setDoc(doc(root, 'memberRoles', 'member'), { roleIds: [], updatedAt: serverTimestamp() }));
     await assertSucceeds(getDocs(collection(anonymous, 'memberVisibility')));
     for (const db of [anonymous, member, owner]) {
       await assertFails(setDoc(doc(db, 'memberVisibility', 'other'), { hidden: true, updatedAt: serverTimestamp() }));
@@ -75,8 +104,16 @@ assert.equal(status({}, 'member').state, 'waiting');
     batch.set(doc(invited, 'admins', 'new'), { enabled: true, memberId: 'new-admin' });
     await assertSucceeds(batch.commit());
     await assertSucceeds(getDocs(collection(invited, 'memberAccess')));
+    for (const id of ['competitive-player', 'community-helper', 'event-champion']) {
+      await assertSucceeds(setDoc(doc(root, 'profileRoles', id), { ...roleData, name: id }));
+    }
+    await assertSucceeds(setDoc(doc(invited, 'memberRoles', 'member'), {
+      roleIds: ['bounty-hunter', 'tournament-mvp', 'competitive-player', 'community-helper', 'event-champion'], updatedAt: serverTimestamp()
+    }));
     await assertFails(updateDoc(doc(invited, 'memberAccess', 'new-admin'), { role: 'member' }));
     await assertSucceeds(updateDoc(doc(root, 'memberAccess', 'new-admin'), { role: 'owner' }));
+    await assertFails(setDoc(doc(invited, 'memberRoles', 'member'), { roleIds: [], updatedAt: serverTimestamp() }));
+    await assertFails(setDoc(doc(invited, 'profileRoles', 'forged'), roleData));
     await assertFails(getDocs(collection(invited, 'memberAccess')));
     await assertFails(setDoc(doc(member, 'adminActivity', 'spoof'), { actorUid: 'root', actorEmail: 'root@wsb-test.invalid', action: 'role-changed', targetType: 'memberAccess', targetId: 'member', detail: '', createdAt: serverTimestamp() }));
     await assertFails(getDocs(collection(member, 'adminActivity')));
@@ -107,6 +144,6 @@ assert.equal(status({}, 'member').state, 'waiting');
     await assertFails(getDoc(doc(owner, 'claimDisputes', 'denied_member')));
     await assertFails(updateDoc(doc(member, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Self-approved', updatedAt: serverTimestamp() }));
     await assertSucceeds(updateDoc(doc(root, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Reviewed by the team.', updatedAt: serverTimestamp() }));
-    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant full restore drill including visibility, Admin-only hide/restore permissions, Admin privileges, demotion, immutable audit, private notifications, reward separation.');
+    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant full restore including profile roles/visibility, Admin-only role and visibility mutations, five-role linked-admin permissions and revocation, Admin privileges, demotion, immutable audit, private notifications, reward separation.');
   } finally { await env.cleanup(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

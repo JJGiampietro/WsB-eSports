@@ -1,5 +1,6 @@
 import { auth, db, provider } from "./firebase-member.js?v=workspace-1";
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
+import { setupAdminProfileRoles } from './admin-profile-roles.js';
 import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDocs, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -410,6 +411,8 @@ prepareInvite.addEventListener("click", () => {
     prepareInvite.innerHTML = "MESSAGE SELECTED <b>→</b>";
   });
 });
+
+setupAdminProfileRoles();
 
 onAuthStateChanged(auth, (user) => {
   stopAdmin(); const version = ++authEpoch;

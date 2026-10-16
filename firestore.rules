@@ -45,6 +45,44 @@ service cloud.firestore {
       allow update: if isAdmin() || (ownsMember(memberId) && validMemberUpdate());
     }
 
+    function validProfileRole(data) {
+      return data.keys().hasAll(['name', 'tone', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['name', 'tone', 'createdAt', 'updatedAt'])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 32
+        && data.tone in ['violet', 'gold', 'mint', 'blue']
+        && data.createdAt is timestamp && data.updatedAt == request.time;
+    }
+    match /profileRoles/{roleId} {
+      allow read: if true;
+      allow create: if isAdmin() && roleId.matches('^[a-z0-9-]{1,64}$')
+        && !(roleId in ['admin', 'administrator', 'website-admin', 'admin-website-access'])
+        && validProfileRole(request.resource.data) && request.resource.data.createdAt <= request.time;
+      allow update: if isAdmin() && validProfileRole(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      // Keep role references and history intact. Uncheck a role to remove it from a profile.
+      allow delete: if false;
+    }
+    function validRoleAt(ids, index) {
+      return ids.size() <= index || (ids[index] is string
+        && existsAfter(/databases/$(database)/documents/profileRoles/$(ids[index])));
+    }
+    match /memberRoles/{memberId} {
+      allow read: if true;
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasAll(['roleIds', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['roleIds', 'updatedAt'])
+        && request.resource.data.roleIds is list
+        && request.resource.data.roleIds.size() <= 5
+        && request.resource.data.roleIds.toSet().size() == request.resource.data.roleIds.size()
+        && request.resource.data.updatedAt == request.time
+        && validRoleAt(request.resource.data.roleIds, 0)
+        && validRoleAt(request.resource.data.roleIds, 1)
+        && validRoleAt(request.resource.data.roleIds, 2)
+        && validRoleAt(request.resource.data.roleIds, 3)
+        && validRoleAt(request.resource.data.roleIds, 4);
+      allow delete: if isAdmin();
+    }
+
     // Visibility is public metadata, but members cannot restore themselves.
     match /memberVisibility/{memberId} {
       allow read: if true;

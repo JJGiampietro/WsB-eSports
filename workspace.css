@@ -1,6 +1,21 @@
 /* Same WsB violet palette, with more readable operational controls. */
 :root { --workspace-muted:#c2b8d6; --workspace-border:#494056; }
 [hidden] { display:none !important; }
+.profile-role-list { position:relative; z-index:2; display:flex; flex-wrap:wrap; gap:6px; min-width:0; max-width:100%; margin:8px 0 12px; }
+.profile-role-badge { display:inline-block; min-width:0; max-width:100%; padding:5px 9px; border:1px solid #695584; border-radius:7px; background:#281d39; color:#e0ceff; font:700 13px/1.35 Rajdhani,sans-serif; letter-spacing:.025em; overflow-wrap:anywhere; text-transform:none; }
+.role-tone-gold { background:#302419; border-color:#927144; color:#ffe1a3; }
+.role-tone-mint { background:#142d28; border-color:#4d8277; color:#b1f0dd; }
+.role-tone-blue { background:#192a3d; border-color:#527ca5; color:#c4e4ff; }
+.admin-role-library,.admin-profile-roles { margin:20px 0; padding:20px; border:1px solid var(--workspace-border); border-radius:12px; background:#191424; min-width:0; }
+.admin-role-library summary { color:#e5d7ff; font:700 17px/1.4 Rajdhani,sans-serif; cursor:pointer; }
+.admin-role-create-fields { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1fr); gap:16px; }
+.admin-profile-roles #adminRoleChoices { display:flex; flex-wrap:wrap; gap:10px; min-width:0; margin:16px 0; padding:0; border:0; }
+.admin-profile-roles #adminRoleChoices label { display:flex; align-items:center; gap:9px; min-width:0; max-width:100%; margin:0; padding:10px 12px; border:1px solid #635472; border-radius:8px; background:#100d17; cursor:pointer; overflow-wrap:anywhere; }
+.admin-profile-roles #adminRoleChoices input { flex:none; width:18px; height:18px; accent-color:#c5b2fb; }
+.admin-profile-roles #adminRoleChoices input:disabled + span { opacity:.6; }
+.admin-profile-roles h3 { margin:0; }
+.admin-profile-roles button,.admin-role-library button { margin-top:12px; }
+@media(max-width:600px) { .admin-role-create-fields { grid-template-columns:minmax(0,1fr); gap:0; } }
 .profile-hidden { display:none !important; }
 .profile-visibility-loading :is(.member-card,.management-card,.player-card[data-roster-id],.stats-player,.lb-row) { visibility:hidden; }
 .admin-profile-visibility { display:flex; align-items:center; gap:24px; padding:20px; margin-bottom:24px; border:1px solid var(--workspace-border); border-radius:12px; background:#191424; }
