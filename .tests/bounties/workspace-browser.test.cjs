@@ -51,6 +51,7 @@ async function pageFor(role, route = 'admin.html') {
   await admin.locator('[data-admin-view="members"]').click(); await admin.locator('#adminMemberPicker').waitFor({ state: 'visible' });
   await admin.waitForFunction(() => !document.getElementById('adminMemberPicker').disabled);
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
+  await require('./profile-roles-browser.cjs')({admin,anon,owner,pageFor,env});
   await admin.locator('#adminProfileBio').fill('Admin edited biography');
   admin.removeAllListeners('dialog'); admin.on('dialog', dialog => dialog.dismiss());
   await admin.locator('#adminMemberPicker').selectOption('bri');
@@ -181,6 +182,7 @@ async function pageFor(role, route = 'admin.html') {
   fs.mkdirSync('artifacts', { recursive: true }); await admin.screenshot({ path: 'artifacts/workspace-desktop.png', fullPage: true });
   await admin.setViewportSize({ width: 390, height: 844 }); assert.equal(await admin.evaluate(() => document.documentElement.scrollWidth > innerWidth), false); await admin.screenshot({ path: 'artifacts/workspace-mobile.png', fullPage: true });
   await env.withSecurityRulesDisabled(ctx => deleteDoc(doc(ctx.firestore(), 'admins', credentials.admin.uid))); await admin.locator('#adminDashboard').waitFor({ state: 'hidden' }); assert.equal(await admin.locator('#adminRewards').textContent(), '');
+  await admin.waitForFunction(() => document.getElementById('adminRoleChoices').textContent === '');
   await require('./member-layout.cjs')(anon);
   assert.deepEqual(errors, []);
   console.log('PASS: signed-out/Owner/admin gating, single workspace, cropped profile preview and persistence, member editing and stats bio, hide/restore without Gmail or data loss, public directory/management/stats/comparison filtering, secure Admin invite/claim, bounty approval, reward delivery, inbox, encrypted backup download/verification/local restore, responsive layout, live privilege revocation.');

@@ -1,6 +1,7 @@
 import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { auth, db, provider, authReady } from './firebase-client.js';
 import { visibility, managementMemberIds } from './member-visibility.js';
+import './profile-roles.js';
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -115,6 +116,7 @@ async function loadLinkedProfile(user, version = accountEpoch) {
     if (version !== accountEpoch) return;
     if (accessSnapshot.docs[0].data().status !== 'active') throw new Error('Your member editing access is inactive. Please contact a WsB admin.');
     linkedMemberId = accessSnapshot.docs[0].id;
+    form.dataset.profileMemberId = linkedMemberId;
     const profileSnapshot = await getDoc(doc(db, "members", linkedMemberId));
     if (!profileSnapshot.exists()) throw new Error("Your member profile record is not ready yet. Please contact a WsB admin.");
     const profile = profileSnapshot.data();
@@ -233,6 +235,8 @@ form.addEventListener("submit", async function (event) {
 onAuthStateChanged(auth, function (user) {
   const version = ++accountEpoch; stopAccount();
   linkedMemberId = null;
+  delete form.dataset.profileMemberId;
+  form.querySelector('[data-profile-role-badges]')?.remove();
   if (!user) {
     hideAll();
     signedOut.hidden = false;

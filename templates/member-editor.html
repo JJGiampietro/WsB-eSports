@@ -89,6 +89,23 @@
         <label>SEARCH MEMBERS<input id="adminMemberSearch" type="search" placeholder="Start typing a name"></label>
         <label>EDIT EXISTING MEMBER<select id="adminMemberPicker" disabled><option value="">Loading members...</option></select></label>
       </div>
+      <details class="admin-role-library">
+        <summary>CREATE PROFILE ROLES</summary>
+        <p>Create reusable badges for player profiles. These do not grant website permissions. Bounty Hunter is included to get you started.</p>
+        <form id="adminRoleCreateForm">
+          <div class="admin-role-create-fields"><label>ROLE NAME<input id="adminNewRoleName" maxlength="32" minlength="2" placeholder="e.g. Bounty Hunter" required></label><label>BADGE COLOR<select id="adminNewRoleTone"><option value="violet">WsB violet</option><option value="gold">Gold</option><option value="mint">Mint</option><option value="blue">Blue</option></select></label></div>
+          <button id="adminCreateRole" class="member-auth-button member-auth-button-secondary" type="submit">CREATE ROLE <b>+</b></button>
+          <p id="adminRoleCreateStatus" role="status" aria-live="polite"></p>
+        </form>
+      </details>
+      <section id="adminProfileRoles" class="admin-profile-roles" aria-labelledby="adminProfileRolesHeading" hidden>
+        <h3 id="adminProfileRolesHeading">PROFILE ROLES</h3>
+        <p>Only admins can assign or remove these public badges. Select up to five. They never grant admin access.</p>
+        <fieldset id="adminRoleChoices" aria-label="Choose profile roles"></fieldset>
+        <div id="adminProfileRolesPreview"></div>
+        <button id="adminSaveProfileRoles" class="member-auth-button member-auth-button-secondary" type="button" disabled>SAVE ROLES <b>→</b></button>
+        <p id="adminProfileRolesStatus" role="status" aria-live="polite"></p>
+      </section>
       <form id="adminMemberForm">
         <input id="adminMemberId" type="hidden">
         <div id="adminProfileVisibility" class="admin-profile-visibility" hidden>
@@ -107,7 +124,7 @@
           <label>TIKTOK URL<input id="adminProfileTikTok" type="url" inputmode="url" placeholder="https://tiktok.com/@username"></label>
           <label>TWITCH URL<input id="adminProfileTwitch" type="url" inputmode="url" placeholder="https://twitch.tv/username"></label>
           <label>GMAIL FOR INVITE<input id="adminInviteEmail" type="email" maxlength="160" placeholder="member@gmail.com" required></label>
-          <label>ROLE<select id="adminRole"><option value="member">Member</option><option value="creator">Creator</option><option value="management">Management</option><option value="owner">Owner</option></select></label>
+          <label>MEMBERSHIP / ACCESS ROLE<select id="adminRole"><option value="member">Member</option><option value="creator">Creator</option><option value="management">Management</option><option value="owner">Owner</option></select></label>
           <label>ACCESS STATUS<select id="adminStatus"><option value="invited">Invited</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
         </div>
         <label class="admin-reset-access"><input id="adminResetAccess" type="checkbox"><span><b>RESET PROFILE ACCESS</b> Use this only when moving the profile to a different Gmail. The prior Google account will lose editing access.</span></label>
