@@ -131,7 +131,16 @@ async function pageFor(role, route = 'admin.html') {
   await member.reload(); await member.locator('#memberProfileForm').waitFor({state:'visible'});
   await admin.locator('#adminToggleVisibility').click();
   await admin.waitForFunction(() => document.getElementById('adminVisibilityState').textContent.includes('Visible'));
-  await detail.locator('.profile-hero-bio').waitFor({state:'visible'});
+  try { await detail.locator('.profile-hero-bio').waitFor({state:'visible'}); }
+  catch(error) {
+    console.error('Restored profile diagnostic:',await detail.evaluate(async()=>{
+      const {db,restrictionDb}=await import('/firebase-client.js');
+      const full=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js');
+      const lite=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-lite.js');
+      const [cached,direct]=await Promise.all([full.getDoc(full.doc(db,'members','barrelroll')),lite.getDoc(lite.doc(restrictionDb,'members','barrelroll'))]);
+      return {hidden:window.WsbVisibility?.isHidden('barrelroll'),hero:!!document.querySelector('.profile-hero-card'),html:document.getElementById('playerDetail')?.innerHTML.slice(0,300),cachedExists:cached.exists(),cachedBio:cached.data()?.bio,directExists:direct.exists(),directBio:direct.data()?.bio};
+    }));throw error;
+  }
   await publicMembers.waitForFunction(() => document.querySelector('.member-card[data-public-member-id="barrelroll"]')?.getBoundingClientRect().height > 0);
   await management.waitForFunction(() => document.querySelector('.management-card[data-public-member-id="barrelroll"]')?.getBoundingClientRect().height > 0);
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
