@@ -1,5 +1,5 @@
 // Encrypt BEFORE download. No passphrase, plaintext, or file is sent anywhere.
-export const BACKUP_COLLECTIONS = ['members', 'memberAccess', 'memberVisibility', 'profileRoles', 'memberRoles', 'admins', 'bounties', 'bountyClaims', 'bountyRewards', 'claimDisputes', 'adminActivity', 'notifications', 'siteEvents', 'siteAnnouncements', 'siteContentState'];
+export const BACKUP_COLLECTIONS = ['members', 'memberAccess', 'accountRestrictions', 'memberVisibility', 'profileRoles', 'memberRoles', 'admins', 'bounties', 'bountyClaims', 'bountyRewards', 'claimDisputes', 'adminActivity', 'notifications', 'siteEvents', 'siteAnnouncements', 'siteContentState'];
 const enc = new TextEncoder(), dec = new TextDecoder();
 const b64 = bytes => { let text = ''; for (let i = 0; i < bytes.length; i += 8192) text += String.fromCharCode(...bytes.subarray(i, i + 8192)); return btoa(text); };
 const unb64 = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
@@ -27,7 +27,8 @@ export function validateBackup(data, projectId) {
     if (!Array.isArray(docs) || docs.length > 10000) throw new Error('Invalid collection: ' + name);
     const ids = new Set();
     for (const doc of docs) {
-      if (!doc || typeof doc.id !== 'string' || !/^[A-Za-z0-9_-]{1,200}$/.test(doc.id) || ids.has(doc.id) || !doc.data || typeof doc.data !== 'object' || Array.isArray(doc.data)) throw new Error('Invalid or duplicate backup document.');
+      const validId = typeof doc?.id === 'string' && doc.id.length <= 200 && (name === 'accountRestrictions' ? /^[^/\\\s@]+@[^/\\\s@]+\.[^/\\\s@]+$/.test(doc.id) : /^[A-Za-z0-9_-]{1,200}$/.test(doc.id));
+      if (!doc || !validId || ids.has(doc.id) || !doc.data || typeof doc.data !== 'object' || Array.isArray(doc.data)) throw new Error('Invalid or duplicate backup document.');
       ids.add(doc.id);
       if (JSON.stringify(doc.data).length > 1000000) throw new Error('Backup document too large.');
     }

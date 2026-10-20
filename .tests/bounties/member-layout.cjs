@@ -12,6 +12,10 @@ module.exports = async function checkMemberLayout(page, base = 'http://localhost
   await page.goto(base+'members.html');
   await page.locator('[data-member-id="elusion"] .member-sync-label').waitFor();
   await page.waitForFunction(()=>document.querySelector('[data-member-id="dmo"] .member-sync-label')?.textContent==='Waiting for first sync');
+  // Async callbacks retain the loaded dependency even during global teardown/reload.
+  await page.evaluate(()=>{ delete window.WsbSync; document.dispatchEvent(new Event('wsb:visibility-applied')); });
+  await page.locator('#memberSearch').fill('elusion');
+  await page.locator('#memberSearch').fill('');
   await page.evaluate(()=>{document.querySelector('[data-member-id="elusion"] .member-name').textContent='TEST VeryLongFortniteDisplayNameWithNoSpaces';});
   for (const theme of ['normal','halloween']) {
     await page.evaluate(value=>document.body.classList.toggle('halloween-theme',value==='halloween'),theme);

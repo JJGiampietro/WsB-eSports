@@ -283,6 +283,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 // The server refreshes this file regularly, so the page loads one saved file instead
 // of making a separate live API request for every member card.
 (function(){
+  const savedStatsSync = window.WsbSync;
   const cards=document.querySelectorAll("[data-fn-user]");
   const refreshNote=document.getElementById("membersRefreshNote");
   if(!cards.length)return;
@@ -350,7 +351,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     cards.forEach(function(card){
       const member=rosterByUsername.get(card.getAttribute("data-fn-user"));
       const stats=(member&&snapshot.players[member.id])||byUsername.get(card.getAttribute("data-fn-user"));
-      if(member)window.WsbSync.renderCardStatus(card,snapshot,member.id);
+      if(member)savedStatsSync.renderCardStatus(card,snapshot,member.id);
       if(stats)applyStats(card,stats);
     });
   }).catch(function(){
@@ -386,6 +387,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Leaderboards page - reads saved hourly JSON snapshots written by GitHub Actions
 (function(){
+  const savedStatsSync = window.WsbSync;
   const pastDayGrid=document.getElementById("lbPastDayGrid");
   const pastWeekGrid=document.getElementById("lbPastWeekGrid");
   const lifetimeGrid=document.getElementById("lbLifetimeGrid");
@@ -435,7 +437,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
       const cur=latest.players[id];
       const prev=baseline.players[id];
       if(!prev)return;
-      if(cur.stale || prev.stale || window.WsbSync.status(latest,id).state !== 'synced')return;
+      if(cur.stale || prev.stale || savedStatsSync.status(latest,id).state !== 'synced')return;
       if(prev.accountId&&cur.accountId&&prev.accountId!==cur.accountId)return;
       const deltaKills=cur.kills-prev.kills;
       const deltaWins=cur.wins-prev.wins;
@@ -482,7 +484,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
       lifetimeRefreshNote.textContent="Last updated "+formatPacific(latest.fetchedAt)+". Refreshes hourly on the hour.";
     }
 
-    const lifetimeEntries=Object.entries(activeLatest.players).map(function(entry){return Object.assign({id:entry[0]},entry[1],{stale:window.WsbSync.status(latest,entry[0]).state!=='synced'});});
+    const lifetimeEntries=Object.entries(activeLatest.players).map(function(entry){return Object.assign({id:entry[0]},entry[1],{stale:savedStatsSync.status(latest,entry[0]).state!=='synced'});});
     let lifetimeHtml="";
     lifetimeHtml+=buildCategory("Best K/D",topBy(lifetimeEntries,"kd"),function(v){return v.toFixed(2);});
     lifetimeHtml+=buildCategory("Most Kills (Lifetime)",topBy(lifetimeEntries,"kills"),fmtInt);
@@ -557,6 +559,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Stats page - detailed member profile view
 (function(){
+  const savedStatsSync = window.WsbSync;
   const overview=document.getElementById("statsOverview");
   const highlights=document.getElementById("statsHighlights");
   const directory=document.getElementById("statsDirectory");
@@ -600,7 +603,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
       refreshNote.textContent="Last updated "+formatPacific(snapshot.fetchedAt)+". Refreshes hourly on the hour.";
     }
     if(directoryNote){
-      const fresh=entries.filter(entry=>window.WsbSync.status(snapshot,entry.member.id).state==='synced').length;
+      const fresh=entries.filter(entry=>savedStatsSync.status(snapshot,entry.member.id).state==='synced').length;
       directoryNote.textContent=fresh+" of "+roster.length+" profiles up to date. "+synced.length+" have saved stats.";
     }
 
@@ -642,11 +645,11 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
         : '<div class="stats-avatar stats-avatar-initial">'+initials(member.displayName)+'</div>';
       const badge=leaderIds.get(member.id)?'<span class="stats-badge">'+leaderIds.get(member.id)+'</span>':"";
       if(!stats){
-        return '<a class="stats-player stats-player-issue" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(member.username)+'</p></div><span class="stats-sync-state"><i></i>Waiting for first sync</span></div><p class="stats-issue-copy">'+escapeHtml(window.WsbSync.describe(snapshot,member.id))+'</p></a>';
+        return '<a class="stats-player stats-player-issue" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(member.username)+'</p></div><span class="stats-sync-state"><i></i>Waiting for first sync</span></div><p class="stats-issue-copy">'+escapeHtml(savedStatsSync.describe(snapshot,member.id))+'</p></a>';
       }
       const killsPerMatch=stats.matches?stats.kills/stats.matches:0;
-      const sync=window.WsbSync.status(snapshot,member.id);
-      return '<a class="stats-player" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(stats.username||member.username)+'</p></div><span class="stats-sync-state '+(sync.state==='synced'?'stats-sync-ok':'stats-sync-stale')+'"><i></i>'+escapeHtml(sync.label)+'</span></div><p class="sync-detail">'+escapeHtml(window.WsbSync.describe(snapshot,member.id))+'</p>'+badge+'<div class="stats-metrics">'
+      const sync=savedStatsSync.status(snapshot,member.id);
+      return '<a class="stats-player" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(stats.username||member.username)+'</p></div><span class="stats-sync-state '+(sync.state==='synced'?'stats-sync-ok':'stats-sync-stale')+'"><i></i>'+escapeHtml(sync.label)+'</span></div><p class="sync-detail">'+escapeHtml(savedStatsSync.describe(snapshot,member.id))+'</p>'+badge+'<div class="stats-metrics">'
         +'<div><span>K/D</span><b>'+fmtDecimal(stats.kd)+'</b></div>'
         +'<div><span>WIN RATE</span><b>'+fmtPercent(stats.winrate)+'</b></div>'
         +'<div><span>WINS</span><b>'+fmtInt(stats.wins)+'</b></div>'
@@ -703,6 +706,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Player Stats detail pages
 (function(){
+  const savedStatsSync = window.WsbSync;
   const detail=document.getElementById("playerDetail");
   const memberId=document.body.dataset.memberId;
   const root=document.body.dataset.siteRoot||"";
@@ -784,7 +788,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
   function activity(latest,baseline,id,label,emptyText){
     const previous=baseline&&baseline.players?baseline.players[id]:null;
     const current=latest.players[id];
-    if(!previous||!current||current.stale||previous.stale||window.WsbSync.status(latest,id).state==='stale')return '<section class="profile-panel"><p class="label">'+label+'</p><p class="profile-empty">'+(current && window.WsbSync.status(latest,id).state==='stale'?'Activity comparison is paused while stats are outdated.':emptyText)+"</p></section>";
+    if(!previous||!current||current.stale||previous.stale||savedStatsSync.status(latest,id).state==='stale')return '<section class="profile-panel"><p class="label">'+label+'</p><p class="profile-empty">'+(current && savedStatsSync.status(latest,id).state==='stale'?'Activity comparison is paused while stats are outdated.':emptyText)+"</p></section>";
     const kills=current.kills-previous.kills;
     const wins=current.wins-previous.wins;
     const matches=current.matches-previous.matches;
@@ -805,8 +809,8 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     const stats=latest&&latest.players?latest.players[member.id]:null;
     const asset=member.profileImage;
     const avatar=asset?'<div class="profile-avatar" style="background-image:url('+escapeHtml(root+asset)+')"></div>':'<div class="profile-avatar profile-avatar-initial">'+escapeHtml(member.displayName.replace(/[^A-Za-z0-9]/g,"").slice(0,2).toUpperCase()||"W")+'</div>';
-    const sync=window.WsbSync.status(latest,member.id);
-    const status='<span class="stats-sync-state '+(sync.state==='synced'?'stats-sync-ok':sync.state==='stale'?'stats-sync-stale':'')+'"><i></i>'+escapeHtml(sync.label)+'</span><p class="sync-detail">'+escapeHtml(window.WsbSync.describe(latest,member.id))+'</p>';
+    const sync=savedStatsSync.status(latest,member.id);
+    const status='<span class="stats-sync-state '+(sync.state==='synced'?'stats-sync-ok':sync.state==='stale'?'stats-sync-stale':'')+'"><i></i>'+escapeHtml(sync.label)+'</span><p class="sync-detail">'+escapeHtml(savedStatsSync.describe(latest,member.id))+'</p>';
     const stream=streamProfiles[member.id];
     const streamLink=stream?'<a class="profile-stream-link" href="'+escapeHtml(stream.url)+'" target="_blank" rel="noopener"><i></i>'+escapeHtml(stream.platform).toUpperCase()+' STREAMER<span>VIEW PROFILE ↗</span></a>':'';
     let html='<a class="profile-back" href="'+root+'stats.html">← BACK TO ALL STATS</a><section class="profile-hero-card">'+avatar+'<div><p class="label">FORTNITE MEMBER PROFILE</p><h1>'+escapeHtml(member.displayName)+'</h1><p class="profile-username">'+escapeHtml((stats&&stats.username)||member.username)+'</p>'+status+streamLink+'</div></section>';
@@ -844,7 +848,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     html+='<div class="profile-activity-grid">'
       +activity(latest,findBaseline(snapshots,latestTime-DAY_MS),member.id,"PAST 24 HOURS","24-hour stats will be ready tomorrow.")
       +activity(latest,findBaseline(snapshots,latestTime-WEEK_MS),member.id,"PAST 7 DAYS","Weekly stats will be ready next week.")
-      +'</div><p class="profile-data-note">'+escapeHtml(window.WsbSync.describe(latest,member.id))+'. Refresh attempts hourly on the hour.</p>';
+      +'</div><p class="profile-data-note">'+escapeHtml(savedStatsSync.describe(latest,member.id))+'. Refresh attempts hourly on the hour.</p>';
     detail.innerHTML=html;
     setupComparison(synced,member,stats);
     document.dispatchEvent(new Event('wsb:profile-render'));

@@ -19,13 +19,15 @@ async function pageFor(role, route = 'admin.html') {
     import {initializeApp,getApps} from '${sdk}firebase-app.js';
     import {getAuth,connectAuthEmulator,signInWithEmailAndPassword,GoogleAuthProvider} from '${sdk}firebase-auth.js';
     import {getFirestore,connectFirestoreEmulator} from '${sdk}firebase-firestore.js';
+    import {getFirestore as getDirectFirestore,connectFirestoreEmulator as connectDirectEmulator} from '${sdk}firebase-firestore-lite.js';
     export const app=initializeApp({apiKey:'demo-key',projectId:'demo-wsb-bounties',authDomain:'localhost'});
     export const auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider(),localTest=true;
+    export const restrictionDb=getDirectFirestore(app);connectDirectEmulator(restrictionDb,'127.0.0.1',8185);
     connectAuthEmulator(auth,'http://127.0.0.1:9198',{disableWarnings:true});connectFirestoreEmulator(db,'127.0.0.1',8185);
     export const authReady=Promise.resolve();
     ${role ? `await signInWithEmailAndPassword(auth,${JSON.stringify(credentials[role].email)},${JSON.stringify(credentials[role].password)});` : ''}
   ` }));
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', error => { errors.push(error.message); console.error('Browser error at '+page.url()+': '+error.stack); });
   page.on('dialog', dialog => dialog.accept());
   await page.goto('http://localhost:8000/' + route);
   return page;
@@ -51,6 +53,7 @@ async function pageFor(role, route = 'admin.html') {
   await admin.locator('[data-admin-view="members"]').click(); await admin.locator('#adminMemberPicker').waitFor({ state: 'visible' });
   await admin.waitForFunction(() => !document.getElementById('adminMemberPicker').disabled);
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
+  await require('./member-editor-browser.cjs')({admin,anon,owner});
   await require('./profile-roles-browser.cjs')({admin,anon,owner,pageFor,env});
   await admin.locator('#adminProfileBio').fill('Admin edited biography');
   admin.removeAllListeners('dialog'); admin.on('dialog', dialog => dialog.dismiss());
@@ -73,6 +76,7 @@ async function pageFor(role, route = 'admin.html') {
   assert.equal(new URL(await detail.locator('.firebase-account-link').getAttribute('href'), detail.url()).pathname, '/member-account.html');
   // Hide/restore is separate from required-Gmail editing and preserves all saved data.
   await admin.locator('#adminMemberPicker').selectOption('elusion');
+  await admin.locator('[data-member-view="access"]').click();
   assert.equal(await admin.locator('#adminInviteEmail').inputValue(), '');
   assert.equal(await admin.locator('#adminInviteEmail').getAttribute('required'), '');
   await admin.locator('#adminToggleVisibility').click();
@@ -84,7 +88,9 @@ async function pageFor(role, route = 'admin.html') {
   await admin.locator('#adminToggleVisibility').click();
   await admin.waitForFunction(() => document.getElementById('adminVisibilityState').textContent.includes('Visible'));
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
+  await admin.locator('[data-member-view="profile"]').click();
   await admin.locator('#adminProfileBio').fill('Unsaved draft must survive visibility changes');
+  await admin.locator('[data-member-view="access"]').click();
   let before;
   await env.withSecurityRulesDisabled(async ctx => { before = {
     access:(await getDoc(doc(ctx.firestore(),'memberAccess','barrelroll'))).data(),
@@ -112,6 +118,7 @@ async function pageFor(role, route = 'admin.html') {
   assert.equal(await otherDetail.locator('#profileCompareSelect option[value="barrelroll"]').count(),0);
   const leaders = await pageFor(null,'leaderboards.html');
   await leaders.waitForFunction(() => !document.documentElement.classList.contains('profile-visibility-loading'));
+  await leaders.locator('.lb-category').first().waitFor({state:'visible'});
   assert.equal(await leaders.locator('a[href*="stats/barrelroll"]:visible').count(),0);
   await env.withSecurityRulesDisabled(async ctx => {
     assert.deepEqual((await getDoc(doc(ctx.firestore(),'memberAccess','barrelroll'))).data(),before.access);
@@ -128,7 +135,7 @@ async function pageFor(role, route = 'admin.html') {
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
   for (const page of [publicMembers,management,directory,otherDetail,leaders]) await page.context().close();
   // Create an Admin invitation; verified Google-equivalent test email can claim it securely.
-  await admin.locator('#adminStartNew').click(); await admin.locator('#adminDisplayName').fill('TEST INVITED ADMIN'); await admin.locator('#adminFortniteUsername').fill('InvitedTestPlayer'); await admin.locator('#adminInviteEmail').fill(credentials.invited.email); await admin.locator('#adminRole').selectOption('admin'); await admin.locator('#adminSave').click();
+  await admin.locator('#adminStartNew').click(); await admin.locator('#adminDisplayName').fill('TEST INVITED ADMIN'); await admin.locator('#adminFortniteUsername').fill('InvitedTestPlayer'); await admin.locator('[data-member-view="access"]').click(); await admin.locator('#adminInviteEmail').fill(credentials.invited.email); await admin.locator('[data-member-view="roles"]').click(); await admin.locator('#adminRole').selectOption('admin'); await admin.locator('[data-member-view="access"]').click(); await admin.locator('#adminSave').click();
   await admin.waitForFunction(() => document.getElementById('adminInviteActions').hidden === false);
   const invited = await pageFor('invited', 'member-account.html'); await invited.locator('#memberProfileForm').waitFor({ state: 'visible' });
   await env.withSecurityRulesDisabled(async context => { const grant = await getDoc(doc(context.firestore(),'admins',credentials.invited.uid)); assert(grant.exists()); });
@@ -174,6 +181,8 @@ async function pageFor(role, route = 'admin.html') {
   await home.evaluate(async () => { const {getAuth,signOut} = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js');await signOut(getAuth()); });
   await home.locator('.site-inbox').waitFor({state:'hidden'}); assert.equal(await home.locator('#notificationItems').textContent(),'');
   const anonHome = await pageFor(null,'index.html'); assert.equal(await anonHome.locator('.site-inbox').isVisible(),false);
+  await require('./membership-role-browser.cjs')({admin,pageFor,env,credentials});
+  await require('./account-access-browser.cjs')({admin,pageFor,env,credentials,createUser});
   await admin.locator('[data-admin-view="backups"]').click(); await admin.locator('#backupPassphrase').fill('Private browser recovery passphrase!'); const download = admin.waitForEvent('download'); await admin.locator('#backupExport').click(); const file = await download; const location = await file.path();
   assert(!fs.readFileSync(location, 'utf8').includes(credentials.member.email));
   await admin.locator('#backupFile').setInputFiles(location); await admin.locator('#backupInspect').click(); await admin.waitForFunction(() => document.getElementById('backupSummary').textContent.startsWith('Verified'));

@@ -21,6 +21,7 @@ assert.equal(status({}, 'member').state, 'waiting');
     members: [{ id: 'member', data: { displayName: 'Member', bio: 'Backup bio', socials: {}, profileImage: 'data:image/png;base64,YQ==', updatedAt: { $timestamp: [1000, 123000] } } }],
     memberAccess: [{ id: 'member', data: { memberId: 'member', invitedEmail: 'member@wsb-test.invalid', ownerUid: 'member', role: 'member', status: 'active' } }],
     memberVisibility: [{ id: 'member', data: { hidden: true, updatedAt: { $timestamp: [1000, 0] } } }],
+    accountRestrictions: [{ id: 'saved-inactive@wsb-test.invalid', data: { memberId: 'saved-inactive', blocked: true, updatedAt: { $timestamp: [1000, 0] } } }],
     profileRoles: [{ id: 'bounty-hunter', data: { name: 'Bounty Hunter', tone: 'gold', createdAt: { $timestamp: [1000, 0] }, updatedAt: { $timestamp: [1000, 0] } } }],
     memberRoles: [{ id: 'member', data: { roleIds: ['bounty-hunter'], updatedAt: { $timestamp: [1000, 0] } } }],
     bounties: [{ id: 'target', data: { targetName: 'Backup target', amount: 10, status: 'archived' } }],
@@ -36,7 +37,7 @@ assert.equal(status({}, 'member').state, 'waiting');
   assert.deepEqual(await cryptoModule.decryptBackup(envelope, password, payload.projectId), payload);
   await assert.rejects(() => cryptoModule.decryptBackup(envelope, 'incorrect password long enough', payload.projectId));
   await assert.rejects(() => cryptoModule.decryptBackup(envelope, password, 'production-project'));
-  const altered = { ...envelope, ciphertext: 'A' + envelope.ciphertext.slice(1) };
+  const altered = { ...envelope, ciphertext: (envelope.ciphertext[0] === 'A' ? 'B' : 'A') + envelope.ciphertext.slice(1) };
   await assert.rejects(() => cryptoModule.decryptBackup(altered, password, payload.projectId));
   const env = await initializeTestEnvironment({ projectId: 'demo-wsb-bounties', firestore: { host: '127.0.0.1', port: 8185, rules: fs.readFileSync('../../firestore.rules', 'utf8') } });
   try {
@@ -56,6 +57,12 @@ assert.equal(status({}, 'member').state, 'waiting');
     const invited = env.authenticatedContext('new', { email: 'new@wsb-test.invalid', email_verified: true }).firestore();
     const root = env.authenticatedContext('root', { email: 'root@wsb-test.invalid' }).firestore();
     const anonymous = env.unauthenticatedContext().firestore();
+    // Membership can be recorded before an invitation exists; nobody can claim a blank email.
+    const uninvitedRole = { memberId: 'role-only', role: 'owner', status: 'invited', invitedEmail: '', ownerUid: null, updatedAt: serverTimestamp() };
+    for (const db of [anonymous, member, owner]) await assertFails(setDoc(doc(db, 'memberAccess', 'role-only'), uninvitedRole));
+    await assertSucceeds(setDoc(doc(root, 'memberAccess', 'role-only'), uninvitedRole));
+    await assertFails(updateDoc(doc(member, 'memberAccess', 'role-only'), { ownerUid: 'member', status: 'active', claimedAt: serverTimestamp() }));
+    await assertFails(getDoc(doc(member, 'memberAccess', 'role-only')));
     // Display roles never create grants or expand a member's editing permissions.
     const roleData = { name: 'Tournament MVP', tone: 'violet', createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
     const assignment = { roleIds: ['bounty-hunter'], updatedAt: serverTimestamp() };
@@ -144,6 +151,7 @@ assert.equal(status({}, 'member').state, 'waiting');
     await assertFails(getDoc(doc(owner, 'claimDisputes', 'denied_member')));
     await assertFails(updateDoc(doc(member, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Self-approved', updatedAt: serverTimestamp() }));
     await assertSucceeds(updateDoc(doc(root, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Reviewed by the team.', updatedAt: serverTimestamp() }));
-    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant full restore including profile roles/visibility, Admin-only role and visibility mutations, five-role linked-admin permissions and revocation, Admin privileges, demotion, immutable audit, private notifications, reward separation.');
+    await require('./account-access.test.cjs')(env);
+    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant full restore including account restrictions/roles/visibility, Admin-only role and visibility mutations, five-role linked-admin permissions and revocation, Admin privileges, demotion, immutable audit, private notifications, reward separation.');
   } finally { await env.cleanup(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

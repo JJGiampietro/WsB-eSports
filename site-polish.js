@@ -1,5 +1,6 @@
 /* Progressive enhancements shared by the static pages. No account writes. */
 (() => {
+  const savedStatsSync = window.WsbSync;
   const root = document.body.dataset.siteRoot || '';
   const main = document.querySelector('main');
   if (main) {
@@ -137,12 +138,12 @@
     cards.forEach(card=>{
       const member=roster.find(m=>m.id===card.dataset.memberId||m.username===card.dataset.fnUser);
       const id=member?.id||(!card.dataset.fnUser?'ingraham':'');
-      const sync=window.WsbSync.status(latestSnapshot,id);
+      const sync=savedStatsSync.status(latestSnapshot,id);
       const synced=players && id && sync.state==='synced';
       const issue=players && member && sync.state!=='synced';
       const rank=card.querySelector('.member-meta b');
       if(rank&&!rank.dataset.rankLabeled&&rank.textContent.trim()!=='SYNCED') { rank.dataset.rankLabeled='true';rank.textContent += /^Dirt/.test(rank.textContent)?' · For fun':' · Team-set'; }
-      if (issue || synced) window.WsbSync.renderCardStatus(card, latestSnapshot, id);
+      if (issue || synced) savedStatsSync.renderCardStatus(card, latestSnapshot, id);
       const matchesName=!term||normalize((card.querySelector('.member-name')?.textContent||'')+' '+card.dataset.fnUser+' '+id).includes(term);
       const matchesFilter=category==='all'||category==='management'&&managementIds.has(id)||category==='synced'&&synced||category==='issue'&&issue;
       const wrapper=card.closest('.member-card-wrap')||card;

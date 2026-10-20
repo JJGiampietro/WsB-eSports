@@ -1,4 +1,5 @@
 import { auth, db, localTest } from './firebase-client.js';
+import './account-access.js';
 import { watchAdmin } from './admin-access.js';
 import { subscribePublished } from './site-content.js';
 import { millis } from './content-model.js';
@@ -54,10 +55,10 @@ function setupPreview(form, prefix, loadedEvent, savedEvent) {
   if (!form) return;
   let baseline = '', initialized = false;
   const picker = document.getElementById('adminMemberPicker'); let selected = picker?.value || '';
-  const fields = () => [...form.querySelectorAll('input:not([type="file"]), textarea, select')].map(i => [i.id, i.type === 'checkbox' ? i.checked : i.value]);
+  const fields = () => [...form.elements].filter(i => i.matches('input:not([type="file"]), textarea, select')).map(i => [i.id, i.type === 'checkbox' ? i.checked : i.value]);
   const snapshot = () => JSON.stringify([fields(), document.getElementById(prefix + 'ProfileImagePreview')?.style.backgroundImage || document.getElementById('profileImagePreview')?.style.backgroundImage || '']);
   const preview = document.createElement('section'); preview.className = 'public-profile-preview'; preview.innerHTML = '<h3>Public profile preview</h3><div class="preview-icon"></div><strong></strong><p></p><div class="preview-socials"></div><small>Your Gmail, account ID, and access settings are never included in this public preview.</small>';
-  form.append(preview);
+  (form.querySelector('[data-preview-slot]') || form).append(preview);
   const nameId = prefix === 'admin' ? 'adminDisplayName' : 'profileDisplayName';
   const bioId = prefix === 'admin' ? 'adminProfileBio' : 'profileBio';
   function renderPreview() {
@@ -73,6 +74,20 @@ function setupPreview(form, prefix, loadedEvent, savedEvent) {
   const clean = () => { baseline = snapshot(); initialized = true; selected = picker?.value || ''; renderPreview(); };
   const dirty = () => initialized && snapshot() !== baseline;
   document.addEventListener(loadedEvent, clean); document.addEventListener(savedEvent, clean);
+  document.addEventListener('wsb:access-revoked', () => { initialized = false; baseline = ''; });
+  if (prefix === 'admin') document.addEventListener('wsb:admin-access-saved', () => {
+    if (!initialized || !baseline) return;
+    const original = JSON.parse(baseline);
+    const field = original[0].find(entry => entry[0] === 'adminStatus');
+    if (field) field[1] = document.getElementById('adminStatus').value;
+    baseline = JSON.stringify(original);
+  });
+  if (prefix === 'admin') document.addEventListener('wsb:admin-membership-saved', () => {
+    if (!initialized || !baseline) return;
+    const original = JSON.parse(baseline), field = original[0].find(entry => entry[0] === 'adminRole');
+    if (field) field[1] = document.getElementById('adminRole').value;
+    baseline = JSON.stringify(original);
+  });
   form.addEventListener('input', () => { if (!initialized) { baseline = ''; initialized = true; } renderPreview(); });
   form.addEventListener('change', renderPreview);
   new MutationObserver(renderPreview).observe(document.getElementById(prefix === 'admin' ? 'adminProfileImagePreview' : 'profileImagePreview'), { attributes: true, attributeFilter: ['style'] });

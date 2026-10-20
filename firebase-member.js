@@ -238,6 +238,7 @@ onAuthStateChanged(auth, function (user) {
   delete form.dataset.profileMemberId;
   form.querySelector('[data-profile-role-badges]')?.remove();
   if (!user) {
+    form.reset(); setProfileImage('', ''); emailOutput.textContent = ''; uidOutput.textContent = ''; setSaving('');
     hideAll();
     signedOut.hidden = false;
     return;
@@ -451,3 +452,5 @@ document.addEventListener("wsb:directory-render", applyPublicMemberProfiles);
 document.addEventListener('wsb:profile-render', applyPublicMemberProfiles);
 
 export { auth, db, provider };
+// Initialize the access guard before member/admin pages can show signed-in controls.
+import './account-access.js';

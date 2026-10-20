@@ -2,6 +2,7 @@
 import { initializeApp, getApps } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, connectAuthEmulator, browserLocalPersistence, setPersistence } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { getFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { getFirestore as getDirectFirestore, connectFirestoreEmulator as connectDirectEmulator } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-lite.js';
 import { APP_CHECK_SITE_KEY } from './security-config.js';
 export const localTest = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 const config = localTest ? { apiKey: 'demo-key', authDomain: 'localhost', projectId: 'demo-wsb-local' } : {
@@ -14,9 +15,13 @@ if (!localTest && APP_CHECK_SITE_KEY) {
   initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
 }
 export const auth = getAuth(app), db = getFirestore(app), provider = new GoogleAuthProvider();
+// Independent server reads remain reliable when revoking an admin invalidates
+// several cached realtime queries at once. They use the same auth and rules.
+export const restrictionDb = getDirectFirestore(app);
 if (localTest) {
   connectAuthEmulator(auth, 'http://127.0.0.1:9199', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8186);
+  connectDirectEmulator(restrictionDb, '127.0.0.1', 8186);
   document.documentElement.classList.add('local-testing');
   const banner = document.createElement('aside'); banner.className = 'local-test-banner';
   banner.textContent = 'LOCAL TEST SITE · Test accounts and data only. Production is unchanged.';

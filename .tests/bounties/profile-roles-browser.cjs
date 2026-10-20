@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict'), fs = require('node:fs');
 const { doc, getDoc, getDocs, collection, setDoc, Timestamp } = require('firebase/firestore');
 module.exports = async ({admin, anon, owner, pageFor, env}) => {
+  await admin.locator('[data-member-view="roles"]').click();
   await admin.locator('#adminRoleChoices input[value="bounty-hunter"]').waitFor();
   assert.equal(await anon.locator('#adminCreateRole').isVisible(),false);
   assert.equal(await owner.locator('#adminSaveProfileRoles').isVisible(),false);
@@ -76,5 +77,6 @@ module.exports = async ({admin, anon, owner, pageFor, env}) => {
   });
   await admin.locator('.admin-role-library summary').click();
   for(const page of [legacy,member,...pages]) await page.context().close();
+  await admin.locator('[data-member-view="profile"]').click();
   console.log('PASS: admin-only role creation/assignment/removal, starter Bounty Hunter, duplicate/reserved names, five-role limit, no-Gmail assignment, live public badges on four surfaces and account page, concurrent admin edits, audit log and responsive layout.');
 };
