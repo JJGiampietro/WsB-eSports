@@ -1,9 +1,11 @@
 import { auth, db, provider } from "./firebase-member.js?v=workspace-1";
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
 import { setupAdminProfileRoles } from './admin-profile-roles.js';
+import { selectMemberView } from './admin-member-editor.js';
+import { planAccountRestrictions, enforceInactiveAccounts } from './account-restrictions.js';
 import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { collection, doc, getDocs, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { collection, doc, getDoc, getDocs, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const signedOut = document.getElementById("adminSignedOut");
 const authPanel = document.getElementById("adminAuthPanel");
@@ -24,6 +26,8 @@ const displayName = document.getElementById("adminDisplayName");
 const fortniteUsername = document.getElementById("adminFortniteUsername");
 const inviteEmail = document.getElementById("adminInviteEmail");
 const role = document.getElementById("adminRole");
+const saveMembershipRole = document.getElementById('adminSaveMembershipRole');
+const membershipRoleStatus = document.getElementById('adminMembershipRoleStatus');
 const status = document.getElementById("adminStatus");
 const resetAccess = document.getElementById("adminResetAccess");
 const save = document.getElementById("adminSave");
@@ -42,6 +46,28 @@ const profileTwitch = document.getElementById("adminProfileTwitch");
 const visibilityPanel = document.getElementById('adminProfileVisibility');
 const visibilityState = document.getElementById('adminVisibilityState');
 const visibilityToggle = document.getElementById('adminToggleVisibility');
+const accountAccessPanel = document.getElementById('adminAccountAccess');
+const accountAccessToggle = document.getElementById('adminToggleAccountAccess');
+function showMemberSummary(record) {
+  const names = { member: 'Member', creator: 'Creator', management: 'Management', owner: 'Owner', admin: 'Admin' };
+  formLabel.textContent = record ? 'EDIT MEMBER' : 'NEW MEMBER';
+  formTitle.textContent = record?.displayName || 'New member.';
+  const state = !record?.invitedEmail ? 'No sign-in configured' : record.status === 'inactive' ? 'Login inactive' : record.ownerUid ? 'Account linked' : 'Invitation ready';
+  const summary = document.getElementById('adminSelectedStatus'), help = document.getElementById('adminMembershipRoleHelp');
+  if (summary) summary.textContent = record ? (names[record.role] || 'Member') + ' membership / ' + state + (record.profileHidden ? ' / Hidden profile' : '') : 'Create a profile and prepare their account invitation.';
+  if (help) help.textContent = record ? 'Only Admin grants website privileges. Other membership roles do not. Save this role without a Gmail; other edits are not saved.' : 'Choose their role here, then use Save Member in Profile or Access after adding their Gmail. Only Admin grants website privileges.';
+  const image = safeProfileImage(record?.profileImage);
+  const avatar = document.getElementById('adminSelectedAvatar');
+  if (avatar) avatar.style.backgroundImage = image ? 'url("' + image + '")' : '';
+}
+function showAccountAccess(record) {
+  accountAccessPanel.hidden = !record;
+  const configured = Boolean(record?.hasAccess && record.invitedEmail);
+  document.getElementById('adminAccessState').textContent = !configured ? 'No member login has been set up' : record.status === 'inactive' ? 'Inactive — member login blocked' : record.ownerUid ? 'Active member access' : 'Invitation available — not claimed yet';
+  accountAccessToggle.disabled = !configured;
+  accountAccessToggle.classList.toggle('is-restore', record?.status === 'inactive');
+  accountAccessToggle.textContent = !configured ? 'NO ACCESS TO REVOKE' : record.status === 'inactive' ? 'RESTORE ACCESS' : 'DEACTIVATE ACCESS';
+}
 
 function showVisibility(record) {
   visibilityPanel.hidden = !record;
@@ -111,13 +137,14 @@ function showInviteMessage(invite) {
 
 function resetForm() {
   editingId = null;
+  saveMembershipRole.disabled = true; membershipRoleStatus.textContent = '';
   showVisibility(null);
+  showAccountAccess(null);
   readyInvite = null;
   form.reset();
   memberId.value = "";
   setProfileImage("", "");
-  formLabel.textContent = "NEW MEMBER";
-  formTitle.innerHTML = "CREATE<br>ACCESS.";
+  showMemberSummary(null); selectMemberView('profile');
   startNew.hidden = true;
   memberSearch.value = "";
   renderMemberPicker();
@@ -128,7 +155,9 @@ function resetForm() {
 
 function showEditor(record) {
   editingId = record.id;
+  saveMembershipRole.disabled = false; membershipRoleStatus.textContent = '';
   showVisibility(record);
+  showAccountAccess(record);
   readyInvite = { id: record.id, email: emptyValue(record.invitedEmail), displayName: emptyValue(record.displayName) || record.id };
   memberId.value = record.id;
   displayName.value = emptyValue(record.displayName);
@@ -142,14 +171,13 @@ function showEditor(record) {
   status.value = ["invited", "active", "inactive"].includes(record.status) ? record.status : "invited";
   setProfileImage(record.profileImage, record.profileImage ? "Current profile icon" : "");
   resetAccess.checked = false;
-  formLabel.textContent = "EDIT MEMBER";
-  formTitle.innerHTML = "UPDATE<br>ACCESS.";
+  showMemberSummary(record);
   startNew.hidden = false;
   memberSearch.value = "";
   renderMemberPicker();
   memberPicker.value = record.id;
   if (readyInvite.email) showInviteMessage(readyInvite);
-  inviteActions.hidden = !readyInvite.email;
+  inviteActions.hidden = !readyInvite.email || record.status === 'inactive';
   updateStatus("");
   document.dispatchEvent(new Event('wsb:admin-profile-loaded'));
 }
@@ -158,6 +186,8 @@ function renderMemberPicker() {
   const items = Array.from(records.values()).sort((a, b) => emptyValue(a.displayName || a.id).localeCompare(emptyValue(b.displayName || b.id)));
   const filter = emptyValue(memberSearch.value).trim().toLocaleLowerCase();
   const matches = items.filter((record) => [record.displayName, record.fortniteUsername, record.invitedEmail, record.id].join(" ").toLocaleLowerCase().includes(filter));
+  const count = document.getElementById('adminRosterCount');
+  if (count) count.textContent = items.length ? (filter ? matches.length + ' matching / ' : '') + items.length + ' members in the roster' : 'Loading the roster…';
   const selectedId = editingId || memberPicker.value;
   memberPicker.textContent = "";
   const placeholder = document.createElement("option");
@@ -169,7 +199,7 @@ function renderMemberPicker() {
     const option = document.createElement("option");
     option.value = record.id;
     const username = emptyValue(record.fortniteUsername);
-    option.textContent = (username ? `${record.displayName || record.id} (${username})` : (record.displayName || record.id)) + (record.profileHidden ? ' — Hidden profile' : '');
+    option.textContent = (username ? `${record.displayName || record.id} (${username})` : (record.displayName || record.id)) + (record.profileHidden ? ' — Hidden profile' : '') + (record.status === 'inactive' ? ' — Inactive access' : '');
     memberPicker.append(option);
   });
   memberPicker.disabled = !items.length;
@@ -185,6 +215,7 @@ async function loadRecords() {
   ]);
   const profiles = new Map(profileSnapshot.docs.map((entry) => [entry.id, entry.data()]));
   const access = new Map(accessSnapshot.docs.map((entry) => [entry.id, entry.data()]));
+  await enforceInactiveAccounts(access, auth.currentUser);
   records = new Map(roster.map((member) => {
     const profile = profiles.get(member.id) || {};
     const memberAccess = access.get(member.id) || {};
@@ -266,6 +297,46 @@ memberPicker.addEventListener("change", () => {
   if (record) showEditor(record);
 });
 
+saveMembershipRole.addEventListener('click', async () => {
+  const record = records.get(editingId), user = auth.currentUser, version = authEpoch, nextRole = role.value;
+  if (!isAdmin || !record || !user || !['member', 'creator', 'management', 'owner', 'admin'].includes(nextRole)) return;
+  const report = (message, problem = false) => { membershipRoleStatus.textContent = message; membershipRoleStatus.classList.toggle('is-problem', problem); };
+  if (record.ownerUid === user.uid && record.role === 'admin' && nextRole !== 'admin') { report('You cannot remove your own admin access. Ask another admin.', true); return; }
+  if (nextRole === 'admin' && record.role !== 'admin' && !confirm('Assign Admin to ' + record.displayName + '? This grants website administration once their linked account is active. Other membership roles do not grant these privileges.')) return;
+  saveMembershipRole.disabled = true; save.disabled = true; accountAccessToggle.disabled = true;
+  report('Saving membership role…');
+  try {
+    await runTransaction(db, async transaction => {
+      const ref = doc(db, 'memberAccess', record.id), snapshot = await transaction.get(ref), current = snapshot.data();
+      if (!isAdmin || version !== authEpoch) throw new Error('Admin access changed. Sign in again.');
+      const sameTime = (a, b) => (!a && !b) || Boolean(a?.isEqual?.(b));
+      if (snapshot.exists() !== record.hasAccess || (current && (!sameTime(current.updatedAt, record.accessVersion) || current.role !== record.role || current.status !== record.status || current.ownerUid !== record.ownerUid))) throw new Error('This member’s access changed. Refresh and select the member again before saving.');
+      if (current) transaction.update(ref, { role: nextRole, updatedAt: serverTimestamp() });
+      else transaction.set(ref, {
+        memberId: record.id, displayName: record.displayName || record.id, fortniteUsername: record.fortniteUsername || '',
+        role: nextRole, invitedEmail: '', ownerUid: null, claimedAt: null, status: 'invited', rosterStatus: 'active',
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+      });
+      if (current?.ownerUid) {
+        if (nextRole === 'admin' && current.status === 'active') transaction.set(doc(db, 'admins', current.ownerUid), { enabled: true, memberId: record.id });
+        else if (current.role === 'admin') transaction.delete(doc(db, 'admins', current.ownerUid));
+      }
+      logActivity(db, transaction, user, 'member-role-changed', 'memberAccess', record.id, 'Role: ' + nextRole);
+    });
+    const snapshot = await getDoc(doc(db, 'memberAccess', record.id));
+    if (!isAdmin || version !== authEpoch) return;
+    Object.assign(record, snapshot.data(), { hasAccess: true, accessVersion: snapshot.data().updatedAt });
+    renderMemberPicker();
+    if (editingId === record.id) {
+      showAccountAccess(record);
+      showMemberSummary(record);
+      document.dispatchEvent(new Event('wsb:admin-membership-saved'));
+      report('Membership role saved.' + (!record.invitedEmail ? ' No login invitation was created. Add a Gmail when they want account access.' : '') + ' Other profile edits were not saved.');
+    }
+  } catch (error) { if (version === authEpoch && editingId === record.id) report(error.message || 'Membership role could not be saved.', true); }
+  finally { save.disabled = false; saveMembershipRole.disabled = !editingId || !isAdmin; showAccountAccess(records.get(editingId)); }
+});
+
 visibilityToggle.addEventListener('click', async () => {
   const record = records.get(editingId), user = auth.currentUser, version = authEpoch;
   if (!isAdmin || !record || !user) return;
@@ -285,11 +356,50 @@ visibilityToggle.addEventListener('click', async () => {
     renderMemberPicker();
     if (editingId === record.id) {
       showVisibility(record);
+      showMemberSummary(record);
       updateStatus(hidden ? 'Profile hidden. Saved data and sign-in access are unchanged.' : 'Profile restored to the public website.');
     }
   } catch (visibilityError) {
     if (version === authEpoch) updateStatus(visibilityError.message || 'Profile visibility could not be changed.', true);
   } finally { visibilityToggle.disabled = false; }
+});
+
+accountAccessToggle.addEventListener('click', async () => {
+  const record = records.get(editingId), user = auth.currentUser, version = authEpoch;
+  if (!isAdmin || !user || !record?.hasAccess || !record.invitedEmail) return;
+  const nextStatus = record.status === 'inactive' ? (record.ownerUid ? 'active' : 'invited') : 'inactive';
+  if (nextStatus === 'inactive' && (record.ownerUid === user.uid || record.invitedEmail.toLowerCase() === user.email?.toLowerCase())) { updateStatus('You cannot deactivate your own account. Ask another admin.', true); return; }
+  if (!confirm((nextStatus === 'inactive' ? 'Deactivate ' : 'Restore access for ') + record.displayName + '? ' + (nextStatus === 'inactive' ? 'They will be signed out and blocked from member/admin features.' : 'They can sign in again with their linked Gmail.') + ' Saved data and public visibility stay unchanged. Other unsaved edits are not saved.')) return;
+  accountAccessToggle.disabled = true; save.disabled = true;
+  saveMembershipRole.disabled = true;
+  try {
+    await runTransaction(db, async transaction => {
+      const ref = doc(db, 'memberAccess', record.id), snapshot = await transaction.get(ref), current = snapshot.data();
+      if (!isAdmin || version !== authEpoch) throw new Error('Admin access changed. Sign in again.');
+      const sameVersion = (!current?.updatedAt && !record.accessVersion) || Boolean(current?.updatedAt?.isEqual?.(record.accessVersion));
+      if (!snapshot.exists() || current.status !== record.status || current.ownerUid !== record.ownerUid || !sameVersion) throw new Error('This account changed while you were editing. Refresh and select the member again.');
+      const next = { ...current, status: nextStatus };
+      const writeRestrictions = await planAccountRestrictions(transaction, record.id, current, next, user);
+      transaction.update(ref, { status: nextStatus, updatedAt: serverTimestamp() });
+      writeRestrictions();
+      if (current.ownerUid && current.role === 'admin') {
+        if (nextStatus === 'active') transaction.set(doc(db, 'admins', current.ownerUid), { enabled: true, memberId: record.id });
+        else transaction.delete(doc(db, 'admins', current.ownerUid));
+      }
+      logActivity(db, transaction, user, nextStatus === 'inactive' ? 'member-deactivated' : 'member-reactivated', 'memberAccess', record.id, 'Status: ' + nextStatus);
+    });
+    const snapshot = await getDoc(doc(db, 'memberAccess', record.id));
+    if (!isAdmin || version !== authEpoch) return;
+    Object.assign(record, snapshot.data(), { accessVersion: snapshot.data().updatedAt });
+    renderMemberPicker();
+    if (editingId === record.id) {
+      status.value = nextStatus; showAccountAccess(record); showMemberSummary(record);
+      inviteActions.hidden = nextStatus === 'inactive' || !readyInvite?.email;
+      document.dispatchEvent(new Event('wsb:admin-access-saved'));
+      updateStatus(nextStatus === 'inactive' ? 'Access deactivated. Member sessions are signed out; protected features are blocked.' : 'Account access restored. The member can sign in again.');
+    }
+  } catch (error) { if (version === authEpoch) updateStatus(error.message || 'Account access could not be changed.', true); }
+  finally { save.disabled = false; saveMembershipRole.disabled = !editingId || !isAdmin; if (editingId === record.id) showAccountAccess(record); }
 });
 
 profileImageInput.addEventListener("change", async () => {
@@ -329,6 +439,8 @@ form.addEventListener("submit", async (event) => {
   const id = editingId || memberId.value || makeMemberId(username);
   memberId.value = id;
   save.disabled = true;
+  accountAccessToggle.disabled = true;
+  saveMembershipRole.disabled = true;
   updateStatus("Saving member access...");
   try {
     const existing = records.get(id);
@@ -344,7 +456,7 @@ form.addEventListener("submit", async (event) => {
       invitedEmail: email,
       role: role.value,
       rosterStatus: existing ? (existing.rosterStatus || "active") : "pending",
-      status: shouldReset ? "invited" : status.value,
+      status: status.value === 'inactive' ? 'inactive' : shouldReset ? "invited" : status.value,
       updatedAt: serverTimestamp()
     };
     if (!existing || !existing.hasAccess) {
@@ -363,7 +475,9 @@ form.addEventListener("submit", async (event) => {
       throw new Error('This member’s access changed while you were editing. Select the member again after refreshing to load the latest record.');
     if (existing?.hasProfile && (!currentProfile.exists() || !sameTime(existing.profileVersion, currentProfile.data().updatedAt)))
       throw new Error('The public profile changed while you were editing. Refresh and select the member again to avoid overwriting their changes.');
+    const writeRestrictions = await planAccountRestrictions(batch, id, currentAccess.data(), access, auth.currentUser);
     batch.set(doc(db, 'memberAccess', id), access, { merge: true });
+    writeRestrictions();
     batch.set(doc(db, "members", id), {
         displayName: name,
         bio: profileBio.value.trim(),
@@ -383,18 +497,23 @@ form.addEventListener("submit", async (event) => {
         logActivity(db, batch, auth.currentUser, 'member-access-changed', 'memberAccess', id, 'Role: ' + role.value + '; status: ' + access.status + (shouldReset ? '; account link reset' : ''));
     }
     logActivity(db, batch, auth.currentUser, existing ? 'member-edited' : 'member-invited', 'memberAccess', id, 'Role: ' + role.value);
+    if (existing?.status !== access.status && (access.status === 'inactive' || existing?.status === 'inactive'))
+      logActivity(db, batch, auth.currentUser, access.status === 'inactive' ? 'member-deactivated' : 'member-reactivated', 'memberAccess', id, 'Status: ' + access.status);
     });
     document.dispatchEvent(new Event('wsb:admin-profile-saved'));
     readyInvite = { id, email, displayName: name };
     showInviteMessage(readyInvite);
-    inviteActions.hidden = false;
-    updateStatus(shouldReset && existing ? "Access reset and ready for the new Gmail invite." : "Member saved and ready to invite.");
+    inviteActions.hidden = access.status === 'inactive';
+    updateStatus(access.status === 'inactive' ? 'Member saved with inactive access. Login and protected features are blocked.' : shouldReset && existing ? "Access reset and ready for the new Gmail invite." : "Member saved and ready to invite.");
     await loadRecords();
+    if (editingId) { showAccountAccess(records.get(editingId)); showMemberSummary(records.get(editingId)); }
     if (!editingId) showEditor(records.get(id));
   } catch (saveError) {
     updateStatus(saveError.message || "Member access could not be saved.", true);
   } finally {
     save.disabled = false;
+    saveMembershipRole.disabled = !editingId || !isAdmin;
+    showAccountAccess(records.get(editingId));
   }
 });
 
@@ -418,6 +537,7 @@ onAuthStateChanged(auth, (user) => {
   stopAdmin(); const version = ++authEpoch;
   isAdmin = false;
   dashboard.hidden = true;
+  records.clear(); resetForm();
   if (!user) {
     authPanel.hidden = false;
     hideAuthPanels();

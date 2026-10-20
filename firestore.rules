@@ -2,7 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
-      return request.auth != null;
+      return request.auth != null && !accountBlocked();
+    }
+    function accountBlocked() {
+      let email = request.auth.token.get('email', '').lower();
+      return email != '' && exists(/databases/$(database)/documents/accountRestrictions/$(email))
+        && get(/databases/$(database)/documents/accountRestrictions/$(email)).data.blocked == true;
     }
 
     function isAdmin() {
@@ -94,16 +99,44 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    function validAdminAccess(memberId, data) {
+      return data.status in ['invited', 'active', 'inactive']
+        && (data.status != 'inactive' || (data.invitedEmail is string
+          && data.invitedEmail.matches('^[^/]+@[^/]+$')
+          && getAfter(/databases/$(database)/documents/accountRestrictions/$(data.invitedEmail.lower())).data.memberId == memberId
+          && getAfter(/databases/$(database)/documents/accountRestrictions/$(data.invitedEmail.lower())).data.blocked == true));
+    }
+    match /accountRestrictions/{email} {
+      // A blocked account can still read its own block so the browser can sign out.
+      allow get: if isAdmin() || (request.auth != null
+        && request.auth.token.get('email_verified', false) == true
+        && request.auth.token.get('email', '').lower() == email);
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+        && email != request.auth.token.get('email', '').lower()
+        && request.resource.data.keys().hasAll(['memberId', 'blocked', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['memberId', 'blocked', 'updatedAt'])
+        && request.resource.data.memberId is string && request.resource.data.memberId.size() <= 100
+        && request.resource.data.blocked == true && request.resource.data.updatedAt == request.time
+        && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.status == 'inactive'
+        && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.invitedEmail.lower() == email
+        && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.get('ownerUid', null) != request.auth.uid;
+      allow delete: if isAdmin() && (getAfter(/databases/$(database)/documents/memberAccess/$(resource.data.memberId)).data.status != 'inactive'
+        || getAfter(/databases/$(database)/documents/memberAccess/$(resource.data.memberId)).data.invitedEmail.lower() != email);
+    }
+
     match /memberAccess/{memberId} {
       allow get: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow list: if isAdmin() || (signedIn() && (
         resource.data.ownerUid == request.auth.uid || (request.auth.token.get('email_verified', false) == true
           && resource.data.invitedEmail == request.auth.token.email)
       ));
-      allow create: if isAdmin() && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin'];
+      allow create: if isAdmin() && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin']
+        && validAdminAccess(memberId, request.resource.data);
       allow delete: if isAdmin() && resource.data.ownerUid != request.auth.uid;
       allow update: if (isAdmin()
           && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin']
+          && validAdminAccess(memberId, request.resource.data)
           && (resource.data.ownerUid != request.auth.uid || resource.data.get('role', '') != 'admin'
             || (request.resource.data.role == 'admin' && request.resource.data.status == 'active' && request.resource.data.ownerUid == request.auth.uid)))
         || (signedIn()

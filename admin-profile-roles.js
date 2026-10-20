@@ -37,7 +37,7 @@ export function setupAdminProfileRoles() {
     id = pickedMember(); dirty = false;
     panel.hidden = !allowed || !id;
     originalIds = [...(roleState.assignments.get(id)?.roleIds || [])]; selected = new Set(originalIds);
-    showStatus(id ? 'Select up to five profile roles. Save roles applies only these badges; other profile edits are not saved.' : '');
+    showStatus(id ? 'Changes here apply only to public badges.' : '');
     renderChoices();
   }
   subscribeRoles(() => {

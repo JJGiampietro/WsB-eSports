@@ -32,7 +32,6 @@ for (const member of roster) {
 let editor = fs.readFileSync(path.join(templates, 'member-editor.html'), 'utf8');
 editor = editor.replace('<option value="owner">Owner</option>', '<option value="owner">Owner</option><option value="admin">Admin (website access)</option>');
 editor = editor.replace('CREATE<br>ACCESS.', 'CREATE<br>ACCESS.');
-editor = editor.replace('<label>ACCESS STATUS', '<p class="member-form-full admin-role-note">Only Admin grants website privileges. Owner, Management, Creator, and Member are display roles.</p><label>ACCESS STATUS');
 const editorBody = editor.match(/<section id="adminDashboard"[\s\S]*?<\/main>/)[0].replace(/<section id="adminDashboard"[^>]+>/, '').replace(/\s*<\/section>\s*<\/main>$/, '');
 let bounty = fs.readFileSync(path.join(root, 'bounties.html'), 'utf8');
 if (!bounty.includes('id="editExpiry"')) bounty = bounty.replace('<label class="bounty-field">Status<select id="editStatus">', '<label class="bounty-field">Deadline (your local time; optional)<input id="editExpiry" type="datetime-local"></label><label class="bounty-field">Eligibility rules<textarea id="editEligibility" maxlength="1000" rows="3"></textarea></label><label class="bounty-field">Dispute policy<textarea id="editDisputePolicy" maxlength="1000" rows="3"></textarea></label><label class="bounty-field">Status<select id="editStatus">');

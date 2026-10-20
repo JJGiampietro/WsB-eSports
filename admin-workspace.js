@@ -1,8 +1,9 @@
 import { auth, db, localTest } from './firebase-client.js';
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
 import { BACKUP_COLLECTIONS, encryptBackup, decryptBackup, encodeData, decodeData } from './backup-crypto.js';
+import { planAccountRestrictions } from './account-restrictions.js';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
-import { collection, doc, getDocs, query, orderBy, limit, onSnapshot, writeBatch, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
+import { collection, doc, getDocs, query, orderBy, limit, onSnapshot, writeBatch, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 const $ = id => document.getElementById(id), esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const when = v => v?.toDate ? v.toDate().toLocaleString() : v ? new Date(v).toLocaleString() : 'Not yet';
 let allowed = false, epoch = 0, subscriptions = [], stopRole = () => {}, state = {}, roster = [], latest = null, manifest = null, inspected = null;
@@ -30,7 +31,7 @@ function render() {
   const access = array('memberAccess'), claims = array('bountyClaims'), bountyIds = new Set(array('bounties').filter(b => b.status !== 'archived').map(b => b.id));
   const rows = [...roster, ...access.filter(a => !roster.some(r => r.id === a.id)).map(a => ({ id: a.id, displayName: a.displayName }))];
   const issues = rows.filter(r => window.WsbSync.status(latest, r.id).state !== 'synced');
-  const metrics = [['Pending invites', access.filter(a => !a.ownerUid && a.status === 'invited').length, 'members'], ['Stats need attention', issues.length, 'overview'], ['Claims to review', claims.filter(c => c.status === 'pending' && bountyIds.has(c.bountyId)).length, 'bounties'], ['Rewards to deliver', claims.filter(c => c.status === 'approved' && !array('bountyRewards').some(r => r.id === c.id && r.status === 'delivered')).length, 'rewards']];
+  const metrics = [['Pending invites', access.filter(a => !a.ownerUid && a.invitedEmail && a.status === 'invited').length, 'members'], ['Stats need attention', issues.length, 'overview'], ['Claims to review', claims.filter(c => c.status === 'pending' && bountyIds.has(c.bountyId)).length, 'bounties'], ['Rewards to deliver', claims.filter(c => c.status === 'approved' && !array('bountyRewards').some(r => r.id === c.id && r.status === 'delivered')).length, 'rewards']];
   $('adminOverview').innerHTML = metrics.map(([label, count, view]) => '<button class="admin-metric" data-open-view="' + view + '"><strong>' + count + '</strong><span>' + label + '</span></button>').join('');
   const search = $('adminSyncSearch').value.trim().toLowerCase(), filter = $('adminSyncFilter').value;
   const visible = rows.filter(r => (filter === 'all' || filter === 'issues' && window.WsbSync.status(latest, r.id).state !== 'synced' || filter === 'synced' && window.WsbSync.status(latest, r.id).state === 'synced') && [r.id, r.displayName].join(' ').toLowerCase().includes(search));
@@ -137,18 +138,29 @@ $('backupRestore').addEventListener('click', async () => {
   if (!allowed || !localTest || !inspected || !$('backupConfirm').checked) { showStatus('backupStatus', 'Verify a backup and confirm the local merge first.'); return; }
   const button = $('backupRestore'); button.disabled = true;
   try {
-    const records = ['profileRoles', 'members', 'memberAccess', 'memberRoles', 'memberVisibility'].flatMap(name => (inspected.collections[name] || []).map(d => ({ ...d, name })));
+    const records = ['profileRoles', 'members', 'memberRoles', 'memberVisibility'].flatMap(name => (inspected.collections[name] || []).map(d => ({ ...d, name })));
     for (let offset = 0; offset < records.length; offset += 200) {
       const batch = writeBatch(db);
       for (const row of records.slice(offset, offset + 200)) {
         const data = decodeData(row.data, Timestamp);
-        // Never import grants or overwrite the administrator doing the restore.
-        if (row.name === 'memberAccess' && (data.role === 'admin' || data.ownerUid === auth.currentUser.uid)) continue;
         batch.set(doc(db, row.name, row.id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
       }
       logActivity(db, batch, auth.currentUser, 'backup-restored', 'backup', 'local-merge'); await batch.commit();
     }
-    showStatus('backupStatus', 'Local profiles, account links, profile roles and visibility restored. Full history restoration is tested separately using the isolated emulator recovery test. No records were deleted.');
+    // Restore account status together with its login restriction. Never import
+    // arbitrary restriction markers or overwrite the administrator restoring.
+    for (const row of inspected.collections.memberAccess || []) {
+      const data = decodeData(row.data, Timestamp);
+      if (data.role === 'admin' || data.ownerUid === auth.currentUser.uid) continue;
+      await runTransaction(db, async transaction => {
+        const ref = doc(db, 'memberAccess', row.id), current = await transaction.get(ref);
+        const next = { ...data, updatedAt: serverTimestamp() };
+        const writeRestrictions = await planAccountRestrictions(transaction, row.id, current.data(), next, auth.currentUser);
+        transaction.set(ref, next, { merge: true }); writeRestrictions();
+        logActivity(db, transaction, auth.currentUser, 'backup-restored', 'memberAccess', row.id);
+      });
+    }
+    showStatus('backupStatus', 'Local profiles, account links, inactive login restrictions, profile roles and visibility restored. Full history restoration is tested separately using the isolated emulator recovery test. No records were deleted.');
   } catch (error) { showStatus('backupStatus', error.message); } finally { button.disabled = false; }
 });
 if (localTest) {

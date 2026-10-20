@@ -1,6 +1,7 @@
 /* Same WsB violet palette, with more readable operational controls. */
 :root { --workspace-muted:#c2b8d6; --workspace-border:#494056; }
 [hidden] { display:none !important; }
+.account-access-notice { margin:24px auto; max-width:1200px; padding:20px; border:1px solid #b96a7b; border-radius:12px; background:#301a23; color:#ffe1e7; font:600 17px/1.5 Rajdhani,sans-serif; overflow-wrap:anywhere; }
 .profile-role-list { position:relative; z-index:2; display:flex; flex-wrap:wrap; gap:6px; min-width:0; max-width:100%; margin:8px 0 12px; }
 .profile-role-badge { display:inline-block; min-width:0; max-width:100%; padding:5px 9px; border:1px solid #695584; border-radius:7px; background:#281d39; color:#e0ceff; font:700 13px/1.35 Rajdhani,sans-serif; letter-spacing:.025em; overflow-wrap:anywhere; text-transform:none; }
 .role-tone-gold { background:#302419; border-color:#927144; color:#ffe1a3; }
@@ -155,3 +156,4 @@ header.nav #navlinks a, header.nav #navlinks summary { font-size:13px; letter-sp
 .content-empty, .content-live-status { padding:24px; color:#dacbea; }
 @media(max-width:900px) { .content-admin-layout { grid-template-columns:1fr; } .content-picker { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .content-field-grid, .content-picker, .content-participants ul { grid-template-columns:1fr; } .content-preview .event-card { grid-template-columns:1fr; } .content-more, .cms-announcement .event-countdown, .cms-announcement .content-details-link { grid-column:auto; } }
+.admin-membership-role{min-width:0;display:flex;flex-direction:column;gap:12px}.admin-membership-role p{margin:0;font-size:14px;line-height:1.5;overflow-wrap:anywhere}.admin-membership-role button{max-width:100%;white-space:normal}

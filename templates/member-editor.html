@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="styles.css?v=circular-logo-20260927">
   <link rel="stylesheet" href="redesign.css?v=20260929-local-polish">
   <link rel="stylesheet" href="polish.css?v=20260929-local-polish">
+  <link rel="stylesheet" href="admin-members.css?v=1">
   <link rel="canonical" href="https://wsb-esports.web.app/admin-members.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="WsB eSports">
@@ -74,44 +75,28 @@
   </section>
 
   <section id="adminDashboard" class="admin-members-dashboard" hidden>
-    <div class="member-account-intro admin-members-guide">
-      <p class="label">HOW IT WORKS</p>
-      <h2>INVITE.<br><span>CLAIM.</span></h2>
-      <p>Add the member’s Gmail and prepare the invite. They sign in with that exact Google account, then can update their own public name, bio, and socials.</p>
-      <ul><li>Admins control membership and roles</li><li>Members control public profile details</li><li>Fortnite identity stays admin-managed</li></ul>
-      <button class="member-text-button" id="adminSignOut" type="button">SIGN OUT</button>
-    </div>
-
-    <section class="member-account-card admin-editor">
-      <div class="admin-editor-head"><div><p class="label" id="adminFormLabel">NEW MEMBER</p><h2 id="adminFormTitle">CREATE<br>ACCESS.</h2></div><button class="member-text-button" id="adminStartNew" type="button" hidden>+ NEW MEMBER</button></div>
-      <p class="admin-editor-note">Choose an existing member to update their Gmail, profile icon, public bio, TikTok or Twitch link, or access. New members are added to the public roster automatically at the next hourly stats refresh.</p>
+    <section class="admin-member-directory" aria-labelledby="adminDirectoryTitle">
+      <div class="admin-directory-heading"><div><h2 id="adminDirectoryTitle">Manage members.</h2><p>Find a member, then choose what you want to update.</p></div><button class="member-text-button" id="adminSignOut" type="button">SIGN OUT</button></div>
       <div class="admin-member-picker" aria-label="Select an existing member to edit">
         <label>SEARCH MEMBERS<input id="adminMemberSearch" type="search" placeholder="Start typing a name"></label>
         <label>EDIT EXISTING MEMBER<select id="adminMemberPicker" disabled><option value="">Loading members...</option></select></label>
+        <button class="member-auth-button member-auth-button-secondary" id="adminStartNew" type="button" hidden>+ NEW MEMBER</button>
       </div>
-      <details class="admin-role-library">
-        <summary>CREATE PROFILE ROLES</summary>
-        <p>Create reusable badges for player profiles. These do not grant website permissions. Bounty Hunter is included to get you started.</p>
-        <form id="adminRoleCreateForm">
-          <div class="admin-role-create-fields"><label>ROLE NAME<input id="adminNewRoleName" maxlength="32" minlength="2" placeholder="e.g. Bounty Hunter" required></label><label>BADGE COLOR<select id="adminNewRoleTone"><option value="violet">WsB violet</option><option value="gold">Gold</option><option value="mint">Mint</option><option value="blue">Blue</option></select></label></div>
-          <button id="adminCreateRole" class="member-auth-button member-auth-button-secondary" type="submit">CREATE ROLE <b>+</b></button>
-          <p id="adminRoleCreateStatus" role="status" aria-live="polite"></p>
-        </form>
-      </details>
-      <section id="adminProfileRoles" class="admin-profile-roles" aria-labelledby="adminProfileRolesHeading" hidden>
-        <h3 id="adminProfileRolesHeading">PROFILE ROLES</h3>
-        <p>Only admins can assign or remove these public badges. Select up to five. They never grant admin access.</p>
-        <fieldset id="adminRoleChoices" aria-label="Choose profile roles"></fieldset>
-        <div id="adminProfileRolesPreview"></div>
-        <button id="adminSaveProfileRoles" class="member-auth-button member-auth-button-secondary" type="button" disabled>SAVE ROLES <b>→</b></button>
-        <p id="adminProfileRolesStatus" role="status" aria-live="polite"></p>
-      </section>
+      <p class="admin-roster-count" id="adminRosterCount" role="status">Loading the roster…</p>
+    </section>
+
+    <section class="member-account-card admin-editor">
+      <div class="admin-editor-head"><div class="admin-selected-member"><div id="adminSelectedAvatar" aria-hidden="true"></div><div><p class="label" id="adminFormLabel">NEW MEMBER</p><h2 id="adminFormTitle">New member.</h2><p id="adminSelectedStatus">Create a profile and prepare their account invitation.</p></div></div><span class="admin-edit-note">ADMIN EDITOR</span></div>
+      <div class="admin-member-tabs" role="tablist" aria-label="Member settings">
+        <button id="member-tab-profile" type="button" role="tab" data-member-view="profile" aria-controls="member-panel-profile" aria-selected="true">Profile</button>
+        <button id="member-tab-roles" type="button" role="tab" data-member-view="roles" aria-controls="member-panel-roles" aria-selected="false" tabindex="-1">Roles &amp; badges</button>
+        <button id="member-tab-access" type="button" role="tab" data-member-view="access" aria-controls="member-panel-access" aria-selected="false" tabindex="-1">Access &amp; visibility</button>
+      </div>
       <form id="adminMemberForm">
         <input id="adminMemberId" type="hidden">
-        <div id="adminProfileVisibility" class="admin-profile-visibility" hidden>
-          <div><p class="label">PUBLIC PROFILE</p><strong id="adminVisibilityState">Visible on the website</strong><p>Hide this member from public directories, management, stats and leaderboards without deleting their profile or history. This does not change their sign-in access. Changes here apply separately from Save member.</p></div>
-          <button id="adminToggleVisibility" class="member-auth-button member-auth-button-secondary" type="button">HIDE PROFILE</button>
-        </div>
+        <section id="member-panel-profile" data-member-panel="profile" role="tabpanel" aria-labelledby="member-tab-profile">
+        <div class="admin-profile-layout"><div>
+        <div class="admin-section-heading"><h3>Public profile.</h3><p>The name, image and details members see on the website.</p></div>
         <div class="member-form-grid">
           <div class="member-avatar-editor member-form-full">
             <div class="member-avatar-preview member-avatar-preview-empty" id="adminProfileImagePreview" aria-hidden="true"><span>WsB</span></div>
@@ -123,14 +108,43 @@
           <label class="member-form-full">PUBLIC BIO<textarea id="adminProfileBio" rows="4" maxlength="280" placeholder="Optional member bio shown on their stats profile."></textarea></label>
           <label>TIKTOK URL<input id="adminProfileTikTok" type="url" inputmode="url" placeholder="https://tiktok.com/@username"></label>
           <label>TWITCH URL<input id="adminProfileTwitch" type="url" inputmode="url" placeholder="https://twitch.tv/username"></label>
+        </div>
+        </div><aside data-preview-slot aria-label="Live public profile preview"></aside></div>
+        </section>
+        <section id="member-panel-access" data-member-panel="access" role="tabpanel" aria-labelledby="member-tab-access" hidden>
+        <div class="admin-section-heading"><h3>Account &amp; visibility.</h3><p>Manage their sign-in invitation and public presence. These are separate controls.</p></div>
+        <div class="admin-access-actions">
+          <div id="adminAccountAccess" class="admin-profile-visibility" hidden>
+            <div><p class="label">WEBSITE ACCOUNT ACCESS</p><strong id="adminAccessState"></strong><p id="adminAccessHelp">Block member login without deleting their profile or history. This action saves immediately.</p></div>
+            <button id="adminToggleAccountAccess" class="member-auth-button member-auth-button-secondary" type="button">DEACTIVATE ACCESS</button>
+          </div>
+          <div id="adminProfileVisibility" class="admin-profile-visibility" hidden>
+            <div><p class="label">PUBLIC PROFILE</p><strong id="adminVisibilityState">Visible on the website</strong><p>Hide their public profile and stats without changing login access. This action saves immediately.</p></div>
+            <button id="adminToggleVisibility" class="member-auth-button member-auth-button-secondary" type="button">HIDE PROFILE</button>
+          </div>
+        </div>
+        <div class="member-form-grid admin-invitation-fields">
           <label>GMAIL FOR INVITE<input id="adminInviteEmail" type="email" maxlength="160" placeholder="member@gmail.com" required></label>
-          <label>MEMBERSHIP / ACCESS ROLE<select id="adminRole"><option value="member">Member</option><option value="creator">Creator</option><option value="management">Management</option><option value="owner">Owner</option></select></label>
-          <label>ACCESS STATUS<select id="adminStatus"><option value="invited">Invited</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+          <label>ACCESS STATUS<select id="adminStatus"><option value="invited">Invited</option><option value="active">Active</option><option value="inactive">Inactive - block member login</option></select></label>
         </div>
         <label class="admin-reset-access"><input id="adminResetAccess" type="checkbox"><span><b>RESET PROFILE ACCESS</b> Use this only when moving the profile to a different Gmail. The prior Google account will lose editing access.</span></label>
-        <div class="member-form-actions"><p id="adminSaveStatus" class="member-save-status"></p><button class="member-auth-button" id="adminSave" type="submit">SAVE MEMBER <b>→</b></button></div>
+        <details class="admin-invite-help"><summary>How account invitations work</summary><p>Add the member’s Gmail and save. Copy their invite message and send it privately. They sign in with that exact Google account to manage their name, bio, image and socials.</p><p>New members enter the public roster at the next hourly stats refresh. Admins manage Fortnite identity, membership and access.</p></details>
+        </section>
+        <div class="member-form-actions admin-member-save-bar" data-member-save-bar><div><p id="adminSaveStatus" class="member-save-status" role="status" aria-live="polite"></p><p class="admin-save-help">Saves profile, invitation and membership settings. Gmail is required. Badge assignments have their own save button.</p></div><button class="member-auth-button" id="adminSave" type="submit">SAVE MEMBER <b>→</b></button></div>
       </form>
-      <div id="adminInviteActions" class="admin-invite-actions" hidden><div><p class="label">READY TO INVITE</p><p id="adminInviteSummary"></p><textarea id="adminInviteMessage" class="admin-invite-message" readonly aria-label="Member invite message"></textarea></div><button class="member-auth-button member-auth-button-secondary" id="adminPrepareInvite" type="button">COPY INVITE MESSAGE <b>⧉</b></button></div>
+      <section id="member-panel-roles" data-member-panel="roles" role="tabpanel" aria-labelledby="member-tab-roles" hidden>
+        <div class="admin-section-heading"><h3>Membership &amp; badges.</h3><p>Set their membership level or add public recognition badges.</p></div>
+        <div class="admin-roles-layout">
+          <div class="admin-membership-role"><h4>Membership</h4><label>MEMBERSHIP / ACCESS ROLE<select id="adminRole" form="adminMemberForm"><option value="member">Member</option><option value="creator">Creator</option><option value="management">Management</option><option value="owner">Owner</option></select></label><p id="adminMembershipRoleHelp">Only Admin grants website privileges. Other membership roles do not. Save an existing member’s role without a Gmail.</p><button id="adminSaveMembershipRole" class="member-auth-button member-auth-button-secondary" type="button" disabled>SAVE MEMBERSHIP ROLE</button><p id="adminMembershipRoleStatus" class="member-save-status" role="status" aria-live="polite"></p></div>
+          <section id="adminProfileRoles" class="admin-profile-roles" aria-labelledby="adminProfileRolesHeading" hidden>
+            <h4 id="adminProfileRolesHeading">Public badges</h4><p>Select up to five. Badges never grant website permissions.</p>
+            <fieldset id="adminRoleChoices" aria-label="Choose profile roles"></fieldset><div id="adminProfileRolesPreview"></div>
+            <button id="adminSaveProfileRoles" class="member-auth-button member-auth-button-secondary" type="button" disabled>SAVE ROLES <b>→</b></button><p id="adminProfileRolesStatus" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+        <details class="admin-role-library"><summary>CREATE PROFILE ROLES</summary><p>Add a reusable public badge. This does not create a website access role.</p><form id="adminRoleCreateForm"><div class="admin-role-create-fields"><label>ROLE NAME<input id="adminNewRoleName" maxlength="32" minlength="2" placeholder="e.g. Bounty Hunter" required></label><label>BADGE COLOR<select id="adminNewRoleTone"><option value="violet">WsB violet</option><option value="gold">Gold</option><option value="mint">Mint</option><option value="blue">Blue</option></select></label></div><button id="adminCreateRole" class="member-auth-button member-auth-button-secondary" type="submit">CREATE ROLE <b>+</b></button><p id="adminRoleCreateStatus" role="status" aria-live="polite"></p></form></details>
+      </section>
+      <div data-member-invite-slot hidden><div id="adminInviteActions" class="admin-invite-actions" hidden><div><p class="label">READY TO INVITE</p><p id="adminInviteSummary"></p><textarea id="adminInviteMessage" class="admin-invite-message" readonly aria-label="Member invite message"></textarea></div><button class="member-auth-button member-auth-button-secondary" id="adminPrepareInvite" type="button">COPY INVITE MESSAGE <b>⧉</b></button></div></div>
     </section>
 
   </section>

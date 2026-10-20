@@ -238,6 +238,7 @@ onAuthStateChanged(auth, function (user) {
   delete form.dataset.profileMemberId;
   form.querySelector('[data-profile-role-badges]')?.remove();
   if (!user) {
+    form.reset(); setProfileImage('', ''); emailOutput.textContent = ''; uidOutput.textContent = ''; setSaving('');
     hideAll();
     signedOut.hidden = false;
     return;
