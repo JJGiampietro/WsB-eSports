@@ -1,5 +1,3 @@
-// Retain the loaded dependency across asynchronous rendering and page teardown.
-const savedStatsSync = window.WsbSync;
 const menu=document.querySelector(".menu");const nav=document.querySelector("#navlinks");if(menu&&nav){menu.addEventListener("click",()=>nav.classList.toggle("open"));nav.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>{nav.classList.remove("open");nav.querySelectorAll(".nav-group[open]").forEach(group=>group.removeAttribute("open"));}));nav.querySelectorAll(".nav-group").forEach(group=>group.addEventListener("toggle",()=>{if(group.open)nav.querySelectorAll(".nav-group").forEach(other=>{if(other!==group)other.removeAttribute("open");});}));document.addEventListener("click",event=>{if(!nav.contains(event.target))nav.querySelectorAll(".nav-group[open]").forEach(group=>group.removeAttribute("open"));});}
 
 // Resolve public visibility before rendering roster-backed pages, including nested stats URLs.
@@ -285,6 +283,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 // The server refreshes this file regularly, so the page loads one saved file instead
 // of making a separate live API request for every member card.
 (function(){
+  const savedStatsSync = window.WsbSync;
   const cards=document.querySelectorAll("[data-fn-user]");
   const refreshNote=document.getElementById("membersRefreshNote");
   if(!cards.length)return;
@@ -388,6 +387,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Leaderboards page - reads saved hourly JSON snapshots written by GitHub Actions
 (function(){
+  const savedStatsSync = window.WsbSync;
   const pastDayGrid=document.getElementById("lbPastDayGrid");
   const pastWeekGrid=document.getElementById("lbPastWeekGrid");
   const lifetimeGrid=document.getElementById("lbLifetimeGrid");
@@ -559,6 +559,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Stats page - detailed member profile view
 (function(){
+  const savedStatsSync = window.WsbSync;
   const overview=document.getElementById("statsOverview");
   const highlights=document.getElementById("statsHighlights");
   const directory=document.getElementById("statsDirectory");
@@ -705,6 +706,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Player Stats detail pages
 (function(){
+  const savedStatsSync = window.WsbSync;
   const detail=document.getElementById("playerDetail");
   const memberId=document.body.dataset.memberId;
   const root=document.body.dataset.siteRoot||"";

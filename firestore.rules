@@ -108,9 +108,11 @@ service cloud.firestore {
     }
     match /accountRestrictions/{email} {
       // A blocked account can still read its own block so the browser can sign out.
-      allow get: if isAdmin() || (request.auth != null
+      // Check ownership first: the account's own access monitor must not depend
+      // on the admin grant or the very restriction document it is monitoring.
+      allow get: if (request.auth != null
         && request.auth.token.get('email_verified', false) == true
-        && request.auth.token.get('email', '').lower() == email);
+        && request.auth.token.get('email', '').lower() == email) || isAdmin();
       allow list: if isAdmin();
       allow create, update: if isAdmin()
         && email != request.auth.token.get('email', '').lower()

@@ -19,8 +19,10 @@ async function pageFor(role, route = 'admin.html') {
     import {initializeApp,getApps} from '${sdk}firebase-app.js';
     import {getAuth,connectAuthEmulator,signInWithEmailAndPassword,GoogleAuthProvider} from '${sdk}firebase-auth.js';
     import {getFirestore,connectFirestoreEmulator} from '${sdk}firebase-firestore.js';
+    import {getFirestore as getDirectFirestore,connectFirestoreEmulator as connectDirectEmulator} from '${sdk}firebase-firestore-lite.js';
     export const app=initializeApp({apiKey:'demo-key',projectId:'demo-wsb-bounties',authDomain:'localhost'});
     export const auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider(),localTest=true;
+    export const restrictionDb=getDirectFirestore(app);connectDirectEmulator(restrictionDb,'127.0.0.1',8185);
     connectAuthEmulator(auth,'http://127.0.0.1:9198',{disableWarnings:true});connectFirestoreEmulator(db,'127.0.0.1',8185);
     export const authReady=Promise.resolve();
     ${role ? `await signInWithEmailAndPassword(auth,${JSON.stringify(credentials[role].email)},${JSON.stringify(credentials[role].password)});` : ''}

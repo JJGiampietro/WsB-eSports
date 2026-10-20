@@ -51,7 +51,8 @@ module.exports=async({admin,pageFor,env,credentials,createUser})=>{
   await admin.locator('#adminMemberPicker').selectOption('bri');
   const owner=await pageFor('owner','member-account.html'); await owner.locator('#memberProfileForm').waitFor({state:'visible'});
   await admin.locator('#adminStatus').selectOption('inactive'); await admin.locator('#adminSave').click();
-  await admin.waitForFunction(()=>document.getElementById('adminSaveStatus').textContent.includes('inactive access'));
+  try { await admin.waitForFunction(()=>document.getElementById('adminSaveStatus').textContent.includes('inactive access')); }
+  catch(error) { console.error('Inactive save diagnostic:',await admin.evaluate(()=>({message:document.getElementById('adminSaveStatus').textContent,invalid:[...document.getElementById('adminMemberForm').elements].filter(input=>input.validity&&!input.validity.valid).map(input=>input.id)})));throw error; }
   await owner.locator('#accountAccessNotice').waitFor({state:'visible'});
   await owner.locator('#accountSignedOut').waitFor({state:'visible'});
   await admin.locator('#adminToggleAccountAccess').click();
@@ -64,8 +65,15 @@ module.exports=async({admin,pageFor,env,credentials,createUser})=>{
   const staff=await pageFor('invited','admin.html'); await staff.locator('#adminDashboard').waitFor({state:'visible'});
   await admin.locator('#adminToggleAccountAccess').click();
   await admin.waitForFunction(()=>document.getElementById('adminSaveStatus').textContent.includes('Access deactivated'));
-  await staff.locator('#adminDashboard').waitFor({state:'hidden'}); await staff.locator('#accountAccessNotice').waitFor({state:'visible'});
+  await staff.locator('#adminDashboard').waitFor({state:'hidden'});
+  try { await staff.locator('#accountAccessNotice').waitFor({state:'visible'}); }
+  catch (error) { console.error('Inactive admin diagnostic:',await staff.evaluate(async()=>{const{getAuth}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js');return {signedIn:Boolean(getAuth().currentUser),notice:document.getElementById('accountAccessNotice')?.outerHTML,stored:sessionStorage.getItem('wsb-access-inactive'),text:document.querySelector('main').innerText.slice(0,450)};}));throw error; }
+  await staff.waitForFunction(async()=>{const{getAuth}=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js');return getAuth().currentUser===null;});
   await env.withSecurityRulesDisabled(async ctx=>{assert.equal((await getDoc(doc(ctx.firestore(),'admins',credentials.invited.uid))).exists(),false);});
+  const blockedStaff=await pageFor('invited','admin.html');
+  await blockedStaff.locator('#accountAccessNotice').waitFor({state:'visible'});
+  await blockedStaff.locator('#adminSignedOut').waitFor({state:'visible'});
+  assert.equal(await blockedStaff.locator('#adminDashboard').isVisible(),false);
   await admin.locator('#adminToggleAccountAccess').click();
   await admin.waitForFunction(()=>document.getElementById('adminSaveStatus').textContent.includes('access restored'));
   const restoredStaff=await pageFor('invited','admin.html'); await restoredStaff.locator('#adminDashboard').waitFor({state:'visible'});
@@ -86,6 +94,6 @@ module.exports=async({admin,pageFor,env,credentials,createUser})=>{
   await admin.locator('[data-member-view="access"]').click();
   await admin.locator('#adminToggleAccountAccess').click();
   await admin.waitForFunction(()=>document.getElementById('adminSaveStatus').textContent.includes('access restored'));
-  for(const page of [member,board,stats,blocked,restored,owner,staff,restoredStaff,legacy]) await page.context().close();
+  for(const page of [member,board,stats,blocked,restored,owner,staff,blockedStaff,restoredStaff,legacy]) await page.context().close();
   console.log('PASS: admin-only deactivate/restore controls without Gmail input, status-dropdown enforcement, existing-session sign-out on account/bounty/stats pages, repeat-login denial, member/admin reactivation, legacy inactive migration, profile/history/visibility preserved.');
 };
