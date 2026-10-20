@@ -1,6 +1,7 @@
 /* Progressive enhancements shared by the static pages. No account writes. */
 (() => {
-  const savedStatsSync = window.WsbSync;
+  let savedStatsSync = window.WsbSync;
+  const syncReady = savedStatsSync ? Promise.resolve(savedStatsSync) : import(new URL('stats-sync.js', document.currentScript.src)).then(module => module.default);
   const root = document.body.dataset.siteRoot || '';
   const main = document.querySelector('main');
   if (main) {
@@ -162,6 +163,8 @@
     if(detail&&document.body.dataset.memberId&&detail.querySelector('.profile-panel-wide')&&lastSuccess){const panel=detail.querySelector('.profile-panel-wide');if(!panel.querySelector('.last-success')){const note=document.createElement('p');note.className='last-success';note.textContent=historyText(document.body.dataset.memberId);panel.append(note);}}
   }
   if(grid||document.getElementById('statsDirectory')||document.getElementById('playerDetail')) {
+    (async () => {
+    savedStatsSync = await syncReady;
     Promise.all([fetch(root+'data/roster.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]),fetch(root+'data/latest.json',{cache:'no-store'}).then(r=>r.ok?r.json():null)]).then(async([members,snapshot])=>{
       roster=Array.isArray(members)?members:[];latestSnapshot=snapshot;players=snapshot?.players||null;updateMembers();
       if(players&&roster.some(m=>!players[m.id])){await loadHistory();updateMembers();annotateStats();}
@@ -172,5 +175,6 @@
     function observe(){observer.observe(target,{childList:true,subtree:true,characterData:true});}observe();
     search?.addEventListener('input',updateMembers);filter?.addEventListener('change',updateMembers);
     document.addEventListener('wsb:visibility-applied',updateMembers);updateMembers();
+    })();
   }
 })();

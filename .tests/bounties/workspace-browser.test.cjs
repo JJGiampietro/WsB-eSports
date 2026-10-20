@@ -194,6 +194,7 @@ async function pageFor(role, route = 'admin.html') {
   const anonHome = await pageFor(null,'index.html'); assert.equal(await anonHome.locator('.site-inbox').isVisible(),false);
   await require('./membership-role-browser.cjs')({admin,pageFor,env,credentials});
   await require('./account-access-browser.cjs')({admin,pageFor,env,credentials,createUser});
+  await require('./stats-helper-browser.cjs')({pageFor});
   await admin.locator('[data-admin-view="backups"]').click(); await admin.locator('#backupPassphrase').fill('Private browser recovery passphrase!'); const download = admin.waitForEvent('download'); await admin.locator('#backupExport').click(); const file = await download; const location = await file.path();
   assert(!fs.readFileSync(location, 'utf8').includes(credentials.member.email));
   await admin.locator('#backupFile').setInputFiles(location); await admin.locator('#backupInspect').click(); await admin.waitForFunction(() => document.getElementById('backupSummary').textContent.startsWith('Verified'));
