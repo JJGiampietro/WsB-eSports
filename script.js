@@ -34,7 +34,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
   const gif=document.getElementById("bioGif");
   const tiktok=document.getElementById("bioTiktok");
   const cards=document.querySelectorAll(".player-card, .tier-node[data-bio]");
-  if(!modal||!cards.length)return;
+  if(!modal)return;
 
   function openBio(card){
     const isTier=card.classList.contains("tier-node");
@@ -62,10 +62,15 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
   cards.forEach(card=>{
     card.setAttribute("tabindex","0");
     card.setAttribute("role","button");
-    card.addEventListener("click",()=>openBio(card));
-    card.addEventListener("keydown",e=>{
-      if(e.key==="Enter"||e.key===" "){e.preventDefault();openBio(card);}
-    });
+  });
+  // Delegation also covers cards added or moved by live membership changes.
+  document.addEventListener('click',event=>{
+    const card=event.target.closest('.player-card, .tier-node[data-bio]');
+    if(card&&!card.classList.contains('profile-hidden'))openBio(card);
+  });
+  document.addEventListener('keydown',event=>{
+    const card=event.target.closest('.player-card, .tier-node[data-bio]');
+    if(card&&!card.classList.contains('profile-hidden')&&(event.key==='Enter'||event.key===' ')){event.preventDefault();openBio(card);}
   });
   modal.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",closeBio));
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBio();});
@@ -283,7 +288,8 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 // The server refreshes this file regularly, so the page loads one saved file instead
 // of making a separate live API request for every member card.
 (function(){
-  const savedStatsSync = window.WsbSync;
+  let savedStatsSync = window.WsbSync;
+  const syncReady = savedStatsSync ? Promise.resolve(savedStatsSync) : import(new URL('stats-sync.js', document.currentScript.src)).then(module => module.default);
   const cards=document.querySelectorAll("[data-fn-user]");
   const refreshNote=document.getElementById("membersRefreshNote");
   if(!cards.length)return;
@@ -298,6 +304,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     if(!member||!member.profileImage)return;
     const emblem=card.querySelector(".member-emblem");
     if(!emblem)return;
+    if(emblem.dataset.memberProfileImage==='true')return;
     emblem.style.backgroundImage='url("'+encodeURI(member.profileImage)+'")';
     emblem.textContent="";
   }
@@ -334,7 +341,8 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
   Promise.all([
     fetch("data/latest.json",{cache:"no-store"}).then(function(res){return res.ok?res.json():null;}),
     fetch("data/roster.json",{cache:"no-store"}).then(function(res){return res.ok?res.json():[];})
-  ]).then(function(results){
+  ]).then(async function(results){
+    savedStatsSync = await syncReady;
     const snapshot=results[0];
     const roster=Array.isArray(results[1])?results[1]:[];
     const rosterByUsername=new Map(roster.map(function(member){return [member.username,member];}));
@@ -387,7 +395,8 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Leaderboards page - reads saved hourly JSON snapshots written by GitHub Actions
 (function(){
-  const savedStatsSync = window.WsbSync;
+  let savedStatsSync = window.WsbSync;
+  const syncReady = savedStatsSync ? Promise.resolve(savedStatsSync) : import(new URL('stats-sync.js', document.currentScript.src)).then(module => module.default);
   const pastDayGrid=document.getElementById("lbPastDayGrid");
   const pastWeekGrid=document.getElementById("lbPastWeekGrid");
   const lifetimeGrid=document.getElementById("lbLifetimeGrid");
@@ -466,6 +475,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     fetch("data/history.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;}),
     fetch("data/roster.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():[];}).catch(function(){return [];})
   ]).then(async function(results){
+    savedStatsSync = await syncReady;
     const latest=results[0];
     const history=results[1];
     const roster=(await window.wsbVisibilityReady).filterRoster(results[2]);
@@ -559,7 +569,8 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Stats page - detailed member profile view
 (function(){
-  const savedStatsSync = window.WsbSync;
+  let savedStatsSync = window.WsbSync;
+  const syncReady = savedStatsSync ? Promise.resolve(savedStatsSync) : import(new URL('stats-sync.js', document.currentScript.src)).then(module => module.default);
   const overview=document.getElementById("statsOverview");
   const highlights=document.getElementById("statsHighlights");
   const directory=document.getElementById("statsDirectory");
@@ -595,6 +606,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
   ]).then(async function(results){
     const roster=(await window.wsbVisibilityReady).filterRoster(results[0]);
     const snapshot=results[1];
+    savedStatsSync = await syncReady;
     const players=snapshot&&snapshot.players?snapshot.players:{};
     const entries=roster.map(function(member){return {member:member,stats:players[member.id]||null};});
     const synced=entries.filter(function(entry){return entry.stats;});
@@ -706,7 +718,8 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 
 // Player Stats detail pages
 (function(){
-  const savedStatsSync = window.WsbSync;
+  let savedStatsSync = window.WsbSync;
+  const syncReady = savedStatsSync ? Promise.resolve(savedStatsSync) : import(new URL('stats-sync.js', document.currentScript.src)).then(module => module.default);
   const detail=document.getElementById("playerDetail");
   const memberId=document.body.dataset.memberId;
   const root=document.body.dataset.siteRoot||"";
@@ -804,6 +817,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     const roster=(await window.wsbVisibilityReady).filterRoster(results[0]);
     const latest=results[1];
     const history=results[2];
+    savedStatsSync = await syncReady;
     const member=roster.find(function(item){return item.id===memberId;});
     if(!member){detail.innerHTML='<section class="unavailable-profile"><p class="label">PLAYER PROFILE</p><h1>PROFILE UNAVAILABLE.</h1><p>This link may belong to a former member, or the roster could not be loaded. Find a current player in the member directory, or try again shortly.</p><a class="outline-btn" href="'+root+'members.html">BROWSE MEMBERS →</a><a class="outline-btn" href="'+root+'stats.html">ALL STATS →</a></section>';return;}
     const stats=latest&&latest.players?latest.players[member.id]:null;

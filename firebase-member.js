@@ -325,7 +325,10 @@ function addNewRosterCards(roster, profiles) {
     card.setAttribute("aria-label", "Open " + displayName + " detailed stats");
     const emblem = document.createElement("div");
     emblem.className = "member-emblem";
-    if (profileImage) emblem.style.backgroundImage = 'url("' + profileImage + '")';
+    if (profileImage) {
+      emblem.style.backgroundImage = 'url("' + profileImage + '")';
+      emblem.dataset.memberProfileImage = 'true';
+    }
     else if (member.profileImage) emblem.style.backgroundImage = 'url("' + member.profileImage + '")';
     else emblem.textContent = displayName.replace(/[^A-Za-z0-9]/g, "").slice(0, 1).toUpperCase() || "W";
     const info = document.createElement("div");
@@ -346,6 +349,9 @@ function addNewRosterCards(roster, profiles) {
 }
 
 async function applyPublicMemberProfiles() {
+  // Management owns its live profile/role rendering; do not reapply stale names,
+  // images or biographies from this module's one-time public profile snapshot.
+  if (document.querySelector('.management-groups')) return;
   const needsProfileData = document.querySelector(".member-card[data-fn-user], a.stats-player[href*='stats/'], #playerDetail, #profileDetail, .management-card, .player-card[data-roster-id]");
   if (!needsProfileData) return;
   try {
@@ -370,7 +376,11 @@ async function applyPublicMemberProfiles() {
       if (profile && name && profile.displayName) name.textContent = profile.displayName;
       const emblem = card.querySelector(".member-emblem");
       const profileImage = profile && safeProfileImage(profile.profileImage);
-      if (emblem && profileImage) emblem.style.backgroundImage = 'url("' + profileImage + '")';
+      if (emblem && profileImage) {
+        emblem.style.backgroundImage = 'url("' + profileImage + '")';
+        emblem.textContent = '';
+        emblem.dataset.memberProfileImage = 'true';
+      }
     });
     addNewRosterCards(roster, profiles);
     document.querySelectorAll("a.stats-player[href*='stats/']").forEach(function (card) {

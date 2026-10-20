@@ -2,6 +2,7 @@ import { auth, db, localTest } from './firebase-client.js';
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
 import { BACKUP_COLLECTIONS, encryptBackup, decryptBackup, encodeData, decodeData } from './backup-crypto.js';
 import { planAccountRestrictions } from './account-restrictions.js';
+import { writePublicMembership } from './membership-directory.js';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { collection, doc, getDocs, query, orderBy, limit, onSnapshot, writeBatch, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 const $ = id => document.getElementById(id), esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -157,6 +158,7 @@ $('backupRestore').addEventListener('click', async () => {
         const next = { ...data, updatedAt: serverTimestamp() };
         const writeRestrictions = await planAccountRestrictions(transaction, row.id, current.data(), next, auth.currentUser);
         transaction.set(ref, next, { merge: true }); writeRestrictions();
+        writePublicMembership(transaction, row.id, next.role);
         logActivity(db, transaction, auth.currentUser, 'backup-restored', 'memberAccess', row.id);
       });
     }

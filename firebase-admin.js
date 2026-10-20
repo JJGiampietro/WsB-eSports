@@ -3,6 +3,7 @@ import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
 import { setupAdminProfileRoles } from './admin-profile-roles.js';
 import { selectMemberView } from './admin-member-editor.js';
 import { planAccountRestrictions, enforceInactiveAccounts } from './account-restrictions.js';
+import { writePublicMembership, syncPublicMemberships } from './membership-directory.js';
 import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -216,6 +217,7 @@ async function loadRecords() {
   const profiles = new Map(profileSnapshot.docs.map((entry) => [entry.id, entry.data()]));
   const access = new Map(accessSnapshot.docs.map((entry) => [entry.id, entry.data()]));
   await enforceInactiveAccounts(access, auth.currentUser);
+  await syncPublicMemberships(access);
   records = new Map(roster.map((member) => {
     const profile = profiles.get(member.id) || {};
     const memberAccess = access.get(member.id) || {};
@@ -317,6 +319,7 @@ saveMembershipRole.addEventListener('click', async () => {
         role: nextRole, invitedEmail: '', ownerUid: null, claimedAt: null, status: 'invited', rosterStatus: 'active',
         createdAt: serverTimestamp(), updatedAt: serverTimestamp()
       });
+      writePublicMembership(transaction, record.id, nextRole);
       if (current?.ownerUid) {
         if (nextRole === 'admin' && current.status === 'active') transaction.set(doc(db, 'admins', current.ownerUid), { enabled: true, memberId: record.id });
         else if (current.role === 'admin') transaction.delete(doc(db, 'admins', current.ownerUid));
@@ -477,6 +480,7 @@ form.addEventListener("submit", async (event) => {
       throw new Error('The public profile changed while you were editing. Refresh and select the member again to avoid overwriting their changes.');
     const writeRestrictions = await planAccountRestrictions(batch, id, currentAccess.data(), access, auth.currentUser);
     batch.set(doc(db, 'memberAccess', id), access, { merge: true });
+    writePublicMembership(batch, id, access.role);
     writeRestrictions();
     batch.set(doc(db, "members", id), {
         displayName: name,

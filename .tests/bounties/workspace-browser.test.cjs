@@ -52,6 +52,7 @@ async function pageFor(role, route = 'admin.html') {
   assert.equal(await admin.locator('[data-admin-view]').count(), 9);
   await admin.locator('[data-admin-view="members"]').click(); await admin.locator('#adminMemberPicker').waitFor({ state: 'visible' });
   await admin.waitForFunction(() => !document.getElementById('adminMemberPicker').disabled);
+  await require('./management-directory-browser.cjs')({admin,pageFor,env});
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
   await require('./member-editor-browser.cjs')({admin,anon,owner});
   await require('./profile-roles-browser.cjs')({admin,anon,owner,pageFor,env});
@@ -72,6 +73,7 @@ async function pageFor(role, route = 'admin.html') {
   const member = await pageFor('member', 'member-account.html'); await member.locator('#memberProfileForm').waitFor({ state: 'visible' });
   assert.equal(await member.locator('#profileBio').inputValue(), 'Admin edited biography');
   await member.locator('#profileBio').fill('Member edited biography'); await member.locator('#profileSave').click(); await member.waitForFunction(() => document.getElementById('memberSaveStatus').textContent.includes('saved'));
+  await require('./member-avatar-browser.cjs')({pageFor,env});
   const detail = await pageFor('member', 'stats/barrelroll/'); await detail.locator('.profile-hero-bio').waitFor(); assert.match(await detail.locator('.profile-hero-bio').textContent(), /Member edited biography/);
   assert.equal(new URL(await detail.locator('.firebase-account-link').getAttribute('href'), detail.url()).pathname, '/member-account.html');
   // Hide/restore is separate from required-Gmail editing and preserves all saved data.
@@ -129,7 +131,16 @@ async function pageFor(role, route = 'admin.html') {
   await member.reload(); await member.locator('#memberProfileForm').waitFor({state:'visible'});
   await admin.locator('#adminToggleVisibility').click();
   await admin.waitForFunction(() => document.getElementById('adminVisibilityState').textContent.includes('Visible'));
-  await detail.locator('.profile-hero-bio').waitFor({state:'visible'});
+  try { await detail.locator('.profile-hero-bio').waitFor({state:'visible'}); }
+  catch(error) {
+    console.error('Restored profile diagnostic:',await detail.evaluate(async()=>{
+      const {db,restrictionDb}=await import('/firebase-client.js');
+      const full=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js');
+      const lite=await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-lite.js');
+      const [cached,direct]=await Promise.all([full.getDoc(full.doc(db,'members','barrelroll')),lite.getDoc(lite.doc(restrictionDb,'members','barrelroll'))]);
+      return {hidden:window.WsbVisibility?.isHidden('barrelroll'),hero:!!document.querySelector('.profile-hero-card'),html:document.getElementById('playerDetail')?.innerHTML.slice(0,300),cachedExists:cached.exists(),cachedBio:cached.data()?.bio,directExists:direct.exists(),directBio:direct.data()?.bio};
+    }));throw error;
+  }
   await publicMembers.waitForFunction(() => document.querySelector('.member-card[data-public-member-id="barrelroll"]')?.getBoundingClientRect().height > 0);
   await management.waitForFunction(() => document.querySelector('.management-card[data-public-member-id="barrelroll"]')?.getBoundingClientRect().height > 0);
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
@@ -183,6 +194,7 @@ async function pageFor(role, route = 'admin.html') {
   const anonHome = await pageFor(null,'index.html'); assert.equal(await anonHome.locator('.site-inbox').isVisible(),false);
   await require('./membership-role-browser.cjs')({admin,pageFor,env,credentials});
   await require('./account-access-browser.cjs')({admin,pageFor,env,credentials,createUser});
+  await require('./stats-helper-browser.cjs')({pageFor});
   await admin.locator('[data-admin-view="backups"]').click(); await admin.locator('#backupPassphrase').fill('Private browser recovery passphrase!'); const download = admin.waitForEvent('download'); await admin.locator('#backupExport').click(); const file = await download; const location = await file.path();
   assert(!fs.readFileSync(location, 'utf8').includes(credentials.member.email));
   await admin.locator('#backupFile').setInputFiles(location); await admin.locator('#backupInspect').click(); await admin.waitForFunction(() => document.getElementById('backupSummary').textContent.startsWith('Verified'));

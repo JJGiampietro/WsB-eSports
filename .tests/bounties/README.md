@@ -19,6 +19,14 @@ Admins can upload PNG, JPEG, or WebP artwork up to 5 MB. The shared profile-icon
 
 Deploy the updated `firestore.rules` before publishing the image-upload UI. The page is linked under Community → Bounties and is also available at `/bounties.html`. No sample bounties are seeded in production.
 
+## Live Management directory
+
+Membership saves also atomically publish `memberMemberships/{memberId}` containing only `role` and `updatedAt`. Public clients cannot read account/invitation records or write membership metadata. The rules require public roles to match the private membership in the same committed transaction. These public labels never grant privileges.
+
+The Management page places Owner and Management memberships in the corresponding sections, moves/removes cards on role changes, honors hidden profiles, and uses stable member IDs for names, images and biographies. Existing assignments are backfilled idempotently when an admin loads Members; legacy static entries remain until an explicit membership record is available. Existing support cards stay in Team Support unless promoted to Owner/Management. An unclaimed invitation does not prevent a public card from appearing. No Gmail or hourly stats sync is needed for a role-only change. Backups include public membership metadata; restoration rebuilds it from restored private roles rather than importing it independently.
+
+Verify `membership-directory.test.cjs` (via operations) and `management-directory-browser.cjs` (via workspace browser suite). Deploy the new rules before publishing the UI, then load Admin → Members to backfill existing membership records, including assignments saved before this release.
+
 ## Inactive website access
 
 The local member editor uses three keyboard-accessible views: Profile, Roles & badges, and Access & visibility. Profile edits have a side-by-side live preview on desktop. Switching views keeps the draft; native validation reveals the view containing the first invalid field. Membership is form-associated with the main member form even though it is presented alongside badges, so full saves and unsaved-change protection still include it. Role and badge buttons continue to save independently. `member-editor-browser.cjs` covers layout, keyboard navigation, hidden-field validation and draft preservation.
