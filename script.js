@@ -34,7 +34,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
   const gif=document.getElementById("bioGif");
   const tiktok=document.getElementById("bioTiktok");
   const cards=document.querySelectorAll(".player-card, .tier-node[data-bio]");
-  if(!modal||!cards.length)return;
+  if(!modal)return;
 
   function openBio(card){
     const isTier=card.classList.contains("tier-node");
@@ -62,10 +62,15 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
   cards.forEach(card=>{
     card.setAttribute("tabindex","0");
     card.setAttribute("role","button");
-    card.addEventListener("click",()=>openBio(card));
-    card.addEventListener("keydown",e=>{
-      if(e.key==="Enter"||e.key===" "){e.preventDefault();openBio(card);}
-    });
+  });
+  // Delegation also covers cards added or moved by live membership changes.
+  document.addEventListener('click',event=>{
+    const card=event.target.closest('.player-card, .tier-node[data-bio]');
+    if(card&&!card.classList.contains('profile-hidden'))openBio(card);
+  });
+  document.addEventListener('keydown',event=>{
+    const card=event.target.closest('.player-card, .tier-node[data-bio]');
+    if(card&&!card.classList.contains('profile-hidden')&&(event.key==='Enter'||event.key===' ')){event.preventDefault();openBio(card);}
   });
   modal.querySelectorAll("[data-close]").forEach(el=>el.addEventListener("click",closeBio));
   document.addEventListener("keydown",e=>{if(e.key==="Escape")closeBio();});
@@ -298,6 +303,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     if(!member||!member.profileImage)return;
     const emblem=card.querySelector(".member-emblem");
     if(!emblem)return;
+    if(emblem.dataset.memberProfileImage==='true')return;
     emblem.style.backgroundImage='url("'+encodeURI(member.profileImage)+'")';
     emblem.textContent="";
   }

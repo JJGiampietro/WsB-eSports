@@ -52,6 +52,7 @@ async function pageFor(role, route = 'admin.html') {
   assert.equal(await admin.locator('[data-admin-view]').count(), 9);
   await admin.locator('[data-admin-view="members"]').click(); await admin.locator('#adminMemberPicker').waitFor({ state: 'visible' });
   await admin.waitForFunction(() => !document.getElementById('adminMemberPicker').disabled);
+  await require('./management-directory-browser.cjs')({admin,pageFor,env});
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
   await require('./member-editor-browser.cjs')({admin,anon,owner});
   await require('./profile-roles-browser.cjs')({admin,anon,owner,pageFor,env});
@@ -72,6 +73,7 @@ async function pageFor(role, route = 'admin.html') {
   const member = await pageFor('member', 'member-account.html'); await member.locator('#memberProfileForm').waitFor({ state: 'visible' });
   assert.equal(await member.locator('#profileBio').inputValue(), 'Admin edited biography');
   await member.locator('#profileBio').fill('Member edited biography'); await member.locator('#profileSave').click(); await member.waitForFunction(() => document.getElementById('memberSaveStatus').textContent.includes('saved'));
+  await require('./member-avatar-browser.cjs')({pageFor,env});
   const detail = await pageFor('member', 'stats/barrelroll/'); await detail.locator('.profile-hero-bio').waitFor(); assert.match(await detail.locator('.profile-hero-bio').textContent(), /Member edited biography/);
   assert.equal(new URL(await detail.locator('.firebase-account-link').getAttribute('href'), detail.url()).pathname, '/member-account.html');
   // Hide/restore is separate from required-Gmail editing and preserves all saved data.
