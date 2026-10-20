@@ -452,3 +452,5 @@ document.addEventListener("wsb:directory-render", applyPublicMemberProfiles);
 document.addEventListener('wsb:profile-render', applyPublicMemberProfiles);
 
 export { auth, db, provider };
+// Initialize the access guard before member/admin pages can show signed-in controls.
+import './account-access.js';
