@@ -1,5 +1,6 @@
 // Public presentation only: hiding never deletes stats or changes account access.
 import { db } from './firebase-client.js';
+import './display-only-members.js';
 import { collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 
 export const managementMemberIds = new Map([
@@ -15,7 +16,7 @@ let resolveReady;
 export const visibility = {
   ready: new Promise(resolve => { resolveReady = resolve; }),
   isHidden: id => !available || hiddenIds.has(id),
-  filterRoster: entries => available ? (Array.isArray(entries) ? entries : []).filter(member => !hiddenIds.has(member.id)) : [],
+  filterRoster: entries => available ? (Array.isArray(entries) ? entries : []).filter(member => !hiddenIds.has(member.id) && !globalThis.WsbDisplayOnly.isDisplayOnlyMember(member.id)) : [],
   apply
 };
 window.WsbVisibility = visibility;

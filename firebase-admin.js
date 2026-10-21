@@ -1,10 +1,11 @@
-import { auth, db, provider } from "./firebase-member.js?v=membership-permissions-20261020";
+import { auth, db, provider } from "./firebase-member.js?v=ingraham-visual-only-20261020";
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js?v=membership-permissions-20261020';
 import { setupAdminProfileRoles } from './admin-profile-roles.js?v=membership-permissions-20261020';
 import { selectMemberView } from './admin-member-editor.js';
 import { planAccountRestrictions, enforceInactiveAccounts } from './account-restrictions.js';
 import { writePublicMembership, syncPublicMemberships, migrateLegacyMemberships } from './membership-directory.js?v=membership-permissions-20261020';
 import { membershipLabels, membershipRoles, membershipRole, hasWebsiteAdmin } from './membership-model.js';
+import './display-only-members.js';
 import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -222,11 +223,11 @@ async function loadRecords() {
     getDocs(collection(db, 'memberVisibility'))
   ]);
   const profiles = new Map(profileSnapshot.docs.map((entry) => [entry.id, entry.data()]));
-  const access = new Map(accessSnapshot.docs.map((entry) => [entry.id, entry.data()]));
+  const access = new Map(accessSnapshot.docs.filter(entry => !globalThis.WsbDisplayOnly.isDisplayOnlyMember(entry.id)).map((entry) => [entry.id, entry.data()]));
   if (await migrateLegacyMemberships(access, auth.currentUser)) return loadRecords();
   await enforceInactiveAccounts(access, auth.currentUser);
   await syncPublicMemberships(access);
-  records = new Map(roster.map((member) => {
+  records = new Map(roster.filter(member => !globalThis.WsbDisplayOnly.isDisplayOnlyMember(member.id)).map((member) => {
     const profile = profiles.get(member.id) || {};
     const memberAccess = access.get(member.id) || {};
     return [member.id, {

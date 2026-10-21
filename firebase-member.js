@@ -4,6 +4,7 @@ import { visibility, managementMemberIds } from './member-visibility.js';
 import './profile-roles.js';
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js?v=membership-permissions-20261020';
 import { hasWebsiteAdmin } from './membership-model.js';
+import './display-only-members.js';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
@@ -88,6 +89,7 @@ async function loadLinkedProfile(user, version = accountEpoch) {
       const inviteSnapshot = await getDocs(inviteQuery);
       if (inviteSnapshot.size === 1) {
         const inviteRef = inviteSnapshot.docs[0].ref;
+        if (globalThis.WsbDisplayOnly.isDisplayOnlyMember(inviteRef.id)) throw new Error('This visual Easter egg does not support account access.');
         const invitation = inviteSnapshot.docs[0].data();
         if (invitation.status !== 'invited' || invitation.ownerUid) throw new Error('This invitation is not available. Please contact a WsB admin.');
         const batch = writeBatch(db);
@@ -113,6 +115,7 @@ async function loadLinkedProfile(user, version = accountEpoch) {
       return;
     }
     if (accessSnapshot.size !== 1) throw new Error("More than one member profile is linked to this account. Please contact a WsB admin.");
+    if (globalThis.WsbDisplayOnly.isDisplayOnlyMember(accessSnapshot.docs[0].id)) throw new Error('This visual Easter egg does not support account access.');
 
     if (version !== accountEpoch) return;
     if (accessSnapshot.docs[0].data().status !== 'active') throw new Error('Your member editing access is inactive. Please contact a WsB admin.');

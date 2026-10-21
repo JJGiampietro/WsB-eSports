@@ -1,5 +1,6 @@
 // Mechanical HTML generation: one navigation source, one player shell.
 const fs = require('node:fs'), path = require('node:path');
+const { isDisplayOnlyMember } = require('../display-only-members.js');
 const root = path.resolve(__dirname, '..'), templates = path.join(root, 'templates');
 const capture = process.argv.includes('--capture'), check = process.argv.includes('--check');
 if (capture) {
@@ -14,14 +15,14 @@ const navigation = fs.readFileSync(path.join(templates, 'navigation.html'), 'utf
 function decorate(html, prefix) {
   html = html.replace(/<header class="nav">[\s\S]*?<\/header>/, navigation.replaceAll('{{root}}', prefix));
   html = html.replace(/polish\.css\?v=[^"']+/g, 'polish.css?v=member-sync-20260930-1');
-  html = html.replace(/(firebase-member|firebase-admin|bounties|admin-workspace|admin-content|site-enhancements)\.js(?:\?v=[^"']+)?(?=["'])/g, '$1.js?v=membership-permissions-20261020');
-  html = html.replace(/management-directory\.js(?:\?v=[^"']+)?(?=["'])/g, 'management-directory.js?v=section-numbering-20261020');
+  html = html.replace(/(firebase-member|firebase-admin|bounties|admin-workspace|admin-content|site-enhancements)\.js(?:\?v=[^"']+)?(?=["'])/g, '$1.js?v=ingraham-visual-only-20261020');
+  html = html.replace(/management-directory\.js(?:\?v=[^"']+)?(?=["'])/g, 'management-directory.js?v=ingraham-visual-only-20261020');
   if (!html.includes('workspace.css')) html = html.replace('</head>', '<link rel="stylesheet" href="' + prefix + 'workspace.css?v=1">\n</head>');
   if (!html.includes('sync-status.js')) html = html.replace(/<script src="([^"]*?)script\.js/, '<script src="' + prefix + 'sync-status.js?v=1"></script>\n<script src="$1script.js');
-  if (!html.includes('site-enhancements.js')) html = html.replace('</body>', '<script type="module" src="' + prefix + 'site-enhancements.js?v=membership-permissions-20261020"></script>\n</body>');
+  if (!html.includes('site-enhancements.js')) html = html.replace('</body>', '<script type="module" src="' + prefix + 'site-enhancements.js?v=ingraham-visual-only-20261020"></script>\n</body>');
   return html;
 }
-const roster = JSON.parse(fs.readFileSync(path.join(root, 'data/roster.json'), 'utf8'));
+const roster = JSON.parse(fs.readFileSync(path.join(root, 'data/roster.json'), 'utf8')).filter(member => !isDisplayOnlyMember(member.id));
 const playerTemplate = decorate(fs.readFileSync(path.join(templates, 'player.html'), 'utf8'), '../../');
 write(path.join(templates, 'player.html'), playerTemplate);
 for (const member of roster) {

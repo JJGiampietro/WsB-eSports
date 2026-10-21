@@ -4,6 +4,7 @@ import { BACKUP_COLLECTIONS, encryptBackup, decryptBackup, encodeData, decodeDat
 import { planAccountRestrictions } from './account-restrictions.js';
 import { writePublicMembership } from './membership-directory.js?v=membership-permissions-20261020';
 import { hasWebsiteAdmin } from './membership-model.js';
+import './display-only-members.js';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { collection, doc, getDocs, query, orderBy, limit, onSnapshot, writeBatch, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 const $ = id => document.getElementById(id), esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -30,8 +31,8 @@ const array = name => state[name] || [];
 function render() {
   if (!allowed) return;
   const drafts = new Map([...document.querySelectorAll('#adminRewards input, #adminDisputes textarea')].map(input => [input.id, input.value]));
-  const access = array('memberAccess'), claims = array('bountyClaims'), bountyIds = new Set(array('bounties').filter(b => b.status !== 'archived').map(b => b.id));
-  const rows = [...roster, ...access.filter(a => !roster.some(r => r.id === a.id)).map(a => ({ id: a.id, displayName: a.displayName }))];
+  const access = array('memberAccess').filter(a => !globalThis.WsbDisplayOnly.isDisplayOnlyMember(a.id)), claims = array('bountyClaims'), bountyIds = new Set(array('bounties').filter(b => b.status !== 'archived').map(b => b.id));
+  const rows = [...roster, ...access.filter(a => !roster.some(r => r.id === a.id)).map(a => ({ id: a.id, displayName: a.displayName }))].filter(row => !globalThis.WsbDisplayOnly.isDisplayOnlyMember(row.id));
   const issues = rows.filter(r => window.WsbSync.status(latest, r.id).state !== 'synced');
   const metrics = [['Pending invites', access.filter(a => !a.ownerUid && a.invitedEmail && a.status === 'invited').length, 'members'], ['Stats need attention', issues.length, 'overview'], ['Claims to review', claims.filter(c => c.status === 'pending' && bountyIds.has(c.bountyId)).length, 'bounties'], ['Rewards to deliver', claims.filter(c => c.status === 'approved' && !array('bountyRewards').some(r => r.id === c.id && r.status === 'delivered')).length, 'rewards']];
   $('adminOverview').innerHTML = metrics.map(([label, count, view]) => '<button class="admin-metric" data-open-view="' + view + '"><strong>' + count + '</strong><span>' + label + '</span></button>').join('');
@@ -152,6 +153,7 @@ $('backupRestore').addEventListener('click', async () => {
     // Restore account status together with its login restriction. Never import
     // arbitrary restriction markers or overwrite the administrator restoring.
     for (const row of inspected.collections.memberAccess || []) {
+      if (globalThis.WsbDisplayOnly.isDisplayOnlyMember(row.id)) continue;
       const data = decodeData(row.data, Timestamp);
       if (hasWebsiteAdmin(data) || data.ownerUid === auth.currentUser.uid) continue;
       await runTransaction(db, async transaction => {

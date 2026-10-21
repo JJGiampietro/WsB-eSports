@@ -22,13 +22,13 @@ module.exports=async({admin,pageFor,env})=>{
   assert.equal(await page.locator('.management-group-creators').isVisible(),false);
   await assertNumbering(['OWNERS','TEAM SUPPORT']);
   const hiddenLoad=page.waitForEvent('load');
-  await env.withSecurityRulesDisabled(async ctx=>{const db=ctx.firestore(),batch=writeBatch(db);for(const id of ['barrelroll','legacy-admin'])batch.set(doc(db,'memberVisibility',id),{hidden:true,updatedAt:Timestamp.now()});await batch.commit();});
+  await env.withSecurityRulesDisabled(async ctx=>{const db=ctx.firestore(),batch=writeBatch(db);for(const id of ['barrelroll','legacy-admin','ingraham'])batch.set(doc(db,'memberVisibility',id),{hidden:true,updatedAt:Timestamp.now()});await batch.commit();});
   await hiddenLoad;
   await page.locator('.management-group-support').waitFor({state:'hidden'});
   assert.equal(await page.locator('.management-community-card').isVisible(),false,'Community link cannot keep an empty Support section visible');
   await assertNumbering(['OWNERS']);
   const restoredLoad=page.waitForEvent('load');
-  await env.withSecurityRulesDisabled(async ctx=>{const db=ctx.firestore(),batch=writeBatch(db);for(const id of ['barrelroll','legacy-admin'])batch.delete(doc(db,'memberVisibility',id));await batch.commit();});
+  await env.withSecurityRulesDisabled(async ctx=>{const db=ctx.firestore(),batch=writeBatch(db);for(const id of ['barrelroll','legacy-admin','ingraham'])batch.delete(doc(db,'memberVisibility',id));await batch.commit();});
   await restoredLoad;
   await page.locator('.management-grid-owners [data-public-member-id="bri"]').waitFor({state:'visible'});
   await page.locator('.management-group-support').waitFor({state:'visible'});
@@ -114,11 +114,11 @@ module.exports=async({admin,pageFor,env})=>{
   await admin.locator('[data-member-view="access"]').click();await admin.locator('#adminSave').click();
   await page.locator('.management-grid-owners [data-public-member-id="'+pendingId+'"]').waitFor({state:'visible'});
   await admin.locator('[data-member-view="roles"]').click();await selectRole('member');await page.locator('[data-public-member-id="'+pendingId+'"]').waitFor({state:'detached'});
-  // A non-playing team member can retain their original card with no account.
+  // Ingraham stays visual-only even if old account/role metadata is restored.
   await env.withSecurityRulesDisabled(async ctx=>{
     const db=ctx.firestore(),batch=writeBatch(db),now=Timestamp.now();
-    batch.set(doc(db,'memberAccess','ingraham'),{memberId:'ingraham',displayName:'ᵂˢᴮIngraham',fortniteUsername:'',invitedEmail:'',ownerUid:null,claimedAt:null,role:'developer',websiteAdmin:false,status:'invited',rosterStatus:'active',updatedAt:now});
-    batch.set(doc(db,'memberMemberships','ingraham'),{role:'developer',updatedAt:now});
+    batch.set(doc(db,'memberAccess','ingraham'),{memberId:'ingraham',displayName:'ᵂˢᴮIngraham',fortniteUsername:'NeverFetch',invitedEmail:'visual@wsb-test.invalid',ownerUid:null,claimedAt:null,role:'owner',websiteAdmin:false,status:'invited',rosterStatus:'pending',updatedAt:now});
+    batch.set(doc(db,'memberMemberships','ingraham'),{role:'owner',updatedAt:now});
     await batch.commit();
   });
   const developer=page.locator('.management-grid-support [data-public-member-id="ingraham"]');
@@ -133,5 +133,17 @@ module.exports=async({admin,pageFor,env})=>{
   await page.context().close();
   await admin.reload();await admin.locator('#adminDashboard').waitFor({state:'visible'});
   await admin.locator('[data-admin-view="members"]').click();await admin.waitForFunction(()=>!document.getElementById('adminMemberPicker').disabled);
+  assert.equal(await admin.locator('#adminMemberPicker option[value="ingraham"]').count(),0,'Visual-only Ingraham must not be an editable account');
+  await admin.locator('[data-admin-view="overview"]').click();
+  await admin.locator('#adminSyncFilter').selectOption('all');await admin.locator('#adminSyncSearch').fill('ingraham');
+  assert.equal(await admin.locator('#adminSyncList [data-edit-member="ingraham"]').count(),0,'No misleading sync warning');
+  const membersPage=await pageFor(null,'members.html');
+  const egg=membersPage.locator('#ingrahamAvatarBtn');await egg.waitFor({state:'visible'});
+  assert.equal(await egg.evaluate(button=>button.closest('.member-card').hasAttribute('data-fn-user')),false);
+  assert.equal(await membersPage.locator('#ingrahamAvatarBtn').count(),1);
+  assert.equal(await membersPage.locator('#mcPeek').count(),1);
+  await membersPage.context().close();
+  await admin.locator('#adminSyncSearch').fill('');await admin.locator('#adminSyncFilter').selectOption('issues');
+  await admin.locator('[data-admin-view="members"]').click();
   console.log('PASS: membership-only Owner/Management/Creator/HR/Developer sections, correct order, empty Creators hidden, no duplicates, no-Gmail promotion, pre-sync create/edit, live profile/modal data, hidden-profile protection and six responsive widths.');
 };

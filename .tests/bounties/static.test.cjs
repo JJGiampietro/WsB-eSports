@@ -1,5 +1,9 @@
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict'), vm = require('node:vm');
 const root = path.resolve(__dirname, '../..');
+const visualOnly=require('../../display-only-members.js');
+assert.equal(visualOnly.isDisplayOnlyMember('ingraham'),true);
+assert.equal(visualOnly.membershipFor('ingraham'),'developer');
+for(const member of ['barrelroll','bri','test-admin','developer','ingraham-other']) assert.equal(visualOnly.isDisplayOnlyMember(member),false);
 function walk(directory) { return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
   if (entry.name.startsWith('.') || ['node_modules', 'templates', 'scripts'].includes(entry.name)) return [];
   const file = path.join(directory, entry.name); return entry.isDirectory() ? walk(file) : entry.name.endsWith('.html') ? [file] : [];

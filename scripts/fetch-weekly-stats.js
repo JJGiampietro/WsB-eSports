@@ -12,6 +12,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { preserveResult, recoverPrevious } = require('./stats-resilience.cjs');
+const { isDisplayOnlyMember } = require('../display-only-members.js');
 
 const DATA_DIR = path.join(__dirname, "..", "data");
 const ROSTER_PATH = path.join(DATA_DIR, "roster.json");
@@ -111,7 +112,7 @@ async function loadPendingRosterMembers() {
       username: firestoreString(fields, "fortniteUsername"),
       rosterStatus: firestoreString(fields, "rosterStatus")
     };
-  }).filter((member) => member.rosterStatus === "pending" && /^[a-z0-9-]+$/.test(member.id) && member.displayName && member.username);
+  }).filter((member) => !isDisplayOnlyMember(member.id) && member.rosterStatus === "pending" && /^[a-z0-9-]+$/.test(member.id) && member.displayName && member.username);
   async function markSynced(id) {
     const documentPath = "https://firestore.googleapis.com/v1/projects/" + encodeURIComponent(serviceAccount.project_id) + "/databases/(default)/documents/memberAccess/" + encodeURIComponent(id) + "?updateMask.fieldPaths=rosterStatus&updateMask.fieldPaths=rosterSyncedAt";
     const saved = await fetch(documentPath, {
@@ -129,6 +130,7 @@ async function loadPendingRosterMembers() {
 }
 
 function createStatsProfilePage(memberId) {
+  if (isDisplayOnlyMember(memberId)) return;
   const profileDir = path.join(STATS_DIR, memberId);
   const profilePath = path.join(profileDir, "index.html");
   if (fs.existsSync(profilePath)) return;
@@ -152,6 +154,7 @@ function accountDetails(json) {
 }
 
 async function fetchPlayerStats(player) {
+  if (isDisplayOnlyMember(player.id)) throw new Error('Display-only Easter eggs must never request Fortnite stats.');
   const usesAccountId = Boolean(player.accountId);
   const url = usesAccountId
     ? "https://fortnite-api.com/v2/stats/br/v2/" + encodeURIComponent(player.accountId)
@@ -183,7 +186,8 @@ async function fetchPlayerStats(player) {
 }
 
 async function main() {
-  const roster = JSON.parse(fs.readFileSync(ROSTER_PATH, "utf8"));
+  const savedRoster = JSON.parse(fs.readFileSync(ROSTER_PATH, "utf8"));
+  const roster = savedRoster.filter(player => !isDisplayOnlyMember(player.id));
   const queue = await loadPendingRosterMembers();
   const pendingRosterIds = new Set(queue.pending.map((member) => member.id));
   const newRosterIds = new Set();
@@ -205,7 +209,7 @@ async function main() {
     fs.existsSync(HISTORY_PATH) ? JSON.parse(fs.readFileSync(HISTORY_PATH, 'utf8')) : null);
   const results = {}, sync = {};
   const timestamp = new Date().toISOString();
-  let rosterChanged = newRosterIds.size > 0;
+  let rosterChanged = newRosterIds.size > 0 || roster.length !== savedRoster.length;
   for (const player of roster) {
     const lookup = player.accountId ? "saved account ID" : 'name "' + player.username + '"';
     console.log(`Fetching ${player.displayName} by ${lookup}...`);

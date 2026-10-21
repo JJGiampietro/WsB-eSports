@@ -17,13 +17,13 @@ service cloud.firestore {
     function isAdmin() {
       let grant = signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ? get(/databases/$(database)/documents/admins/$(request.auth.uid)).data : null;
       return signedIn() && grant != null && grant.get('enabled', true) == true
-        && (!('memberId' in grant) || (get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.ownerUid == request.auth.uid
+        && (!('memberId' in grant) || (grant.memberId != 'ingraham' && get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.ownerUid == request.auth.uid
           && websiteAdmin(get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data)
           && get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.status == 'active'));
     }
 
     function ownsMember(memberId) {
-      return signedIn()
+      return signedIn() && memberId != 'ingraham'
         && get(/databases/$(database)/documents/memberAccess/$(memberId)).data.ownerUid == request.auth.uid
         && get(/databases/$(database)/documents/memberAccess/$(memberId)).data.status == 'active';
     }
@@ -150,10 +150,10 @@ service cloud.firestore {
         resource.data.ownerUid == request.auth.uid || (request.auth.token.get('email_verified', false) == true
           && resource.data.invitedEmail == request.auth.token.email)
       ));
-      allow create: if isAdmin() && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'hr', 'developer']
+      allow create: if memberId != 'ingraham' && isAdmin() && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'hr', 'developer']
         && validAdminAccess(memberId, request.resource.data);
       allow delete: if isAdmin() && resource.data.ownerUid != request.auth.uid;
-      allow update: if (isAdmin()
+      allow update: if memberId != 'ingraham' && ((isAdmin()
           && (request.resource.data.role in ['member', 'creator', 'management', 'owner', 'hr', 'developer']
             || (resource.data.role == 'admin' && request.resource.data.role == 'admin'))
           && validAdminAccess(memberId, request.resource.data)
@@ -166,7 +166,7 @@ service cloud.firestore {
         && resource.data.invitedEmail == request.auth.token.email
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.status == "active" && request.resource.data.claimedAt == request.time
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerUid', 'status', 'claimedAt']));
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ownerUid', 'status', 'claimedAt'])));
     }
 
     function validBounty(data) {
@@ -216,7 +216,7 @@ service cloud.firestore {
     }
 
     function activeBountyMember(data) {
-      return signedIn() && ((isAdmin() && data.memberId == '')
+      return signedIn() && data.memberId != 'ingraham' && ((isAdmin() && data.memberId == '')
         || (data.memberId != ''
           && get(/databases/$(database)/documents/memberAccess/$(data.memberId)).data.ownerUid == request.auth.uid
           && get(/databases/$(database)/documents/memberAccess/$(data.memberId)).data.status == 'active'));
@@ -286,6 +286,7 @@ service cloud.firestore {
       allow create, update: if (isAdmin() || (signedIn() && userId == request.auth.uid))
         && request.resource.data.keys().hasOnly(['memberId', 'enabled'])
         && request.resource.data.enabled == true && request.resource.data.memberId is string
+        && request.resource.data.memberId != 'ingraham'
         && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.ownerUid == userId
         && websiteAdmin(getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data)
         && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.status == 'active';

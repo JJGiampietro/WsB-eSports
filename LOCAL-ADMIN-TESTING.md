@@ -73,6 +73,15 @@ The automated tests use separate demo ports 8185/9198; they cannot reset the int
 
 ## Production release procedure
 
+Ingraham alone is a visual-only Minecraft Easter egg. `display-only-members.js`
+keeps his Members card and fixed Developer card under Team Support, without any
+`memberAccess` or `memberMemberships` record. He is excluded from the admin editor,
+sync health, invitation claims, stats queue, stats-page generation and API calls.
+Normal Developer memberships still work as before. Preserve his pre-existing
+public bio and image. The old unlinked account metadata was removed locally;
+apply the same narrowly scoped cleanup to production only with publish approval,
+after the new rules and code are deployed. Never run local fixture seeding on prod.
+
 - Back up production data privately, review grants and test a representative Admin/member flow in a separate environment.
 - Deploy and verify the updated Firestore rules **before** the new browser UI. The hosting service account has Hosting permissions only; this branch does not add IAM privileges or deploy rules automatically.
 - Merge only after local review. Stats jobs then generate new profiles/sitemap from shared templates and retain stale data automatically. Local fixtures are never copied to production. Existing events and announcements are imported safely when an administrator first saves that content type.

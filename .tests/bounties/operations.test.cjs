@@ -157,6 +157,8 @@ assert.equal(status({}, 'member').state, 'waiting');
     await assertSucceeds(updateDoc(doc(root, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Reviewed by the team.', updatedAt: serverTimestamp() }));
     await require('./account-access.test.cjs')(env);
     await require('./membership-directory.test.cjs')(env);
+    await require('./display-only.test.cjs')(env);
+    await require('./display-only-stats.test.cjs')();
     console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant restore, Admin-only role/visibility mutations, independent membership/admin permission, stale-grant denial, immutable audit, private notifications and reward separation.');
   } finally { await env.cleanup(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });
