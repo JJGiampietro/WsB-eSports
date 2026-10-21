@@ -1,4 +1,4 @@
-import { auth, db, provider } from './firebase-member.js?v=membership-permissions-20261020';
+import { auth, db, provider } from './firebase-member.js?v=ingraham-visual-only-20261020';
 import { safeProfileImage, makeProfileIcon } from './profile-image.js?v=1';
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js?v=membership-permissions-20261020';
 import { onAuthStateChanged, signInWithPopup } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';

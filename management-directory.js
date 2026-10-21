@@ -2,6 +2,7 @@ import { db } from './firebase-client.js';
 import { visibility, managementMemberIds } from './member-visibility.js';
 import { safeProfileImage } from './profile-image.js?v=1';
 import { membershipLabels } from './membership-model.js';
+import './display-only-members.js';
 import { collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 
 const grids = {
@@ -40,9 +41,9 @@ function render() {
   const ids = new Set([...originals.keys(), ...memberships.keys()]);
   const groups = { owner: [], management: [], creator: [], support: [] };
   for (const id of ids) {
-    const original = originals.get(id), membership = memberships.get(id), profile = profiles.get(id) || {}, member = roster.get(id);
-    // Only an assigned membership puts somebody in a team section. Original HTML
-    // supplies photos/bios, never overrides their membership or permissions.
+    const original = originals.get(id), membership = globalThis.WsbDisplayOnly.membershipFor(id) || memberships.get(id), profile = profiles.get(id) || {}, member = roster.get(id);
+    // Normal members require an assignment. Ingraham alone is a visual Easter
+    // egg with a fixed Developer label and no account/membership record needed.
     const group = ['owner', 'management', 'creator'].includes(membership) ? membership : ['hr', 'developer'].includes(membership) ? 'support' : null;
     if (!group || visibility.isHidden(id)) { cards.get(id)?.remove(); continue; }
     if (!original && !member && !profile.displayName) continue;
