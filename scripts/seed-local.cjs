@@ -28,9 +28,14 @@ async function account(role) {
       for (const [role, user] of Object.entries(users)) {
         const id = role === 'member' ? 'barrelroll' : 'test-' + role;
         await setDoc(doc(db, 'members', id), { displayName: 'LOCAL ' + role.toUpperCase(), bio: 'Local test profile. No real member data is changed.', socials: { tiktok: '', twitch: '' }, profileImage: '', createdAt: now, updatedAt: now });
-        await setDoc(doc(db, 'memberAccess', id), { memberId: id, displayName: 'LOCAL ' + role.toUpperCase(), fortniteUsername: 'LocalTest_' + role, invitedEmail: user.email, ownerUid: role === 'invited' ? null : user.uid, role: role === 'admin' ? 'admin' : role === 'owner' ? 'owner' : 'member', status: role === 'invited' ? 'invited' : 'active', rosterStatus: 'active', createdAt: now, updatedAt: now, claimedAt: role === 'invited' ? null : now });
+        const membership = role === 'admin' ? 'developer' : role === 'owner' ? 'owner' : role === 'member' ? 'hr' : 'creator';
+        await setDoc(doc(db, 'memberAccess', id), { memberId: id, displayName: 'LOCAL ' + role.toUpperCase(), fortniteUsername: 'LocalTest_' + role, invitedEmail: user.email, ownerUid: role === 'invited' ? null : user.uid, role: membership, websiteAdmin: role === 'admin', status: role === 'invited' ? 'invited' : 'active', rosterStatus: 'active', createdAt: now, updatedAt: now, claimedAt: role === 'invited' ? null : now });
+        await setDoc(doc(db, 'memberMemberships', id), { role: membership, updatedAt: now });
         if (role === 'admin') await setDoc(doc(db, 'admins', user.uid), { enabled: true, memberId: id });
       }
+      await setDoc(doc(db, 'members', 'test-management'), { displayName: 'LOCAL MANAGEMENT', bio: 'Local team-directory test.', socials: {}, profileImage: '', updatedAt: now });
+      await setDoc(doc(db, 'memberAccess', 'test-management'), { memberId: 'test-management', displayName: 'LOCAL MANAGEMENT', fortniteUsername: 'LocalManager', invitedEmail: '', ownerUid: null, role: 'management', websiteAdmin: false, status: 'invited', rosterStatus: 'active', updatedAt: now });
+      await setDoc(doc(db, 'memberMemberships', 'test-management'), { role: 'management', updatedAt: now });
       await setDoc(doc(db, 'bounties', 'local-demo'), { targetName: 'LOCAL DEMO TARGET', amount: 10, mode: 'Reload', instructions: 'Test only. Show both names and the elimination.', image: 'wsb-logo.png', status: 'open', winningClaimId: '', createdBy: users.admin.uid, createdAt: now, updatedAt: now, expiresAt: Timestamp.fromMillis(Date.now() + 7 * 86400000), eligibility: 'Active test members. No staged eliminations.', disputePolicy: 'Use Request a review for denied claims.' });
     });
     console.log('Seeded local Admin, Member, Owner (display role only), and Invited member test accounts. No production writes.');

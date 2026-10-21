@@ -38,7 +38,7 @@ function apply() {
   });
   document.querySelectorAll('.management-group').forEach(group => {
     const cards = [...group.querySelectorAll('.management-card')];
-    group.classList.toggle('profile-hidden', cards.every(card => card.classList.contains('profile-hidden')) && !group.querySelector('.management-community-card'));
+    group.classList.toggle('profile-hidden', cards.every(card => card.classList.contains('profile-hidden')));
   });
   document.documentElement.classList.remove('profile-visibility-loading');
 }

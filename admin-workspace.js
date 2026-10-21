@@ -1,8 +1,9 @@
 import { auth, db, localTest } from './firebase-client.js';
-import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
+import { watchAdmin, logActivity, notifyMember } from './admin-access.js?v=membership-permissions-20261020';
 import { BACKUP_COLLECTIONS, encryptBackup, decryptBackup, encodeData, decodeData } from './backup-crypto.js';
 import { planAccountRestrictions } from './account-restrictions.js';
-import { writePublicMembership } from './membership-directory.js';
+import { writePublicMembership } from './membership-directory.js?v=membership-permissions-20261020';
+import { hasWebsiteAdmin } from './membership-model.js';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { collection, doc, getDocs, query, orderBy, limit, onSnapshot, writeBatch, runTransaction, serverTimestamp, Timestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 const $ = id => document.getElementById(id), esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -152,9 +153,10 @@ $('backupRestore').addEventListener('click', async () => {
     // arbitrary restriction markers or overwrite the administrator restoring.
     for (const row of inspected.collections.memberAccess || []) {
       const data = decodeData(row.data, Timestamp);
-      if (data.role === 'admin' || data.ownerUid === auth.currentUser.uid) continue;
+      if (hasWebsiteAdmin(data) || data.ownerUid === auth.currentUser.uid) continue;
       await runTransaction(db, async transaction => {
         const ref = doc(db, 'memberAccess', row.id), current = await transaction.get(ref);
+        if (hasWebsiteAdmin(current.data())) return; // Never demote a live admin from an old backup.
         const next = { ...data, updatedAt: serverTimestamp() };
         const writeRestrictions = await planAccountRestrictions(transaction, row.id, current.data(), next, auth.currentUser);
         transaction.set(ref, next, { merge: true }); writeRestrictions();

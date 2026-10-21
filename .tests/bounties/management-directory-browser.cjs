@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {doc,getDoc,setDoc,deleteDoc,Timestamp}=require('firebase/firestore');
+const {doc,getDoc,setDoc,deleteDoc,writeBatch,Timestamp}=require('firebase/firestore');
 module.exports=async({admin,pageFor,env})=>{
   await admin.locator('[data-admin-view="members"]').click();
   await admin.waitForFunction(()=>!document.getElementById('adminMemberPicker').disabled);
@@ -10,6 +10,18 @@ module.exports=async({admin,pageFor,env})=>{
   const card=()=>page.locator('.management-card[data-public-member-id="bri"]');
   await page.locator('.management-grid-owners [data-public-member-id="bri"]').waitFor({state:'visible'});
   assert.equal(await card().count(),1);
+  assert.equal(await page.locator('[aria-labelledby="management-heading"]').isVisible(),false);
+  assert.equal(await page.locator('.management-group-creators').isVisible(),false);
+  const hiddenLoad=page.waitForEvent('load');
+  await env.withSecurityRulesDisabled(async ctx=>{const db=ctx.firestore(),batch=writeBatch(db);for(const id of ['barrelroll','legacy-admin'])batch.set(doc(db,'memberVisibility',id),{hidden:true,updatedAt:Timestamp.now()});await batch.commit();});
+  await hiddenLoad;
+  await page.locator('.management-group-support').waitFor({state:'hidden'});
+  assert.equal(await page.locator('.management-community-card').isVisible(),false,'Community link cannot keep an empty Support section visible');
+  const restoredLoad=page.waitForEvent('load');
+  await env.withSecurityRulesDisabled(async ctx=>{const db=ctx.firestore(),batch=writeBatch(db);for(const id of ['barrelroll','legacy-admin'])batch.delete(doc(db,'memberVisibility',id));await batch.commit();});
+  await restoredLoad;
+  await page.locator('.management-grid-owners [data-public-member-id="bri"]').waitFor({state:'visible'});
+  await page.locator('.management-group-support').waitFor({state:'visible'});
   await card().press('Enter'); await page.locator('#bioModal.open').waitFor();
   assert.match(await page.locator('#bioName').textContent(),/TEST owner/i);
   await page.keyboard.press('Escape');
@@ -21,7 +33,16 @@ module.exports=async({admin,pageFor,env})=>{
   await page.locator('.management-grid-management [data-public-member-id="bri"]').waitFor({state:'visible'});
   assert.equal(await card().count(),1);
   await selectRole('member'); await card().waitFor({state:'detached'});
+  await selectRole('creator'); await page.locator('.management-grid-creators [data-public-member-id="bri"]').waitFor({state:'visible'});
+  assert.equal(await card().count(),1);
+  for(const membership of ['hr','developer']) {
+    await selectRole(membership); await page.locator('.management-grid-support [data-public-member-id="bri"]').waitFor({state:'visible'});
+    assert.equal(await card().count(),1);
+    assert.equal(await page.locator('.management-group-creators').isVisible(),false);
+    assert.equal(await card().getAttribute('data-role'),membership==='hr'?'HR':'Developer');
+  }
   await selectRole('owner'); await card().waitFor({state:'visible'});
+  assert.deepEqual(await page.locator('.management-groups > section').evaluateAll(sections=>sections.map(section=>section.querySelector('h2').textContent)),['OWNERS','MANAGEMENT','CREATORS','TEAM SUPPORT']);
   // Public profile changes update the same stable-id card immediately.
   await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'members','bri'),{displayName:'Bri updated',bio:'Live biography',socials:{tiktok:'https://www.tiktok.com/@test-bri'},profileImage:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aD1sAAAAASUVORK5CYII=',updatedAt:Timestamp.now()},{merge:true}));
   await page.waitForFunction(()=>document.querySelector('[data-public-member-id="bri"] .tier-name')?.textContent==='Bri updated');
@@ -61,6 +82,7 @@ module.exports=async({admin,pageFor,env})=>{
   await admin.locator('[data-member-view="roles"]').click();await admin.locator('#adminRole').selectOption('management');
   await admin.locator('[data-member-view="access"]').click();
   await admin.locator('#adminSave').click();await admin.waitForFunction(()=>document.getElementById('adminInviteActions').hidden===false);
+  await admin.waitForFunction(()=>!document.getElementById('adminSave').disabled);
   const pendingId=await admin.locator('#adminMemberId').inputValue();
   await page.locator('.management-grid-management [data-public-member-id="'+pendingId+'"]').waitFor({state:'visible'});
   await admin.locator('[data-member-view="roles"]').click();await admin.locator('#adminRole').selectOption('owner');
@@ -70,5 +92,5 @@ module.exports=async({admin,pageFor,env})=>{
   await page.context().close();
   await admin.reload();await admin.locator('#adminDashboard').waitFor({state:'visible'});
   await admin.locator('[data-admin-view="members"]').click();await admin.waitForFunction(()=>!document.getElementById('adminMemberPicker').disabled);
-  console.log('PASS: existing Owner backfill, live Owner/Management moves and demotion, no duplicate cards, no-Gmail roster promotion, full create/edit before first stats sync, live names/bio/images/modal, hidden-profile protection, six responsive widths.');
+  console.log('PASS: membership-only Owner/Management/Creator/HR/Developer sections, correct order, empty Creators hidden, no duplicates, no-Gmail promotion, pre-sync create/edit, live profile/modal data, hidden-profile protection and six responsive widths.');
 };

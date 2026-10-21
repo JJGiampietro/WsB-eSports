@@ -49,7 +49,7 @@ assert.equal(status({}, 'member').state, 'waiting');
       for (const [name, documents] of Object.entries(recovered.collections)) for (const entry of documents) await setDoc(doc(db, name, entry.id), cryptoModule.decodeData(entry.data, Timestamp));
       for (const [name, documents] of Object.entries(payload.collections)) for (const entry of documents) assert.deepEqual(cryptoModule.encodeData((await getDoc(doc(db, name, entry.id))).data()), entry.data);
       await setDoc(doc(db, 'admins', 'root'), { enabled: true });
-      await setDoc(doc(db, 'memberAccess', 'new-admin'), { ownerUid: null, invitedEmail: 'new@wsb-test.invalid', status: 'invited', role: 'admin' });
+      await setDoc(doc(db, 'memberAccess', 'new-admin'), { ownerUid: null, invitedEmail: 'new@wsb-test.invalid', status: 'invited', role: 'developer', websiteAdmin: true });
       await setDoc(doc(db, 'memberAccess', 'display-owner'), { ownerUid: 'display-owner', role: 'owner', status: 'active' });
     });
     const member = env.authenticatedContext('member', { email: 'member@wsb-test.invalid', email_verified: true }).firestore();
@@ -117,8 +117,12 @@ assert.equal(status({}, 'member').state, 'waiting');
     await assertSucceeds(setDoc(doc(invited, 'memberRoles', 'member'), {
       roleIds: ['bounty-hunter', 'tournament-mvp', 'competitive-player', 'community-helper', 'event-champion'], updatedAt: serverTimestamp()
     }));
-    await assertFails(updateDoc(doc(invited, 'memberAccess', 'new-admin'), { role: 'member' }));
+    await assertSucceeds(updateDoc(doc(invited, 'memberAccess', 'new-admin'), { role: 'member' }));
+    await assertFails(updateDoc(doc(invited, 'memberAccess', 'new-admin'), { websiteAdmin: false }));
     await assertSucceeds(updateDoc(doc(root, 'memberAccess', 'new-admin'), { role: 'owner' }));
+    await assertSucceeds(getDocs(collection(invited, 'memberAccess')));
+    // The stale grant and existing token cannot bypass permission revocation.
+    await assertSucceeds(updateDoc(doc(root, 'memberAccess', 'new-admin'), { websiteAdmin: false }));
     await assertFails(setDoc(doc(invited, 'memberRoles', 'member'), { roleIds: [], updatedAt: serverTimestamp() }));
     await assertFails(setDoc(doc(invited, 'profileRoles', 'forged'), roleData));
     await assertFails(getDocs(collection(invited, 'memberAccess')));
@@ -153,6 +157,6 @@ assert.equal(status({}, 'member').state, 'waiting');
     await assertSucceeds(updateDoc(doc(root, 'claimDisputes', 'denied_member'), { status: 'resolved', resolution: 'Reviewed by the team.', updatedAt: serverTimestamp() }));
     await require('./account-access.test.cjs')(env);
     await require('./membership-directory.test.cjs')(env);
-    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant full restore including account restrictions/roles/visibility, Admin-only role and visibility mutations, five-role linked-admin permissions and revocation, Admin privileges, demotion, immutable audit, private notifications, reward separation.');
+    console.log('PASS: stats retention/recovery, per-player freshness, encrypted/tamper-resistant restore, Admin-only role/visibility mutations, independent membership/admin permission, stale-grant denial, immutable audit, private notifications and reward separation.');
   } finally { await env.cleanup(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

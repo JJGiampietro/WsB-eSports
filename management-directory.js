@@ -1,14 +1,17 @@
 import { db } from './firebase-client.js';
 import { visibility, managementMemberIds } from './member-visibility.js';
 import { safeProfileImage } from './profile-image.js?v=1';
+import { membershipLabels } from './membership-model.js';
 import { collection, onSnapshot } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 
 const grids = {
   owner: document.querySelector('.management-grid-owners'),
   management: document.querySelector('.management-grid-management'),
+  creator: document.querySelector('.management-grid-creators'),
   support: document.querySelector('.management-grid-support')
 };
 const originals = new Map(), cards = new Map();
+Object.values(grids).forEach(grid => { grid.closest('.management-group').hidden = true; });
 document.querySelectorAll('.management-card').forEach((card, index) => {
   const id = card.dataset.publicMemberId || managementMemberIds.get(card.querySelector('.tier-name')?.textContent.trim());
   if (!id) return;
@@ -26,12 +29,12 @@ const safeSocial = value => { try { const url = new URL(value); return url.proto
 function render() {
   if (!ready || !rolesReady || !profilesReady) return;
   const ids = new Set([...originals.keys(), ...memberships.keys()]);
-  const groups = { owner: [], management: [], support: [] };
+  const groups = { owner: [], management: [], creator: [], support: [] };
   for (const id of ids) {
     const original = originals.get(id), membership = memberships.get(id), profile = profiles.get(id) || {}, member = roster.get(id);
-    // The saved role is authoritative. Legacy entries remain until migrated.
-    const group = membership === 'owner' || membership === 'management' ? membership
-      : original?.group === 'support' ? 'support' : memberships.has(id) ? null : original?.group;
+    // Only an assigned membership puts somebody in a team section. Original HTML
+    // supplies photos/bios, never overrides their membership or permissions.
+    const group = ['owner', 'management', 'creator'].includes(membership) ? membership : ['hr', 'developer'].includes(membership) ? 'support' : null;
     if (!group || visibility.isHidden(id)) { cards.get(id)?.remove(); continue; }
     if (!original && !member && !profile.displayName) continue;
     let card = cards.get(id);
@@ -41,9 +44,9 @@ function render() {
       card.dataset.publicMemberId = id; cards.set(id, card);
     }
     const name = profile.displayName || member?.displayName || original?.name || id;
-    const label = group === 'support' ? original.roleLabel : group === 'owner' ? 'OWNER' : 'MANAGEMENT';
+    const label = membership === 'hr' ? 'HUMAN RESOURCES' : membershipLabels[membership].toUpperCase();
     card.querySelector('.tier-name').textContent = name; card.querySelector('.tier-role').textContent = label;
-    card.dataset.role = group === 'support' ? original.role : group === 'owner' ? 'Owner' : 'Management';
+    card.dataset.role = membershipLabels[membership];
     card.dataset.bio = typeof profile.bio === 'string' ? profile.bio : original?.bio || '';
     card.dataset.tiktok = profile.socials ? safeSocial(profile.socials.tiktok) : original?.tiktok || '';
     card.dataset.bioGif = original?.gif || '';
@@ -61,7 +64,10 @@ function render() {
     entries.sort((a, b) => a.index - b.index || a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
     const community = grids[group].querySelector('.management-community-card');
     grids[group].replaceChildren(...entries.map(entry => entry.card), ...(community ? [community] : []));
+    grids[group].closest('.management-group').hidden = entries.length === 0;
   }
+  const count = Object.values(groups).reduce((total, entries) => total + entries.length, 0);
+  if (status.dataset.problem !== 'true') { status.textContent = 'No team memberships are currently listed.'; status.hidden = count > 0; }
   visibility.apply();
   document.dispatchEvent(new Event('wsb:management-render'));
 }
@@ -70,9 +76,9 @@ Promise.all([visibility.ready, fetch(new URL('data/roster.json', import.meta.url
   roster = new Map(members.map(member => [member.id, member])); ready = true; render();
 });
 onSnapshot(collection(db, 'memberMemberships'), snapshot => {
-  memberships = new Map(snapshot.docs.map(entry => [entry.id, entry.data().role])); rolesReady = true; status.hidden = true; render();
+  memberships = new Map(snapshot.docs.map(entry => [entry.id, entry.data().role])); rolesReady = true; status.dataset.problem = 'false'; status.hidden = true; render();
 }, () => {
-  rolesReady = true; status.textContent = 'Membership updates are temporarily unavailable. Showing the saved team listing.'; status.hidden = false; render();
+  rolesReady = true; status.dataset.problem = 'true'; status.textContent = 'Team memberships are temporarily unavailable. Please try again later.'; status.hidden = false; render();
 });
 onSnapshot(collection(db, 'members'), snapshot => {
   profiles = new Map(snapshot.docs.map(entry => [entry.id, entry.data()])); profilesReady = true; render();

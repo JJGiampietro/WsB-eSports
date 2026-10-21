@@ -14,11 +14,10 @@ const navigation = fs.readFileSync(path.join(templates, 'navigation.html'), 'utf
 function decorate(html, prefix) {
   html = html.replace(/<header class="nav">[\s\S]*?<\/header>/, navigation.replaceAll('{{root}}', prefix));
   html = html.replace(/polish\.css\?v=[^"']+/g, 'polish.css?v=member-sync-20260930-1');
-  html = html.replace(/firebase-member\.js\?v=[^"']+/g, 'firebase-member.js?v=workspace-1');
-  html = html.replace(/firebase-admin\.js\?v=[^"']+/g, 'firebase-admin.js?v=workspace-1');
+  html = html.replace(/(firebase-member|firebase-admin|bounties|admin-workspace|admin-content|site-enhancements|management-directory)\.js(?:\?v=[^"']+)?(?=["'])/g, '$1.js?v=membership-permissions-20261020');
   if (!html.includes('workspace.css')) html = html.replace('</head>', '<link rel="stylesheet" href="' + prefix + 'workspace.css?v=1">\n</head>');
   if (!html.includes('sync-status.js')) html = html.replace(/<script src="([^"]*?)script\.js/, '<script src="' + prefix + 'sync-status.js?v=1"></script>\n<script src="$1script.js');
-  if (!html.includes('site-enhancements.js')) html = html.replace('</body>', '<script type="module" src="' + prefix + 'site-enhancements.js?v=1"></script>\n</body>');
+  if (!html.includes('site-enhancements.js')) html = html.replace('</body>', '<script type="module" src="' + prefix + 'site-enhancements.js?v=membership-permissions-20261020"></script>\n</body>');
   return html;
 }
 const roster = JSON.parse(fs.readFileSync(path.join(root, 'data/roster.json'), 'utf8'));
@@ -30,7 +29,6 @@ for (const member of roster) {
   write(path.join(dir, 'index.html'), playerTemplate.replaceAll('{{memberId}}', member.id));
 }
 let editor = fs.readFileSync(path.join(templates, 'member-editor.html'), 'utf8');
-editor = editor.replace('<option value="owner">Owner</option>', '<option value="owner">Owner</option><option value="admin">Admin (website access)</option>');
 editor = editor.replace('CREATE<br>ACCESS.', 'CREATE<br>ACCESS.');
 const editorBody = editor.match(/<section id="adminDashboard"[\s\S]*?<\/main>/)[0].replace(/<section id="adminDashboard"[^>]+>/, '').replace(/\s*<\/section>\s*<\/main>$/, '');
 let bounty = fs.readFileSync(path.join(root, 'bounties.html'), 'utf8');

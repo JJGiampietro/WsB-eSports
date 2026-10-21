@@ -1,6 +1,6 @@
 import { auth, db, localTest } from './firebase-client.js';
 import './account-access.js';
-import { watchAdmin } from './admin-access.js';
+import { watchAdmin } from './admin-access.js?v=membership-permissions-20261020';
 import { subscribePublished } from './site-content.js';
 import { millis } from './content-model.js';
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
@@ -86,6 +86,12 @@ function setupPreview(form, prefix, loadedEvent, savedEvent) {
     if (!initialized || !baseline) return;
     const original = JSON.parse(baseline), field = original[0].find(entry => entry[0] === 'adminRole');
     if (field) field[1] = document.getElementById('adminRole').value;
+    baseline = JSON.stringify(original);
+  });
+  if (prefix === 'admin') document.addEventListener('wsb:admin-permission-saved', () => {
+    if (!initialized || !baseline) return;
+    const original = JSON.parse(baseline), field = original[0].find(entry => entry[0] === 'adminWebsiteAdmin');
+    if (field) field[1] = document.getElementById('adminWebsiteAdmin').checked;
     baseline = JSON.stringify(original);
   });
   form.addEventListener('input', () => { if (!initialized) { baseline = ''; initialized = true; } renderPreview(); });

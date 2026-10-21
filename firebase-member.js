@@ -2,7 +2,8 @@ import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { auth, db, provider, authReady } from './firebase-client.js';
 import { visibility, managementMemberIds } from './member-visibility.js';
 import './profile-roles.js';
-import { watchAdmin, logActivity, notifyMember } from './admin-access.js';
+import { watchAdmin, logActivity, notifyMember } from './admin-access.js?v=membership-permissions-20261020';
+import { hasWebsiteAdmin } from './membership-model.js';
 import { onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where, writeBatch, onSnapshot } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
@@ -95,11 +96,11 @@ async function loadLinkedProfile(user, version = accountEpoch) {
           status: "active",
           claimedAt: serverTimestamp()
         });
-        if (invitation.role === 'admin') batch.set(doc(db, 'admins', user.uid), { enabled: true, memberId: inviteRef.id });
+        if (hasWebsiteAdmin(invitation)) batch.set(doc(db, 'admins', user.uid), { enabled: true, memberId: inviteRef.id });
         logActivity(db, batch, user, 'account-linked', 'memberAccess', inviteRef.id);
         notifyMember(db, batch, user.uid, 'account-linked', inviteRef.id, 'Your WsB member profile is linked. You can now edit your public profile.');
         await batch.commit();
-        if (invitation.role === 'admin') accountAdmin = true;
+        if (hasWebsiteAdmin(invitation)) accountAdmin = true;
         if (version !== accountEpoch) return;
         return loadLinkedProfile(user);
       }
