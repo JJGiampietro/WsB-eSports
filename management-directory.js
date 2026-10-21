@@ -26,6 +26,15 @@ let memberships = new Map(), profiles = new Map(), roster = new Map(), ready = f
 const status = document.createElement('p'); status.hidden = true; status.setAttribute('role', 'status');
 document.querySelector('.management-intro').after(status);
 const safeSocial = value => { try { const url = new URL(value); return url.protocol === 'https:' ? url.href : ''; } catch (_) { return ''; } };
+function numberVisibleSections() {
+  let number = 0;
+  document.querySelectorAll('.management-groups > .management-group').forEach(section => {
+    const label = section.querySelector('.management-group-heading > p');
+    const text = section.hidden || section.classList.contains('profile-hidden') ? '' : String(++number).padStart(2, '0');
+    if (label.textContent !== text) label.textContent = text;
+  });
+}
+document.addEventListener('wsb:visibility-applied', numberVisibleSections);
 function render() {
   if (!ready || !rolesReady || !profilesReady) return;
   const ids = new Set([...originals.keys(), ...memberships.keys()]);
@@ -69,6 +78,7 @@ function render() {
   const count = Object.values(groups).reduce((total, entries) => total + entries.length, 0);
   if (status.dataset.problem !== 'true') { status.textContent = 'No team memberships are currently listed.'; status.hidden = count > 0; }
   visibility.apply();
+  numberVisibleSections();
   document.dispatchEvent(new Event('wsb:management-render'));
 }
 Promise.all([visibility.ready, fetch(new URL('data/roster.json', import.meta.url), { cache: 'no-store' })

@@ -14,7 +14,8 @@ const navigation = fs.readFileSync(path.join(templates, 'navigation.html'), 'utf
 function decorate(html, prefix) {
   html = html.replace(/<header class="nav">[\s\S]*?<\/header>/, navigation.replaceAll('{{root}}', prefix));
   html = html.replace(/polish\.css\?v=[^"']+/g, 'polish.css?v=member-sync-20260930-1');
-  html = html.replace(/(firebase-member|firebase-admin|bounties|admin-workspace|admin-content|site-enhancements|management-directory)\.js(?:\?v=[^"']+)?(?=["'])/g, '$1.js?v=membership-permissions-20261020');
+  html = html.replace(/(firebase-member|firebase-admin|bounties|admin-workspace|admin-content|site-enhancements)\.js(?:\?v=[^"']+)?(?=["'])/g, '$1.js?v=membership-permissions-20261020');
+  html = html.replace(/management-directory\.js(?:\?v=[^"']+)?(?=["'])/g, 'management-directory.js?v=section-numbering-20261020');
   if (!html.includes('workspace.css')) html = html.replace('</head>', '<link rel="stylesheet" href="' + prefix + 'workspace.css?v=1">\n</head>');
   if (!html.includes('sync-status.js')) html = html.replace(/<script src="([^"]*?)script\.js/, '<script src="' + prefix + 'sync-status.js?v=1"></script>\n<script src="$1script.js');
   if (!html.includes('site-enhancements.js')) html = html.replace('</body>', '<script type="module" src="' + prefix + 'site-enhancements.js?v=membership-permissions-20261020"></script>\n</body>');

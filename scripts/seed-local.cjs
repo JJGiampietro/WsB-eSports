@@ -1,7 +1,7 @@
 // This tool can only address the loopback demo project. It has no production credentials.
 const fs = require('node:fs'), path = require('node:path');
 const { initializeTestEnvironment } = require('../.tests/bounties/node_modules/@firebase/rules-unit-testing');
-const { doc, setDoc, Timestamp } = require('../.tests/bounties/node_modules/firebase/firestore');
+const { doc, setDoc, runTransaction, Timestamp } = require('../.tests/bounties/node_modules/firebase/firestore');
 const projectId = 'demo-wsb-local';
 async function account(role) {
   const email = role + '@wsb-test.invalid', password = 'Local-test-only-123!';
@@ -36,6 +36,13 @@ async function account(role) {
       await setDoc(doc(db, 'members', 'test-management'), { displayName: 'LOCAL MANAGEMENT', bio: 'Local team-directory test.', socials: {}, profileImage: '', updatedAt: now });
       await setDoc(doc(db, 'memberAccess', 'test-management'), { memberId: 'test-management', displayName: 'LOCAL MANAGEMENT', fortniteUsername: 'LocalManager', invitedEmail: '', ownerUid: null, role: 'management', websiteAdmin: false, status: 'invited', rosterStatus: 'active', updatedAt: now });
       await setDoc(doc(db, 'memberMemberships', 'test-management'), { role: 'management', updatedAt: now });
+      // Team membership does not require a Gmail, Fortnite identity or login.
+      await runTransaction(db, async transaction => {
+        const ref = doc(db, 'memberAccess', 'ingraham');
+        if ((await transaction.get(ref)).exists()) return; // Preserve later local edits.
+        transaction.set(ref, { memberId: 'ingraham', displayName: 'ᵂˢᴮIngraham', fortniteUsername: '', invitedEmail: '', ownerUid: null, claimedAt: null, role: 'developer', websiteAdmin: false, status: 'invited', rosterStatus: 'active', createdAt: now, updatedAt: now });
+        transaction.set(doc(db, 'memberMemberships', 'ingraham'), { role: 'developer', updatedAt: now });
+      });
       await setDoc(doc(db, 'bounties', 'local-demo'), { targetName: 'LOCAL DEMO TARGET', amount: 10, mode: 'Reload', instructions: 'Test only. Show both names and the elimination.', image: 'wsb-logo.png', status: 'open', winningClaimId: '', createdBy: users.admin.uid, createdAt: now, updatedAt: now, expiresAt: Timestamp.fromMillis(Date.now() + 7 * 86400000), eligibility: 'Active test members. No staged eliminations.', disputePolicy: 'Use Request a review for denied claims.' });
     });
     console.log('Seeded local Admin, Member, Owner (display role only), and Invited member test accounts. No production writes.');
