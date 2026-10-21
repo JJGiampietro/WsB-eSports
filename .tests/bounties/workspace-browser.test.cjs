@@ -41,7 +41,7 @@ async function pageFor(role, route = 'admin.html') {
     await setDoc(doc(db, 'admins', credentials.admin.uid), { enabled: true });
     for (const [role, id] of [['member', 'barrelroll'], ['owner', 'bri']]) {
       await setDoc(doc(db, 'members', id), { displayName: 'TEST ' + role, bio: 'Test bio', socials: { tiktok: '', twitch: '' }, profileImage: '', createdAt: now, updatedAt: now });
-      await setDoc(doc(db, 'memberAccess', id), { memberId: id, displayName: 'TEST ' + role, fortniteUsername: 'Test_' + role, invitedEmail: credentials[role].email, ownerUid: credentials[role].uid, role: role === 'owner' ? 'owner' : 'member', status: 'active', rosterStatus: 'active', createdAt: now, updatedAt: now, claimedAt: now });
+      await setDoc(doc(db, 'memberAccess', id), { memberId: id, displayName: 'TEST ' + role, fortniteUsername: 'Test_' + role, invitedEmail: credentials[role].email, ownerUid: credentials[role].uid, role: role === 'owner' ? 'owner' : 'hr', websiteAdmin: false, status: 'active', rosterStatus: 'active', createdAt: now, updatedAt: now, claimedAt: now });
     }
   });
   browser = await chromium.launch({ ...(process.platform === 'win32' ? { channel: 'msedge' } : {}), headless: true });
@@ -52,6 +52,7 @@ async function pageFor(role, route = 'admin.html') {
   assert.equal(await admin.locator('[data-admin-view]').count(), 9);
   await admin.locator('[data-admin-view="members"]').click(); await admin.locator('#adminMemberPicker').waitFor({ state: 'visible' });
   await admin.waitForFunction(() => !document.getElementById('adminMemberPicker').disabled);
+  await require('./website-permission-browser.cjs')({admin,pageFor,env,credentials,createUser});
   await require('./management-directory-browser.cjs')({admin,pageFor,env});
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
   await require('./member-editor-browser.cjs')({admin,anon,owner});
@@ -146,7 +147,7 @@ async function pageFor(role, route = 'admin.html') {
   await admin.locator('#adminMemberPicker').selectOption('barrelroll');
   for (const page of [publicMembers,management,directory,otherDetail,leaders]) await page.context().close();
   // Create an Admin invitation; verified Google-equivalent test email can claim it securely.
-  await admin.locator('#adminStartNew').click(); await admin.locator('#adminDisplayName').fill('TEST INVITED ADMIN'); await admin.locator('#adminFortniteUsername').fill('InvitedTestPlayer'); await admin.locator('[data-member-view="access"]').click(); await admin.locator('#adminInviteEmail').fill(credentials.invited.email); await admin.locator('[data-member-view="roles"]').click(); await admin.locator('#adminRole').selectOption('admin'); await admin.locator('[data-member-view="access"]').click(); await admin.locator('#adminSave').click();
+  await admin.locator('#adminStartNew').click(); await admin.locator('#adminDisplayName').fill('TEST INVITED ADMIN'); await admin.locator('#adminFortniteUsername').fill('InvitedTestPlayer'); await admin.locator('[data-member-view="access"]').click(); await admin.locator('#adminInviteEmail').fill(credentials.invited.email); await admin.locator('[data-member-view="roles"]').click(); await admin.locator('#adminRole').selectOption('developer'); await admin.locator('#adminWebsiteAdmin').check(); await admin.locator('[data-member-view="access"]').click(); await admin.locator('#adminSave').click();
   await admin.waitForFunction(() => document.getElementById('adminInviteActions').hidden === false);
   const invited = await pageFor('invited', 'member-account.html'); await invited.locator('#memberProfileForm').waitFor({ state: 'visible' });
   await env.withSecurityRulesDisabled(async context => { const grant = await getDoc(doc(context.firestore(),'admins',credentials.invited.uid)); assert(grant.exists()); });

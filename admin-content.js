@@ -1,5 +1,5 @@
 import { auth, db } from './firebase-client.js';
-import { watchAdmin, logActivity } from './admin-access.js';
+import { watchAdmin, logActivity } from './admin-access.js?v=membership-permissions-20261020';
 import { CONTENT_TYPES, millis, sortContent, validateContent } from './content-model.js';
 import { contentDefaults, renderEvent, renderAnnouncement } from './site-content.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';

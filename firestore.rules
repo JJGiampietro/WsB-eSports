@@ -10,11 +10,15 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/accountRestrictions/$(email)).data.blocked == true;
     }
 
+    function websiteAdmin(data) {
+      return data.get('websiteAdmin', data.get('role', '') == 'admin') == true;
+    }
+
     function isAdmin() {
       let grant = signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ? get(/databases/$(database)/documents/admins/$(request.auth.uid)).data : null;
       return signedIn() && grant != null && grant.get('enabled', true) == true
         && (!('memberId' in grant) || (get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.ownerUid == request.auth.uid
-          && get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.role == 'admin'
+          && websiteAdmin(get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data)
           && get(/databases/$(database)/documents/memberAccess/$(grant.memberId)).data.status == 'active'));
     }
 
@@ -101,6 +105,7 @@ service cloud.firestore {
 
     function validAdminAccess(memberId, data) {
       return data.status in ['invited', 'active', 'inactive']
+        && (!('websiteAdmin' in data) || data.websiteAdmin is bool)
         && (data.status != 'inactive' || (data.invitedEmail is string
           && data.invitedEmail.matches('^[^/]+@[^/]+$')
           && getAfter(/databases/$(database)/documents/accountRestrictions/$(data.invitedEmail.lower())).data.memberId == memberId
@@ -133,7 +138,7 @@ service cloud.firestore {
       allow create, update: if isAdmin()
         && request.resource.data.keys().hasAll(['role', 'updatedAt'])
         && request.resource.data.keys().hasOnly(['role', 'updatedAt'])
-        && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin']
+        && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'hr', 'developer']
         && request.resource.data.updatedAt == request.time
         && getAfter(/databases/$(database)/documents/memberAccess/$(memberId)).data.role == request.resource.data.role;
       allow delete: if isAdmin();
@@ -145,14 +150,15 @@ service cloud.firestore {
         resource.data.ownerUid == request.auth.uid || (request.auth.token.get('email_verified', false) == true
           && resource.data.invitedEmail == request.auth.token.email)
       ));
-      allow create: if isAdmin() && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin']
+      allow create: if isAdmin() && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'hr', 'developer']
         && validAdminAccess(memberId, request.resource.data);
       allow delete: if isAdmin() && resource.data.ownerUid != request.auth.uid;
       allow update: if (isAdmin()
-          && request.resource.data.role in ['member', 'creator', 'management', 'owner', 'admin']
+          && (request.resource.data.role in ['member', 'creator', 'management', 'owner', 'hr', 'developer']
+            || (resource.data.role == 'admin' && request.resource.data.role == 'admin'))
           && validAdminAccess(memberId, request.resource.data)
-          && (resource.data.ownerUid != request.auth.uid || resource.data.get('role', '') != 'admin'
-            || (request.resource.data.role == 'admin' && request.resource.data.status == 'active' && request.resource.data.ownerUid == request.auth.uid)))
+          && (resource.data.ownerUid != request.auth.uid || !websiteAdmin(resource.data)
+            || (websiteAdmin(request.resource.data) && request.resource.data.status == 'active' && request.resource.data.ownerUid == request.auth.uid)))
         || (signedIn()
         && resource.data.ownerUid == null
         && resource.data.status == 'invited'
@@ -275,13 +281,13 @@ service cloud.firestore {
     }
 
     match /admins/{userId} {
-      allow get: if signedIn() && userId == request.auth.uid;
+      allow get: if (signedIn() && userId == request.auth.uid) || isAdmin();
       allow list: if isAdmin();
       allow create, update: if (isAdmin() || (signedIn() && userId == request.auth.uid))
         && request.resource.data.keys().hasOnly(['memberId', 'enabled'])
         && request.resource.data.enabled == true && request.resource.data.memberId is string
         && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.ownerUid == userId
-        && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.role == 'admin'
+        && websiteAdmin(getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data)
         && getAfter(/databases/$(database)/documents/memberAccess/$(request.resource.data.memberId)).data.status == 'active';
       allow delete: if isAdmin() && userId != request.auth.uid;
     }

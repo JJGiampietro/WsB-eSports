@@ -69,7 +69,7 @@ module.exports = async ({admin, anon, owner, pageFor, env}) => {
   await member.waitForFunction(()=>document.querySelectorAll('#memberProfileForm .profile-role-badge').length===0);
   await env.withSecurityRulesDisabled(async ctx=>{
     const db=ctx.firestore();
-    assert.equal((await getDoc(doc(db,'memberAccess','barrelroll'))).data().role,'member');
+    assert.equal((await getDoc(doc(db,'memberAccess','barrelroll'))).data().role,'hr');
     assert.equal((await getDoc(doc(db,'memberAccess','elusion'))).exists(),false);
     const activities=(await getDocs(collection(db,'adminActivity'))).docs.map(entry=>entry.data());
     assert(activities.some(entry=>entry.action==='profile-role-created'));

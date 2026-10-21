@@ -1,5 +1,5 @@
 import { auth, db } from './firebase-client.js';
-import { watchAdmin, logActivity } from './admin-access.js';
+import { watchAdmin, logActivity } from './admin-access.js?v=membership-permissions-20261020';
 import { MAX_PROFILE_ROLES, ROLE_TONES, roleNameKey, roleIdForName, roleState, subscribeRoles, paintRoleBadges } from './profile-roles.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js';
 import { doc, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';

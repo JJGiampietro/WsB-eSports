@@ -43,16 +43,23 @@ module.exports=async({admin,pageFor,env,credentials})=>{
     assert.equal((await getDoc(doc(db,'admins',credentials.member.uid))).exists(),false);
   });
   const owner=await pageFor('member','admin.html');await owner.locator('#adminDenied').waitFor({state:'visible'});
-  // Only the Admin membership role grants website privileges; role-only demotion revokes them.
-  await admin.locator('#adminRole').selectOption('admin');await admin.locator('#adminSaveMembershipRole').click();
-  await admin.waitForFunction(()=>document.getElementById('adminMembershipRoleStatus').textContent.includes('Membership role saved'));
+  // Website Admin is independent of membership; no membership option grants it.
+  assert.deepEqual(await admin.locator('#adminRole option').evaluateAll(options=>options.map(option=>option.value)),['member','creator','management','owner','hr','developer']);
+  await admin.locator('#adminWebsiteAdmin').check();await admin.locator('#adminSaveWebsiteAccess').click();
+  await admin.waitForFunction(()=>document.getElementById('adminWebsiteAccessStatus').textContent.includes('Website permission saved'));
+  await env.withSecurityRulesDisabled(async ctx=>{const a=(await getDoc(doc(ctx.firestore(),'memberAccess','barrelroll'))).data();assert.equal(a.role,'owner');assert.equal(a.websiteAdmin,true);});
   await owner.locator('#adminDashboard').waitFor({state:'visible'});
   await owner.locator('[data-admin-view="members"]').click();
   await owner.waitForFunction(()=>!document.getElementById('adminMemberPicker').disabled);
-  await owner.locator('#adminMemberPicker').selectOption('barrelroll');await owner.locator('[data-member-view="roles"]').click();await owner.locator('#adminRole').selectOption('member');await owner.locator('#adminSaveMembershipRole').click();
-  await owner.waitForFunction(()=>document.getElementById('adminMembershipRoleStatus').textContent.includes('cannot remove your own'));
+  await owner.locator('#adminMemberPicker').selectOption('barrelroll');await owner.locator('[data-member-view="roles"]').click();
+  await owner.locator('#adminWebsiteAdmin').uncheck();await owner.locator('#adminSaveWebsiteAccess').click();
+  await owner.waitForFunction(()=>document.getElementById('adminWebsiteAccessStatus').textContent.includes('cannot remove your own'));
+  // Membership changes retain admin access, including for the admin editing themselves.
   await admin.locator('#adminRole').selectOption('member');await admin.locator('#adminSaveMembershipRole').click();
   await admin.waitForFunction(()=>document.getElementById('adminMembershipRoleStatus').textContent.includes('Membership role saved'));
+  assert.equal(await owner.locator('#adminDashboard').isVisible(),true);
+  await admin.locator('#adminWebsiteAdmin').uncheck();await admin.locator('#adminSaveWebsiteAccess').click();
+  await admin.waitForFunction(()=>document.getElementById('adminWebsiteAccessStatus').textContent.includes('Website permission saved'));
   await owner.locator('#adminDashboard').waitFor({state:'hidden'});
   // Concurrent access changes must not be overwritten by an old editor.
   await env.withSecurityRulesDisabled(ctx=>updateDoc(doc(ctx.firestore(),'memberAccess','barrelroll'),{updatedAt:Timestamp.now()}));
@@ -65,5 +72,5 @@ module.exports=async({admin,pageFor,env,credentials})=>{
     assert((await getDocs(collection(db,'adminActivity'))).docs.some(entry=>entry.data().action==='member-role-changed'&&entry.data().targetId==='elusion'));
   });
   await owner.context().close();
-  console.log('PASS: membership role-only saves without Gmail for uninvited/linked members, persistence, no accidental invite/profile edits, Admin-only grants and live demotion, self-lockout/concurrency protection, responsive controls.');
+  console.log('PASS: six memberships without Gmail, no accidental profile edits, separate website permission grants/revocation, membership changes preserve admin access, self-lockout/concurrency protection and responsive controls.');
 };

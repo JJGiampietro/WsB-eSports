@@ -18,13 +18,23 @@ If emulators are stopped, start them with `.tests/bounties/node_modules/.bin/fir
 1. Stats retain the last valid numbers on failures, record per-player success/attempt/error and retry transient failures with timeouts. The local JSON was upgraded offline, including two recoverable profiles from history. Its original refresh timestamp is preserved; no new live API fetch is claimed.
 2. Members, stats directories, player pages and the admin overview show fresh/outdated/waiting status. Period comparisons exclude retained stale snapshots and match stable IDs, not changing display names.
 3. `admin.html` consolidates overview, searchable member/invite editing, events, announcements, bounties, reviews/disputes, reward delivery, activity, backups and release health. The legacy admin URL redirects here.
-4. Website Admin is distinct from display roles. Admin invitations grant privileges only when claimed with the verified matching email. Linked Admin grants are checked against active membership; demotion/inactivation revokes privileges immediately. Existing manually provisioned administrators remain bootstrap administrators, not privileges derived from Owner labels. Self-removal of linked Admin access is blocked.
+4. Website Admin is a separate private permission, not a membership choice. An invited admin gets tools only after claiming with the verified matching email. Linked grants require an active account and the permission; membership changes do not revoke it. Permission removal/inactivation revokes tools immediately. Self-removal is blocked.
 5. Website admin saves write append-only activity entries atomically with the change. An actor cannot spoof another account or rewrite an entry. This is an application activity log, not a replacement for Google Cloud audit logging; direct project-console/admin-SDK changes bypass these browser flows.
 6. Members have a live public preview, unsaved-change prompts, square image zoom/repositioning, and private notifications. Administrators can edit profiles without silently overwriting concurrent changes.
 7. Bounty deadlines are enforced by server rules, with eligibility, evidence, disputes and private reward delivery tracked separately from approval. The deadline is the submission cutoff; existing evidence can be reviewed afterward.
 8. Public pages share generated navigation/player shells, larger labels, a home activity strip, sitemap, robots guidance and a plain-language privacy page. Player detail pages fetch a single public profile rather than the whole image collection.
 9. Every Firebase publish path, including recovery, has the same isolated security/workflow/recovery/navigation test gate. Templates are not hosted.
 10. Hosting security headers are prepared, with CSP **report-only**. App Check has an optional initializer but no provider key and no enforcement.
+
+## Membership and permission separation (local review)
+
+The current changes are local only, not a production deployment. In Members > Roles & badges, Team Membership offers Member, Creator, Management, Owner, HR and Developer. Existing members have separate Save Membership Role and Save Website Access controls; neither needs Gmail or saves unrelated profile drafts. The Website Admin checkbox can also be included when creating a new account.
+
+The Management page uses assigned public membership metadata only: Owners first, Management second, Creators third, Team Support (HR/Developer) last. Ordinary members are not listed there. Empty or entirely hidden sections disappear, including the Support community-link card. Historical HTML supplies fallback photos/bios, not membership assignments.
+
+When an authorized admin loads the editor, legacy Admin memberships become Member with Website Admin preserved. Existing manually provisioned grants with a linked profile preserve its real membership and acquire the separate permission. Unlinked bootstrap admins remain intact. Migration is transactional and logged; it does not guess an unknown legacy admin's correct team membership. Select that membership afterward. Private permissions, Gmail and account IDs are never copied into the public directory.
+
+Before production rollout, back up private data, deploy the reviewed rules with the website, then verify existing admin sessions and directory assignments. Browser recovery deliberately skips both backed-up and currently privileged admin accounts rather than restoring privileges blindly.
 
 ## Events and announcements
 
