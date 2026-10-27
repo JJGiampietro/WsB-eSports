@@ -120,7 +120,6 @@
 
   const grid = document.getElementById('membersGrid');
   const search = document.getElementById('memberSearch'), filter = document.getElementById('memberFilter');
-  const managementIds = new Set(['jen','lizzie','taz','kato','lazy','elusion','dmo','bee','mysterious','skrewwww','barrelroll','ingraham']);
   const normalize = value => String(value || '').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   let roster = [], players = null, latestSnapshot = null, lastSuccess = null;
   const formatTime = value => new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:'America/Los_Angeles',timeZoneName:'short'}).format(new Date(value));
@@ -137,16 +136,13 @@
     const term=normalize(search?.value), category=filter?.value||'all';let shown=0;
     const cards=[...grid.querySelectorAll('.member-card')].filter(card => !card.classList.contains('profile-hidden'));
     cards.forEach(card=>{
-      const member=roster.find(m=>m.id===card.dataset.memberId||m.username===card.dataset.fnUser);
-      const id=member?.id||(!card.dataset.fnUser?'ingraham':'');
+      const id=card.dataset.memberId||card.dataset.publicMemberId||'';
+      const member=roster.find(m=>m.id===id);
       const sync=savedStatsSync.status(latestSnapshot,id);
       const synced=players && id && sync.state==='synced';
       const issue=players && member && sync.state!=='synced';
-      const rank=card.querySelector('.member-meta b');
-      if(rank&&!rank.dataset.rankLabeled&&rank.textContent.trim()!=='SYNCED') { rank.dataset.rankLabeled='true';rank.textContent += /^Dirt/.test(rank.textContent)?' · For fun':' · Team-set'; }
-      if (issue || synced) savedStatsSync.renderCardStatus(card, latestSnapshot, id);
       const matchesName=!term||normalize((card.querySelector('.member-name')?.textContent||'')+' '+card.dataset.fnUser+' '+id).includes(term);
-      const matchesFilter=category==='all'||category==='management'&&managementIds.has(id)||category==='synced'&&synced||category==='issue'&&issue;
+      const matchesFilter=category==='all'||category==='management'&&['owner','management','hr','developer'].includes(card.dataset.membershipRole)||category==='synced'&&synced||category==='issue'&&issue;
       const wrapper=card.closest('.member-card-wrap')||card;
       wrapper.hidden=!(matchesName&&matchesFilter);if(!wrapper.hidden)shown++;
     });
@@ -154,11 +150,6 @@
     const empty=document.getElementById('memberEmpty');if(empty)empty.hidden=shown!==0;
   }
   function annotateStats() {
-    document.querySelectorAll('.stats-player-issue').forEach(card=>{
-      const id=decodeURIComponent(new URL(card.href).pathname.split('/').filter(Boolean).pop());
-      const note=card.querySelector('.stats-issue-copy');
-      if(note&&lastSuccess&&!latestSnapshot?.sync?.[id])note.textContent='Waiting for a successful refresh. '+historyText(id);
-    });
     const detail=document.getElementById('playerDetail');
     if(detail&&document.body.dataset.memberId&&detail.querySelector('.profile-panel-wide')&&lastSuccess){const panel=detail.querySelector('.profile-panel-wide');if(!panel.querySelector('.last-success')){const note=document.createElement('p');note.className='last-success';note.textContent=historyText(document.body.dataset.memberId);panel.append(note);}}
   }
@@ -167,7 +158,7 @@
     savedStatsSync = await syncReady;
     Promise.all([fetch(root+'data/roster.json',{cache:'no-store'}).then(r=>r.ok?r.json():[]),fetch(root+'data/latest.json',{cache:'no-store'}).then(r=>r.ok?r.json():null)]).then(async([members,snapshot])=>{
       roster=Array.isArray(members)?members:[];latestSnapshot=snapshot;players=snapshot?.players||null;updateMembers();
-      if(players&&roster.some(m=>!players[m.id])){await loadHistory();updateMembers();annotateStats();}
+      if(document.getElementById('playerDetail')&&players&&roster.some(m=>!players[m.id])){await loadHistory();annotateStats();}
     }).catch(()=>{updateMembers();});
     const target=grid||document.getElementById('statsDirectory')||document.getElementById('playerDetail');
     let timer;
@@ -175,6 +166,7 @@
     function observe(){observer.observe(target,{childList:true,subtree:true,characterData:true});}observe();
     search?.addEventListener('input',updateMembers);filter?.addEventListener('change',updateMembers);
     document.addEventListener('wsb:visibility-applied',updateMembers);updateMembers();
+    document.addEventListener('wsb:memberships-applied',updateMembers);
     })();
   }
 })();

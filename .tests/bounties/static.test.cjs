@@ -9,6 +9,17 @@ function walk(directory) { return fs.readdirSync(directory, { withFileTypes: tru
   const file = path.join(directory, entry.name); return entry.isDirectory() ? walk(file) : entry.name.endsWith('.html') ? [file] : [];
 }); }
 const pages = walk(root);
+// Every hand-authored member card needs an immutable identity before any async
+// image, stats, visibility or badge module runs. Names are presentation only.
+const rosterIds = new Set(JSON.parse(fs.readFileSync(path.join(root, 'data/roster.json'), 'utf8')).map(member => member.id));
+const cardIds = [];
+for (const match of fs.readFileSync(path.join(root, 'members.html'), 'utf8').matchAll(/class="member-card(?:\s[^\"]*)?"([^>]*)>/g)) {
+  const id = match[1].match(/data-member-id="([a-z0-9-]+)"/)?.[1];
+  assert(id && (rosterIds.has(id) || visualOnly.isDisplayOnlyMember(id)), 'Member card missing a known stable ID');
+  cardIds.push(id);
+}
+assert(cardIds.length > 0);
+assert.equal(new Set(cardIds).size, cardIds.length, 'Static member IDs must be unique');
 for (const file of pages) {
   const html = fs.readFileSync(file, 'utf8');
   if (path.basename(file) === 'admin-members.html') continue;

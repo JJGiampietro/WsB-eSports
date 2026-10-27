@@ -21,11 +21,8 @@ export const visibility = {
 };
 window.WsbVisibility = visibility;
 function cardId(card) {
-  if (card.dataset.publicMemberId) return card.dataset.publicMemberId;
-  let id = card.dataset.memberId || card.dataset.rosterId;
+  let id = card.dataset.memberId || card.dataset.publicMemberId || card.dataset.rosterId;
   if (!id && card.classList.contains('management-card')) id = managementMemberIds.get(card.querySelector('.tier-name')?.textContent.trim());
-  if (!id && card.dataset.fnUser) id = roster.find(member => member.username === card.dataset.fnUser)?.id;
-  if (!id && card.classList.contains('member-card') && !card.dataset.fnUser) id = 'ingraham';
   const link = card.matches('a') ? card : card.querySelector('a[href*="stats/"]');
   if (!id && link) id = new URL(link.href).pathname.match(/\/stats\/([^/]+)\/?$/)?.[1];
   if (id) card.dataset.publicMemberId = id;

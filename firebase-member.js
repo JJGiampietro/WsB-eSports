@@ -2,6 +2,7 @@ import { safeProfileImage, cropProfileIcon } from './profile-image.js?v=1';
 import { auth, db, provider, authReady } from './firebase-client.js';
 import { visibility, managementMemberIds } from './member-visibility.js';
 import './profile-roles.js';
+import './member-membership-labels.js';
 import { watchAdmin, logActivity, notifyMember } from './admin-access.js?v=membership-permissions-20261020';
 import { hasWebsiteAdmin } from './membership-model.js';
 import './display-only-members.js';
@@ -315,14 +316,16 @@ function appendPublicProfile(memberId, profile) {
 function addNewRosterCards(roster, profiles) {
   const grid = document.getElementById("membersGrid");
   if (!grid) return;
-  const existingUsernames = new Set(Array.from(grid.querySelectorAll(".member-card[data-fn-user]")).map(function (card) { return card.dataset.fnUser; }));
+  const existingIds = new Set(Array.from(grid.querySelectorAll(".member-card[data-member-id]")).map(function (card) { return card.dataset.memberId; }));
   roster.forEach(function (member) {
-    if (existingUsernames.has(member.username)) return;
+    if (existingIds.has(member.id)) return;
     const profile = profiles.get(member.id) || {};
     const displayName = safeText(profile.displayName) || member.displayName || member.username;
     const profileImage = safeProfileImage(profile.profileImage);
     const card = document.createElement("div");
     card.className = "member-card has-stats member-card-link";
+    card.dataset.memberId = member.id;
+    card.dataset.publicMemberId = member.id;
     card.dataset.fnUser = member.username;
     card.setAttribute("role", "link");
     card.setAttribute("tabindex", "0");
@@ -342,13 +345,14 @@ function addNewRosterCards(roster, profiles) {
     name.textContent = displayName;
     const meta = document.createElement("div");
     meta.className = "member-meta";
-    meta.innerHTML = "<b>MEMBER PROFILE</b>";
+    meta.innerHTML = "<b>Member</b>";
     info.append(name, meta);
     card.append(emblem, info);
     const openProfile = function () { window.location.href = "stats/" + encodeURIComponent(member.id) + "/"; };
     card.addEventListener("click", openProfile);
     card.addEventListener("keydown", function (event) { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openProfile(); } });
     grid.append(card);
+    existingIds.add(member.id);
   });
 }
 
@@ -356,7 +360,7 @@ async function applyPublicMemberProfiles() {
   // Management owns its live profile/role rendering; do not reapply stale names,
   // images or biographies from this module's one-time public profile snapshot.
   if (document.querySelector('.management-groups')) return;
-  const needsProfileData = document.querySelector(".member-card[data-fn-user], a.stats-player[href*='stats/'], #playerDetail, #profileDetail, .management-card, .player-card[data-roster-id]");
+  const needsProfileData = document.querySelector(".member-card[data-member-id], a.stats-player[href*='stats/'], #playerDetail, #profileDetail, .management-card, .player-card[data-roster-id]");
   if (!needsProfileData) return;
   try {
     await visibility.ready;
@@ -372,9 +376,12 @@ async function applyPublicMemberProfiles() {
     }
     const profiles = publicProfiles;
     const roster = visibility.filterRoster(publicRoster);
-    const rosterByUsername = new Map(roster.map(function (member) { return [member.username, member.id]; }));
-    document.querySelectorAll(".member-card[data-fn-user]").forEach(function (card) {
-      const memberId = rosterByUsername.get(card.dataset.fnUser);
+    addNewRosterCards(roster, profiles);
+    const rosterById = new Map(roster.map(function (member) { return [member.id, member]; }));
+    document.querySelectorAll(".member-card[data-member-id][data-fn-user]").forEach(function (card) {
+      const memberId = card.dataset.memberId;
+      const member = rosterById.get(memberId);
+      if (member) card.dataset.fnUser = member.username;
       const profile = profiles.get(memberId);
       const name = card.querySelector(".member-name");
       if (profile && name && profile.displayName) name.textContent = profile.displayName;
@@ -386,7 +393,6 @@ async function applyPublicMemberProfiles() {
         emblem.dataset.memberProfileImage = 'true';
       }
     });
-    addNewRosterCards(roster, profiles);
     document.querySelectorAll("a.stats-player[href*='stats/']").forEach(function (card) {
       const profile = profiles.get(memberIdFromStatsLink(card));
       const name = card.querySelector("h3");

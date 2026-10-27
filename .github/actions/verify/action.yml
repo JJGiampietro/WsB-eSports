@@ -25,7 +25,7 @@ runs:
     - name: Test security, recovery and workflows
       shell: bash
       working-directory: .tests/bounties
-      run: ./node_modules/.bin/firebase emulators:exec --config ../../.bounty-emulator.json --project demo-wsb-bounties --only firestore,auth "node rules.test.cjs && node operations.test.cjs && node browser.test.cjs && node workspace-browser.test.cjs && node content.test.cjs"
+      run: ./node_modules/.bin/firebase emulators:exec --config ../../.bounty-emulator.json --project demo-wsb-bounties --only firestore,auth "node rules.test.cjs && node operations.test.cjs && node browser.test.cjs && node workspace-browser.test.cjs && node content.test.cjs && node member-identity.test.cjs"
     - name: Test redirects and nested routes
       shell: bash
       run: node .tests/migration/verify.cjs

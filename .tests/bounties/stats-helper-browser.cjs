@@ -7,7 +7,7 @@ module.exports=async({pageFor})=>{
     await page.route('**/sync-status.js?v=1',route=>route.abort());
     for(const [route,selector] of [
       ['stats/barrelroll/','.profile-hero-bio'],
-      ['members.html','.member-sync-label'],
+      ['members.html','.member-card[data-profile-link-ready="true"]'],
       ['stats.html','a.stats-player'],
       ['leaderboards.html','.lb-category']
     ]){

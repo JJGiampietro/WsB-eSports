@@ -290,7 +290,7 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
 (function(){
   let savedStatsSync = window.WsbSync;
   const syncReady = savedStatsSync ? Promise.resolve(savedStatsSync) : import(new URL('stats-sync.js', document.currentScript.src)).then(module => module.default);
-  const cards=document.querySelectorAll("[data-fn-user]");
+  const cards=document.querySelectorAll(".member-card[data-member-id][data-fn-user]");
   const refreshNote=document.getElementById("membersRefreshNote");
   if(!cards.length)return;
 
@@ -345,9 +345,10 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     savedStatsSync = await syncReady;
     const snapshot=results[0];
     const roster=Array.isArray(results[1])?results[1]:[];
-    const rosterByUsername=new Map(roster.map(function(member){return [member.username,member];}));
+    const rosterById=new Map(roster.map(function(member){return [member.id,member];}));
     cards.forEach(function(card){
-      const member=rosterByUsername.get(card.getAttribute("data-fn-user"));
+      const member=rosterById.get(card.dataset.memberId);
+      if(member)card.dataset.fnUser=member.username;
       setProfileImage(card,member);
       setProfileLink(card,member);
     });
@@ -355,11 +356,9 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
     if(refreshNote&&snapshot.fetchedAt){
       refreshNote.textContent="Last updated "+formatPacific(snapshot.fetchedAt)+". Refreshes hourly on the hour.";
     }
-    const byUsername=new Map(Object.values(snapshot.players).map(function(player){return [player.username,player];}));
     cards.forEach(function(card){
-      const member=rosterByUsername.get(card.getAttribute("data-fn-user"));
-      const stats=(member&&snapshot.players[member.id])||byUsername.get(card.getAttribute("data-fn-user"));
-      if(member)savedStatsSync.renderCardStatus(card,snapshot,member.id);
+      const member=rosterById.get(card.dataset.memberId);
+      const stats=member&&snapshot.players[member.id];
       if(stats)applyStats(card,stats);
     });
   }).catch(function(){
@@ -656,18 +655,16 @@ window.wsbVisibilityReady = import(new URL('member-visibility.js', document.curr
         ? '<div class="stats-avatar" style="background-image:url('+asset+')"></div>'
         : '<div class="stats-avatar stats-avatar-initial">'+initials(member.displayName)+'</div>';
       const badge=leaderIds.get(member.id)?'<span class="stats-badge">'+leaderIds.get(member.id)+'</span>':"";
-      if(!stats){
-        return '<a class="stats-player stats-player-issue" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(member.username)+'</p></div><span class="stats-sync-state"><i></i>Waiting for first sync</span></div><p class="stats-issue-copy">'+escapeHtml(savedStatsSync.describe(snapshot,member.id))+'</p></a>';
-      }
-      const killsPerMatch=stats.matches?stats.kills/stats.matches:0;
-      const sync=savedStatsSync.status(snapshot,member.id);
-      return '<a class="stats-player" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(stats.username||member.username)+'</p></div><span class="stats-sync-state '+(sync.state==='synced'?'stats-sync-ok':'stats-sync-stale')+'"><i></i>'+escapeHtml(sync.label)+'</span></div><p class="sync-detail">'+escapeHtml(savedStatsSync.describe(snapshot,member.id))+'</p>'+badge+'<div class="stats-metrics">'
-        +'<div><span>K/D</span><b>'+fmtDecimal(stats.kd)+'</b></div>'
-        +'<div><span>WIN RATE</span><b>'+fmtPercent(stats.winrate)+'</b></div>'
-        +'<div><span>WINS</span><b>'+fmtInt(stats.wins)+'</b></div>'
-        +'<div><span>KILLS</span><b>'+fmtInt(stats.kills)+'</b></div>'
-        +'<div><span>MATCHES</span><b>'+fmtInt(stats.matches)+'</b></div>'
-        +'<div><span>KILLS / MATCH</span><b>'+fmtDecimal(killsPerMatch)+'</b></div>'
+      const killsPerMatch=stats&&stats.matches?stats.kills/stats.matches:0;
+      // Public cards show saved numbers, not per-account operational messages.
+      // Missing data stays blank rather than being presented as zero stats.
+      return '<a class="stats-player" href="stats/'+encodeURIComponent(member.id)+'/" aria-label="Open '+escapeHtml(member.displayName)+' stats">'+avatar+'<div class="stats-player-head"><div><h3>'+escapeHtml(member.displayName)+'</h3><p>'+escapeHtml(stats?.username||member.username)+'</p></div></div>'+badge+'<div class="stats-metrics">'
+        +'<div><span>K/D</span><b>'+(stats?fmtDecimal(stats.kd):'-')+'</b></div>'
+        +'<div><span>WIN RATE</span><b>'+(stats?fmtPercent(stats.winrate):'-')+'</b></div>'
+        +'<div><span>WINS</span><b>'+(stats?fmtInt(stats.wins):'-')+'</b></div>'
+        +'<div><span>KILLS</span><b>'+(stats?fmtInt(stats.kills):'-')+'</b></div>'
+        +'<div><span>MATCHES</span><b>'+(stats?fmtInt(stats.matches):'-')+'</b></div>'
+        +'<div><span>KILLS / MATCH</span><b>'+(stats?fmtDecimal(killsPerMatch):'-')+'</b></div>'
         +'</div></a>';
     }
 

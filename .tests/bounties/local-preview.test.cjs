@@ -12,6 +12,15 @@ process.chdir(__dirname);
       for (const width of [1440, 1040, 390]) { await page.setViewportSize({ width, height: 1000 }); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'Overflow: ' + route + ' at ' + width); }
     }
     await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto('http://localhost:8000/index.html'); await page.locator('#homeCurrentActivity a').first().waitFor(); await page.locator('.current-activity').screenshot({ path: 'artifacts/local-home-activity.png' });
-    assert.deepEqual(errors, []); console.log('PASS: real isolated local SDK, seeded Admin login, management controls, 13 pages at desktop/tablet/mobile, home activity, and no browser runtime errors.');
+    const {snapshot} = await require('./member-layout.cjs')(page);
+    await page.route('**/data/latest.json*', route=>route.fulfill({contentType:'application/json',body:JSON.stringify(snapshot)}));
+    await page.goto('http://localhost:8000/admin.html');
+    await page.locator('#adminDashboard').waitFor({state:'visible'});
+    await page.waitForFunction(()=>{
+      const text=document.getElementById('adminSyncList').textContent;
+      return text.includes('Outdated stats')&&text.includes('Waiting for first sync')&&text.includes('Verify the Epic username');
+    });
+    await page.unroute('**/data/latest.json*');
+    assert.deepEqual(errors, []); console.log('PASS: real isolated local SDK, seeded Admin login, management controls, 13 pages at desktop/tablet/mobile, clean public cards with detailed sync health retained in the admin panel, home activity, and no browser runtime errors.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

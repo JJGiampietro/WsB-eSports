@@ -53,7 +53,7 @@ onSnapshot(detailId ? doc(db, 'memberRoles', detailId) : collection(db, 'memberR
 function renderPublicRoles() {
   if (!roleState.catalogLoaded || !roleState.assignmentsLoaded) return;
   for (const card of document.querySelectorAll('.member-card, a.stats-player, .management-card, .player-card[data-roster-id]')) {
-    let id = card.dataset.publicMemberId || card.dataset.memberId || card.dataset.rosterId;
+    let id = card.dataset.memberId || card.dataset.publicMemberId || card.dataset.rosterId;
     if (!id && card.matches('a.stats-player')) id = new URL(card.href).pathname.match(/\/stats\/([^/]+)\//)?.[1];
     if (!id && card.matches('.management-card')) id = managementMemberIds.get(card.querySelector('.tier-name')?.textContent.trim());
     if (!id) continue;
